@@ -78,6 +78,23 @@ namespace LogPose.Replay
             }
             ScrollRect scroll = gls.go_LogView.GetComponentInChildren<ScrollRect>(true);
             if (scroll != null)
+            {
+                // The layout only recalculates next frame, which would undo the scroll —
+                // force it now, stick to bottom, and re-stick after the frame settles.
+                Canvas.ForceUpdateCanvases();
+                RectTransform contentRect = content as RectTransform;
+                if (contentRect != null)
+                    LayoutRebuilder.ForceRebuildLayoutImmediate(contentRect);
+                scroll.verticalNormalizedPosition = 0f;
+                if (Plugin.Instance != null)
+                    Plugin.Instance.StartCoroutine(StickToBottom(scroll));
+            }
+        }
+
+        private static System.Collections.IEnumerator StickToBottom(ScrollRect scroll)
+        {
+            yield return new WaitForEndOfFrame();
+            if (scroll != null)
                 scroll.verticalNormalizedPosition = 0f;
         }
     }
