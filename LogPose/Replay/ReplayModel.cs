@@ -147,10 +147,19 @@ namespace LogPose.Replay
         public class DeckActivity
         {
             public int Start, End;   // event-index range (start exclusive of prior action)
+            public int DisplayEnd;   // last deck event + 1 — the reveal row hides after this
             public int Player;       // 1 or 2
             public readonly List<string> CardIds = new List<string>();
             public readonly List<bool> ToHand = new List<bool>();
             public readonly List<int> EventIdx = new List<int>();  // when each card's move applies
+
+            public void RecomputeDisplayEnd()
+            {
+                DisplayEnd = Start + 1;
+                foreach (int e in EventIdx)
+                    if (e + 1 > DisplayEnd)
+                        DisplayEnd = e + 1;
+            }
         }
         public readonly List<DeckActivity> DeckActivities = new List<DeckActivity>();
 
@@ -243,6 +252,7 @@ namespace LogPose.Replay
                     if (activity.CardIds.Count > 0 && ActionSaysRevealDraw(end))
                     {
                         activity.Player = player;
+                        activity.RecomputeDisplayEnd();
                         pendingRevealDraw = activity;
                     }
                     else
@@ -252,6 +262,7 @@ namespace LogPose.Replay
                     continue;
                 }
                 activity.Player = player;
+                activity.RecomputeDisplayEnd();
                 if (pendingRevealDraw != null && pendingRevealDraw.Player == player
                     && pendingRevealDraw.End == activity.Start)
                 {
@@ -264,6 +275,7 @@ namespace LogPose.Replay
                         activity.EventIdx.Insert(0, pendingRevealDraw.EventIdx[c]);
                     }
                     activity.Start = pendingRevealDraw.Start;
+                    activity.RecomputeDisplayEnd();
                 }
                 pendingRevealDraw = null;
                 if (activity.CardIds.Count > 0)
@@ -290,6 +302,7 @@ namespace LogPose.Replay
                             }
                         }
                         prev.End = activity.End;
+                        prev.RecomputeDisplayEnd();
                     }
                     else
                     {

@@ -113,6 +113,7 @@ namespace LogPose.Replay
     {
         private static readonly List<GameObject> _cards = new List<GameObject>();
         private const int MaxCards = 8;
+        private static int _lastPos = -1;
 
         public static void Sync(GameplayLogicScript gls, ReplaySession session, int pos)
         {
@@ -120,13 +121,39 @@ namespace LogPose.Replay
             {
                 ReplaySession.DeckActivity current = null;
                 foreach (ReplaySession.DeckActivity a in session.DeckActivities)
-                    if (pos > a.Start && pos <= a.End)
+                    if (pos > a.Start && pos <= a.DisplayEnd)
                         current = a;
                 Show(gls, current, pos);
+                // If the take just played out this step, start the real card's glide from its
+                // reveal-row slot instead of the deck pile.
+                if (current != null && _lastPos >= 0 && pos > _lastPos)
+                    RedirectTakenCards(gls, current, pos);
             }
             catch (Exception e)
             {
                 Plugin.Log.LogWarning("Reveal row failed: " + e.Message);
+            }
+            _lastPos = pos;
+        }
+
+        private static void RedirectTakenCards(GameplayLogicScript gls, ReplaySession.DeckActivity activity, int pos)
+        {
+            int count = Math.Min(activity.CardIds.Count, MaxCards);
+            for (int i = 0; i < count; i++)
+            {
+                if (!activity.ToHand[i] || activity.EventIdx[i] < _lastPos || activity.EventIdx[i] >= pos)
+                    continue;
+                int p = activity.Player == 2 ? 1 : 0;
+                List<GameObject> hand = gls.Lps_Players[p].Lgo_MyHand;
+                for (int h = hand.Count - 1; h >= 0; h--)
+                {
+                    CardLogicScript cls = hand[h] != null ? hand[h].GetComponent<CardLogicScript>() : null;
+                    if (cls == null || cls.myCard.cardDef == null || cls.myCard.cardDef.cardID != activity.CardIds[i])
+                        continue;
+                    Vector3 slot = SlotPosition(gls, activity, i);
+                    hand[h].transform.localPosition = slot;
+                    break;
+                }
             }
         }
 
@@ -136,18 +163,12 @@ namespace LogPose.Replay
                 if (go != null)
                     UnityEngine.Object.Destroy(go);
             _cards.Clear();
+            _lastPos = -1;
         }
 
-        private static void Show(GameplayLogicScript gls, ReplaySession.DeckActivity activity, int pos)
+        private static void RowLayout(GameplayLogicScript gls, ReplaySession.DeckActivity activity,
+            int count, out float x0, out float y, out float spacing)
         {
-            Clear();
-            if (activity == null || gls == null || CardDatabaseScript.Instance == null)
-                return;
-            int count = Math.Min(activity.CardIds.Count, MaxCards);
-            if (count == 0)
-                return;
-            // Use the game's own top-deck reveal location (where real searches display) —
-            // player 1 uses their strip, player 2's mirrors on the opposite side.
             LocationSet loc = null;
             try
             {
@@ -157,7 +178,6 @@ namespace LogPose.Replay
                     loc = gls.sc_Locations.playerLocations[idx].topDeck;
             }
             catch { }
-            float x0, y, spacing;
             if (loc != null && (loc.x != 0f || loc.y != 0f))
             {
                 x0 = loc.x;
@@ -170,8 +190,33 @@ namespace LogPose.Replay
                 spacing = 95f;
                 x0 = -spacing * (count - 1) / 2f;
             }
+        }
+
+        private static Vector3 SlotPosition(GameplayLogicScript gls, ReplaySession.DeckActivity activity, int i)
+        {
+            float x0, y, spacing;
+            RowLayout(gls, activity, Math.Min(activity.CardIds.Count, MaxCards), out x0, out y, out spacing);
+            return new Vector3(x0 + i * spacing, y);
+        }
+
+        private static void Show(GameplayLogicScript gls, ReplaySession.DeckActivity activity, int pos)
+        {
+            Clear();
+            if (activity == null || gls == null || CardDatabaseScript.Instance == null)
+                return;
+            int count = Math.Min(activity.CardIds.Count, MaxCards);
+            if (count == 0)
+                return;
+            float x0, y, spacing;
+            RowLayout(gls, activity, count, out x0, out y, out spacing);
             for (int i = 0; i < count; i++)
             {
+                // Once its to-hand move has applied, the taken card lives in the hand on the
+                // real board — leave a gap in the row instead of showing a duplicate.
+                bool taken = i < activity.ToHand.Count && activity.ToHand[i]
+                    && i < activity.EventIdx.Count && pos > activity.EventIdx[i];
+                if (taken)
+                    continue;
                 CardDefinition def = CardDatabaseScript.Instance.FindDefinition(activity.CardIds[i]);
                 if (def == null)
                     continue;
@@ -182,11 +227,9 @@ namespace LogPose.Replay
                 CardLogicScript cls = go.GetComponent<CardLogicScript>();
                 cls.LoadCardDefinition(def);
                 cls.SetFaceUp(true);
-                // Raise the taken card only once its to-hand move has actually applied, so
-                // stepping shows: whole set revealed -> the pick lifts -> the rest bottom.
-                bool toHand = i < activity.ToHand.Count && activity.ToHand[i]
-                    && i < activity.EventIdx.Count && pos > activity.EventIdx[i];
-                go.transform.localPosition = new Vector3(x0 + i * spacing, y + (toHand ? 30f : 0f));
+                // The card about to be grabbed sits raised so the pick is visible.
+                bool willTake = i < activity.ToHand.Count && activity.ToHand[i];
+                go.transform.localPosition = new Vector3(x0 + i * spacing, y + (willTake ? 30f : 0f));
                 cls.vDestination = go.transform.localPosition;
                 Canvas cv = go.GetComponent<Canvas>();
                 if (cv != null)
