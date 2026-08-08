@@ -87,6 +87,22 @@ namespace LogPose.Replay
                 }
             }
 
+            // The refreshes queue MoveTo animations from spawn position to each card's slot,
+            // which reads as re-dealing the whole board on every seek. Snap every card straight
+            // to its destination in the same frame so scrubbing is instant.
+            for (int p = 0; p < 2; p++)
+            {
+                PlayerState ps = gls.Lps_Players[p];
+                for (int z = 0; z < RState.ZoneCount; z++)
+                {
+                    List<GameObject> list = GetList(ps, z);
+                    if (list == null)
+                        continue;
+                    foreach (GameObject go in list)
+                        SnapCard(go);
+                }
+            }
+
             // Park the rules engine: every win/lose/concede path checks bHasGameEnded first,
             // so raising it keeps the game from adjudicating the replayed position.
             TrySet(t, "bHasGameEnded", true);
@@ -184,6 +200,20 @@ namespace LogPose.Replay
             cls.myCard.iHandUIOrder = indexInZone;
             cls.myCard.deckUniqueID = (player == 0) ? (1000 + indexInZone) : (-1000 - indexInZone);
             return go;
+        }
+
+        private static void SnapCard(GameObject go)
+        {
+            if (go == null)
+                return;
+            CardLogicScript cls = go.GetComponent<CardLogicScript>();
+            if (cls == null)
+                return;
+            if (cls.vDestination != Vector3.zero)
+                go.transform.localPosition = cls.vDestination;
+            if (cls.lgo_AttachedDon != null)
+                foreach (GameObject don in cls.lgo_AttachedDon)
+                    SnapCard(don);
         }
 
         private static void TrySet(Traverse t, string field, object value)
