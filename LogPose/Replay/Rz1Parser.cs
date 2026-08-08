@@ -18,6 +18,9 @@ namespace LogPose.Replay
         // deck, hand, deploy, life, donDeck, donCost, trash, stage, leader, equippedDon
         public int[] Check;
         public int CheckPlayer;
+        // Ordinal of this move across the ENTIRE source file — used to correlate replay
+        // position with the human-readable lines of the sibling .log file.
+        public int GlobalIndex;
     }
 
     internal class Rz1File
@@ -35,6 +38,9 @@ namespace LogPose.Replay
         // First CHK counts seen per player (index 0/1) — the initial zone sizes to seed
         // (deck, hand, deploy, life, donDeck, donCost, trash, stage, leader, equippedDon).
         public int[][] InitialCounts = new int[2][];
+        // Human-readable combat log lines from the sibling .log file, keyed by the global
+        // move index they precede (shared by every game parsed from the same file).
+        public List<KeyValuePair<int, string>> HumanLines;
     }
 
     internal static class Rz1Parser
@@ -47,6 +53,7 @@ namespace LogPose.Replay
             var games = new List<Rz1File>();
             var f = new Rz1File { Path = path };
             games.Add(f);
+            int globalIndex = 0;
             foreach (string raw in File.ReadAllLines(path))
             {
                 if (!raw.StartsWith("RZ1|", StringComparison.Ordinal))
@@ -110,6 +117,7 @@ namespace LogPose.Replay
                         Tapped = p[10] == "1",
                         PowDelta = int.Parse(p[11], CultureInfo.InvariantCulture),
                         CostDelta = int.Parse(p[12], CultureInfo.InvariantCulture),
+                        GlobalIndex = globalIndex++,
                     };
                     if (ev.Oz == 8 && ev.Dz == 8 && ev.Os == 0 && ev.Ds == 0 && !ev.Tapped)
                         f.TurnMarks.Add(f.Events.Count);
@@ -121,7 +129,47 @@ namespace LogPose.Replay
                 }
             }
             games.RemoveAll(g => g.Events.Count == 0);
-            return SplitByCheckpoints(games);
+            List<Rz1File> result = SplitByCheckpoints(games);
+            List<KeyValuePair<int, string>> human = LoadHumanLines(path);
+            foreach (Rz1File g in result)
+                g.HumanLines = human;
+            return result;
+        }
+
+        // The vanilla .log interleaves human lines with RZ1 lines in emission order, which
+        // encodes their correspondence: a human line "belongs" right before the Nth move line.
+        private static readonly System.Text.RegularExpressions.Regex TmpTags =
+            new System.Text.RegularExpressions.Regex("<[^<>]{1,64}?>");
+        private static readonly System.Text.RegularExpressions.Regex InvisibleChars =
+            new System.Text.RegularExpressions.Regex("[\u200B\u200C\u200D\u2060\uFEFF]");
+
+        private static List<KeyValuePair<int, string>> LoadHumanLines(string rz1Path)
+        {
+            var result = new List<KeyValuePair<int, string>>();
+            try
+            {
+                string logPath = rz1Path.EndsWith(".rz1", StringComparison.OrdinalIgnoreCase)
+                    ? rz1Path.Substring(0, rz1Path.Length - 4) + ".log"
+                    : rz1Path + ".log";
+                if (!File.Exists(logPath))
+                    return result;
+                int moveCount = 0;
+                foreach (string raw in File.ReadAllLines(logPath))
+                {
+                    if (raw.StartsWith("RZ1|", StringComparison.Ordinal))
+                    {
+                        string[] p = raw.Split('|');
+                        if (p.Length >= 13 && p[1] != "CHK" && p[1] != "HDR" && p[1] != "PLY")
+                            moveCount++;
+                        continue;
+                    }
+                    string line = InvisibleChars.Replace(TmpTags.Replace(raw, ""), "").Trim();
+                    if (line.Length > 0)
+                        result.Add(new KeyValuePair<int, string>(moveCount, line));
+                }
+            }
+            catch { }
+            return result;
         }
 
         // Segment boundaries (HDR lines) are unreliable in both directions: mid-game stream

@@ -111,6 +111,12 @@ namespace LogPose.Replay
             _session = new ReplaySession(game);
             _pos = 0;
             _autoPlay = false;
+            ReplayBridge.ResetLiveCards();
+            ReplayLogView.ResetForNewSession();
+            GameplayLogicScript board = ReplayBridge.FindBoard();
+            if (board != null)
+                NativeReplayPanel.Show(board);
+            _visible = false; // native panel takes over; F7 reopens the picker window
             Seek(0);
         }
 
@@ -122,7 +128,39 @@ namespace LogPose.Replay
             _session.SeekTo(_pos);
             GameplayLogicScript board = ReplayBridge.FindBoard();
             if (board != null)
+            {
                 ReplayBridge.Apply(board, _session, _revealAll);
+                ReplayLogView.Sync(board, _session, _pos);
+            }
+            NativeReplayPanel.Refresh(_session, _pos, _autoPlay);
+        }
+
+        // Transport entry points shared by the native panel and the keyboard.
+        internal static void SeekTo(int pos) { Seek(pos); }
+        internal static void SeekToEnd() { if (_session != null) Seek(_session.EventCount); }
+        internal static void StepBy(int n) { Seek(_pos + n); }
+        internal static void JumpTurn(int dir)
+        {
+            if (_session == null)
+                return;
+            Seek(dir > 0 ? _session.NextTurnMark(_pos) : _session.PrevTurnMark(_pos));
+        }
+        internal static void TogglePlay()
+        {
+            _autoPlay = !_autoPlay;
+            _autoAccum = 0f;
+            NativeReplayPanel.Refresh(_session, _pos, _autoPlay);
+        }
+        internal static void ChangeSpeed(float delta)
+        {
+            _autoSpeed = Mathf.Clamp(_autoSpeed + delta, 1f, 20f);
+        }
+        internal static void ExitReplay()
+        {
+            _session = null;
+            _autoPlay = false;
+            NativeReplayPanel.Hide();
+            _visible = false;
         }
 
         private static void DrawWindow(int id)

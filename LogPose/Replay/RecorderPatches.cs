@@ -26,6 +26,15 @@ namespace LogPose.Replay
         private static void GameStartSolo_Prefix(GameplayLogicScript __instance)
         {
             Reset(__instance);
+            ReplayBridge.InReplay = false;
+        }
+
+        // While a replay is loaded, the board holds replayed history — autosaving it would
+        // produce garbage log files full of re-emitted RZ1 lines.
+        [HarmonyPrefix, HarmonyPatch(typeof(GameplayLogicScript), nameof(GameplayLogicScript.SaveMyLogLines))]
+        private static bool SaveMyLogLines_Prefix()
+        {
+            return !ReplayBridge.InReplay;
         }
 
         [HarmonyPrefix, HarmonyPatch(typeof(GameplayLogicScript), nameof(GameplayLogicScript.GameStartMultiplayer))]
