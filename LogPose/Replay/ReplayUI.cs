@@ -111,6 +111,15 @@ namespace LogPose.Replay
         private static void OpenGame(Rz1File game)
         {
             _session = new ReplaySession(game);
+            _session.BuildDeckActivityLines(id =>
+            {
+                CardDefinition def = CardDatabaseScript.Instance != null
+                    ? CardDatabaseScript.Instance.FindDefinition(id)
+                    : null;
+                return (def != null && !string.IsNullOrEmpty(def.characterName))
+                    ? def.characterName + " [" + id + "]"
+                    : id;
+            });
             _pos = 0;
             _autoPlay = false;
             ReplayBridge.ResetLiveCards();

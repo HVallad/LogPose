@@ -55,8 +55,15 @@ namespace LogPose.Replay
             int upper = pos < evs.Count ? evs[pos].GlobalIndex : evs[evs.Count - 1].GlobalIndex + 1;
 
             var show = new List<string>();
-            foreach (KeyValuePair<int, string> kv in session.File.HumanLines)
+            List<KeyValuePair<int, string>> human = session.File.HumanLines;
+            List<KeyValuePair<int, string>> deck = session.DeckActivityLines;
+            int hi = 0, di = 0;
+            while (hi < human.Count || di < deck.Count)
             {
+                // At equal keys the deck-activity line describes the action that just ended,
+                // so it goes before the next action's human lines.
+                bool takeDeck = di < deck.Count && (hi >= human.Count || deck[di].Key <= human[hi].Key);
+                KeyValuePair<int, string> kv = takeDeck ? deck[di++] : human[hi++];
                 if (kv.Key < lower)
                     continue;
                 if (kv.Key > upper)

@@ -116,6 +116,83 @@ namespace LogPose.Replay
             return best;
         }
 
+        // Synthetic log lines describing deck-internal activity (searches, mills, scries) per
+        // action, keyed like HumanLines by the global move index they precede. The RZ1 stream
+        // records real card ids for these moves — including the opponent's searches.
+        public readonly List<KeyValuePair<int, string>> DeckActivityLines = new List<KeyValuePair<int, string>>();
+
+        public void BuildDeckActivityLines(Func<string, string> nameOf)
+        {
+            DeckActivityLines.Clear();
+            if (File.Events.Count == 0)
+                return;
+            var bounds = new List<int>(ActionMarks);
+            if (bounds.Count == 0 || bounds[0] != 0)
+                bounds.Insert(0, 0);
+            bounds.Add(File.Events.Count);
+            for (int a = 0; a + 1 < bounds.Count; a++)
+            {
+                int start = bounds[a], end = bounds[a + 1];
+                var parts = new List<string>();
+                var reorders = new List<string>();
+                int deckTouches = 0;
+                bool searchy = false;
+                int player = 0;
+                for (int i = start; i < end; i++)
+                {
+                    Rz1Event ev = File.Events[i];
+                    bool deckInvolved = ev.Oz == 0 || ev.Dz == 0;
+                    if (!deckInvolved || ev.CardId == "" || ev.CardId == "?" || ev.CardId == "Don")
+                        continue;
+                    deckTouches++;
+                    player = ev.Player;
+                    string what = null;
+                    if (ev.Oz == 0 && ev.Dz == 0)
+                    {
+                        searchy = true;
+                        if (ev.Os == ev.Ds)
+                            what = "revealed on deck";
+                        else
+                        {
+                            reorders.Add(nameOf(ev.CardId) + (ev.Ds == 0 ? " to deck bottom" : " reordered"));
+                            continue;
+                        }
+                    }
+                    else if (ev.Oz == 0 && ev.Dz == 1) what = "to hand";
+                    else if (ev.Oz == 0 && ev.Dz == 6) { what = "milled to trash"; searchy = true; }
+                    else if (ev.Oz == 0 && ev.Dz == 2) { what = "into play"; searchy = true; }
+                    else if (ev.Oz == 0 && ev.Dz == 3) { what = "to life"; searchy = true; }
+                    else if (ev.Oz == 1 && ev.Dz == 0) { what = "hand to deck"; searchy = true; }
+                    else if (ev.Dz == 0) { what = "to deck"; searchy = true; }
+                    else if (ev.Oz == 0) what = "out of deck";
+                    if (what != null)
+                        parts.Add(nameOf(ev.CardId) + " " + what);
+                }
+                // Many reorders in one action = a shuffle, not a search — don't spell out
+                // the whole deck.
+                if (reorders.Count >= 8)
+                    parts.Add("shuffled the deck");
+                else
+                    parts.AddRange(reorders);
+                // A plain draw is already narrated by the game's own log line.
+                if (parts.Count == 0 || (!searchy && deckTouches <= 1))
+                    continue;
+                const int maxShown = 6;
+                string body = string.Join(" · ", parts.GetRange(0, Math.Min(parts.Count, maxShown)).ToArray());
+                if (parts.Count > maxShown)
+                    body += " · +" + (parts.Count - maxShown) + " more";
+                int key = end < File.Events.Count
+                    ? File.Events[end].GlobalIndex
+                    : File.Events[File.Events.Count - 1].GlobalIndex + 1;
+                string who = player == 2 ? File.Player2 : File.Player1;
+                int hash = who.IndexOf('#');
+                if (hash > 0)
+                    who = who.Substring(0, hash);
+                DeckActivityLines.Add(new KeyValuePair<int, string>(key,
+                    "<color=#7A4A1E><i>- " + who + ": " + body + "</i></color>"));
+            }
+        }
+
         // Leaders and the initial deck/life/don-deck contents never "move" in the RZ1 stream,
         // so they must be seeded: leader from the PLY line, hidden piles as placeholder cards
         // sized from the first CHK checksum per player (fallback: 50 deck / 10 don).
