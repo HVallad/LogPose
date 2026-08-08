@@ -65,6 +65,8 @@ namespace LogPose.Replay
             {
                 if (Input.GetKeyDown(KeyCode.RightArrow)) Seek(_pos + 1);
                 if (Input.GetKeyDown(KeyCode.LeftArrow)) Seek(_pos - 1);
+                if (Input.GetKeyDown(KeyCode.DownArrow)) JumpAction(1);
+                if (Input.GetKeyDown(KeyCode.UpArrow)) JumpAction(-1);
                 if (Input.GetKeyDown(KeyCode.PageDown)) Seek(_session.NextTurnMark(_pos));
                 if (Input.GetKeyDown(KeyCode.PageUp)) Seek(_session.PrevTurnMark(_pos));
                 if (Input.GetKeyDown(KeyCode.End)) Seek(_session.EventCount);
@@ -144,6 +146,12 @@ namespace LogPose.Replay
             if (_session == null)
                 return;
             Seek(dir > 0 ? _session.NextTurnMark(_pos) : _session.PrevTurnMark(_pos));
+        }
+        internal static void JumpAction(int dir)
+        {
+            if (_session == null)
+                return;
+            Seek(dir > 0 ? _session.NextActionMark(_pos) : _session.PrevActionMark(_pos));
         }
         internal static void TogglePlay()
         {

@@ -132,8 +132,8 @@ namespace LogPose.Replay
             float w = 56f, h = 52f;
             MakeButton(gls, "|<", new Vector2(-165f, y1), new Vector2(w, h), () => ReplayUI.SeekTo(0));
             MakeButton(gls, "<T", new Vector2(-99f, y1), new Vector2(w, h), () => ReplayUI.JumpTurn(-1));
-            MakeButton(gls, "<", new Vector2(-33f, y1), new Vector2(w, h), () => ReplayUI.StepBy(-1));
-            MakeButton(gls, ">", new Vector2(33f, y1), new Vector2(w, h), () => ReplayUI.StepBy(1));
+            MakeButton(gls, "<A", new Vector2(-33f, y1), new Vector2(w, h), () => ReplayUI.JumpAction(-1));
+            MakeButton(gls, "A>", new Vector2(33f, y1), new Vector2(w, h), () => ReplayUI.JumpAction(1));
             MakeButton(gls, "T>", new Vector2(99f, y1), new Vector2(w, h), () => ReplayUI.JumpTurn(1));
             MakeButton(gls, ">|", new Vector2(165f, y1), new Vector2(w, h), () => ReplayUI.SeekToEnd());
 
@@ -144,7 +144,7 @@ namespace LogPose.Replay
             MakeButton(gls, "Spd +", new Vector2(78f, y2), new Vector2(85f, h), () => ReplayUI.ChangeSpeed(2f));
             MakeButton(gls, "Exit", new Vector2(160f, y2), new Vector2(65f, h), () => ReplayUI.ExitReplay());
 
-            MakeLabel(gls, "PgUp/PgDn: turn   Arrows: step", new Vector2(0f, -90f), new Vector2(380f, 30f), 16f);
+            MakeLabel(gls, "A: action (↑/↓)   T: turn (PgUp/PgDn)   ←/→: event", new Vector2(0f, -90f), new Vector2(390f, 30f), 16f);
         }
 
         private static GameObject MakeButton(GameplayLogicScript gls, string label, Vector2 pos, Vector2 size, UnityEngine.Events.UnityAction onClick)

@@ -62,6 +62,9 @@ namespace LogPose.Replay
 
         public string ValidationSummary = "";
 
+        // Event indexes where a human combat-log line sits — i.e. logical action boundaries.
+        public readonly List<int> ActionMarks = new List<int>();
+
         public ReplaySession(Rz1File file)
         {
             File = file;
@@ -69,6 +72,48 @@ namespace LogPose.Replay
             SeedInitialState(Current);
             _snapshots.Add(Current.Clone());
             Validate();
+            BuildActionMarks();
+        }
+
+        private void BuildActionMarks()
+        {
+            if (File.HumanLines == null || File.Events.Count == 0)
+                return;
+            int lower = File.Events[0].GlobalIndex;
+            int upper = File.Events[File.Events.Count - 1].GlobalIndex;
+            int evIdx = 0;
+            foreach (KeyValuePair<int, string> kv in File.HumanLines)
+            {
+                if (kv.Key < lower)
+                    continue;
+                if (kv.Key > upper)
+                    break;
+                while (evIdx < File.Events.Count && File.Events[evIdx].GlobalIndex < kv.Key)
+                    evIdx++;
+                if (evIdx >= File.Events.Count)
+                    break;
+                if (ActionMarks.Count == 0 || ActionMarks[ActionMarks.Count - 1] != evIdx)
+                    ActionMarks.Add(evIdx);
+            }
+        }
+
+        public int NextActionMark(int eventIndex)
+        {
+            foreach (int m in ActionMarks)
+                if (m > eventIndex)
+                    return m;
+            return EventCount;
+        }
+
+        public int PrevActionMark(int eventIndex)
+        {
+            int best = 0;
+            foreach (int m in ActionMarks)
+                if (m < eventIndex)
+                    best = m;
+                else
+                    break;
+            return best;
         }
 
         // Leaders and the initial deck/life/don-deck contents never "move" in the RZ1 stream,
