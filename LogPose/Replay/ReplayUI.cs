@@ -135,6 +135,7 @@ namespace LogPose.Replay
         {
             if (_session == null)
                 return;
+            int prevPos = _pos;
             _pos = Mathf.Clamp(target, 0, _session.EventCount);
             _session.SeekTo(_pos);
             GameplayLogicScript board = ReplayBridge.FindBoard();
@@ -142,7 +143,7 @@ namespace LogPose.Replay
             {
                 ReplayBridge.Apply(board, _session, _revealAll);
                 ReplayLogView.Sync(board, _session, _pos);
-                RevealRow.Sync(board, _session, _pos);
+                RevealRow.Sync(board, _session, _pos, prevPos);
             }
             NativeReplayPanel.Refresh(_session, _pos, _autoPlay);
         }

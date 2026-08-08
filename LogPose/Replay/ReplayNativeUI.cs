@@ -113,9 +113,11 @@ namespace LogPose.Replay
     {
         private static readonly List<GameObject> _cards = new List<GameObject>();
         private const int MaxCards = 8;
-        private static int _lastPos = -1;
+        // Redirect glides only for reasonably local jumps — an End-jump shouldn't fling
+        // cards around from long-gone searches.
+        private const int MaxRedirectSpan = 100;
 
-        public static void Sync(GameplayLogicScript gls, ReplaySession session, int pos)
+        public static void Sync(GameplayLogicScript gls, ReplaySession session, int pos, int prevPos)
         {
             try
             {
@@ -124,25 +126,26 @@ namespace LogPose.Replay
                     if (pos > a.Start && pos <= a.DisplayEnd)
                         current = a;
                 Show(gls, current, pos);
-                // If the take just played out this step, start the real card's glide from its
+                // Any take whose event was crossed by this seek starts its glide from its
                 // reveal-row slot instead of the deck pile.
-                if (current != null && _lastPos >= 0 && pos > _lastPos)
-                    RedirectTakenCards(gls, current, pos);
+                if (pos > prevPos && pos - prevPos <= MaxRedirectSpan)
+                    foreach (ReplaySession.DeckActivity a in session.DeckActivities)
+                        RedirectTakenCards(gls, a, prevPos, pos);
             }
             catch (Exception e)
             {
                 Plugin.Log.LogWarning("Reveal row failed: " + e.Message);
             }
-            _lastPos = pos;
         }
 
-        private static void RedirectTakenCards(GameplayLogicScript gls, ReplaySession.DeckActivity activity, int pos)
+        private static void RedirectTakenCards(GameplayLogicScript gls, ReplaySession.DeckActivity activity, int prevPos, int pos)
         {
             int count = Math.Min(activity.CardIds.Count, MaxCards);
             for (int i = 0; i < count; i++)
             {
-                if (!activity.ToHand[i] || activity.EventIdx[i] < _lastPos || activity.EventIdx[i] >= pos)
+                if (!activity.ToHand[i] || activity.EventIdx[i] < prevPos || activity.EventIdx[i] >= pos)
                     continue;
+                Plugin.Log.LogInfo("Replay: redirecting " + activity.CardIds[i] + " glide to start from the reveal row");
                 int p = activity.Player == 2 ? 1 : 0;
                 List<GameObject> hand = gls.Lps_Players[p].Lgo_MyHand;
                 for (int h = hand.Count - 1; h >= 0; h--)
@@ -163,7 +166,6 @@ namespace LogPose.Replay
                 if (go != null)
                     UnityEngine.Object.Destroy(go);
             _cards.Clear();
-            _lastPos = -1;
         }
 
         private static void RowLayout(GameplayLogicScript gls, ReplaySession.DeckActivity activity,
