@@ -24,6 +24,15 @@ states. Config: `EmitMissingReplayLines`.
 `<stamp>.clean.log` (markup + zero-width chars stripped, UTF-8, human lines only) and
 `<stamp>.rz1` (replay lines only). Config: `WriteCleanLog`, `WriteReplayFile`, `LogFontSize`.
 
+**In-game replay viewer** (`Replay/*.cs`) — start a Solo v Self game, then press **F7** (file
+picker) or **F8** (instantly open the newest replay). Scrub any recorded `.rz1` on the real
+board: slider, per-event stepping (arrow keys), turn jumps (PageUp/PageDown), autoplay, and a
+reveal-hidden toggle. Reconstruction is validated against the CHK checksums embedded in the
+stream and the accuracy is shown in the panel (100% on well-formed LogPose recordings). One
+autosave can contain several games (rematches); the parser splits them via checksum signatures
+and lists each game separately. Don't interact with the board while a replay is loaded —
+restart Solo v Self to return to normal play.
+
 **Alt art selector** (`AltArt*.cs`) — press **F6** in the deck editor. Cards in the current deck
 with variant art get `<` / `>` cycling; thumbnails refresh live; choices persist to
 `Decks\<name>.deck.arts.json` when the deck is saved (the `.deck` file is untouched, so decks

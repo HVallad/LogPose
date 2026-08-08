@@ -11,7 +11,7 @@ namespace LogPose
     {
         public const string GUID = "com.hunter.logpose";
         public const string NAME = "LogPose";
-        public const string VERSION = "0.1.0";
+        public const string VERSION = "0.2.0";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;
@@ -21,6 +21,8 @@ namespace LogPose
         internal static ConfigEntry<bool> CfgWriteReplayFile;
         internal static ConfigEntry<float> CfgLogFontSize;
         internal static ConfigEntry<KeyCode> CfgAltArtKey;
+        internal static ConfigEntry<KeyCode> CfgReplayKey;
+        internal static ConfigEntry<KeyCode> CfgReplayQuickKey;
 
         private void Awake()
         {
@@ -37,11 +39,17 @@ namespace LogPose
                 "Font size for combat log lines in the in-game log panel. 0 = keep the game's default.");
             CfgAltArtKey = Config.Bind("AltArt", "ToggleKey", KeyCode.F6,
                 "Key that opens the Alt Art selector while in the deck editor.");
+            CfgReplayKey = Config.Bind("Replay", "ViewerKey", KeyCode.F7,
+                "Key that opens the replay viewer while in a Solo v Self game.");
+            CfgReplayQuickKey = Config.Bind("Replay", "QuickOpenKey", KeyCode.F8,
+                "Key that immediately opens the newest .rz1 replay while in a Solo v Self game. " +
+                "With a replay open: Left/Right arrows step events, PageUp/PageDown jump turns, Home/End jump to start/end.");
 
             var harmony = new Harmony(GUID);
             harmony.PatchAll(typeof(ReplaySyncPatches));
             harmony.PatchAll(typeof(CombatLogPatches));
             harmony.PatchAll(typeof(AltArtPatches));
+            harmony.PatchAll(typeof(Replay.RecorderPatches));
 
             Log.LogInfo(NAME + " " + VERSION + " loaded.");
         }
@@ -49,11 +57,13 @@ namespace LogPose
         private void Update()
         {
             AltArtUI.Update();
+            Replay.ReplayUI.Update();
         }
 
         private void OnGUI()
         {
             AltArtUI.OnGUI();
+            Replay.ReplayUI.OnGUI();
         }
     }
 }

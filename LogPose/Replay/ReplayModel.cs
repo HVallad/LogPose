@@ -1,0 +1,320 @@
+using System;
+using System.Collections.Generic;
+
+namespace LogPose.Replay
+{
+    // Virtual board reconstruction. Zones use ReplaySyncZone numbering (0 deck, 1 hand,
+    // 2 characters, 3 life, 4 don deck, 5 don cost area, 6 trash, 7 stage, 8 leader);
+    // zone 9 (equipped don) lives on the parent card's AttachedDon list, slot-encoded as
+    // parent*100 + attachIndex with parent 99 = leader.
+    internal class RCard
+    {
+        public string Id;
+        public bool Tapped;
+        public bool VisOwner = true;
+        public bool VisEnemy = true;
+        public List<RCard> AttachedDon = new List<RCard>();
+
+        public RCard Clone()
+        {
+            var c = new RCard { Id = Id, Tapped = Tapped, VisOwner = VisOwner, VisEnemy = VisEnemy };
+            foreach (RCard d in AttachedDon)
+                c.AttachedDon.Add(d.Clone());
+            return c;
+        }
+    }
+
+    internal class RState
+    {
+        public const int ZoneCount = 9;
+        public List<RCard>[][] P; // [player 0/1][zone 0-8]
+        public int EventIndex;    // number of events applied
+
+        public RState()
+        {
+            P = new List<RCard>[2][];
+            for (int p = 0; p < 2; p++)
+            {
+                P[p] = new List<RCard>[ZoneCount];
+                for (int z = 0; z < ZoneCount; z++)
+                    P[p][z] = new List<RCard>();
+            }
+        }
+
+        public RState Clone()
+        {
+            var s = new RState { EventIndex = EventIndex };
+            for (int p = 0; p < 2; p++)
+                for (int z = 0; z < ZoneCount; z++)
+                    foreach (RCard c in P[p][z])
+                        s.P[p][z].Add(c.Clone());
+            return s;
+        }
+    }
+
+    internal class ReplaySession
+    {
+        private const int SnapshotEvery = 20;
+
+        public Rz1File File;
+        public RState Current;
+        private readonly List<RState> _snapshots = new List<RState>();
+
+        public string ValidationSummary = "";
+
+        public ReplaySession(Rz1File file)
+        {
+            File = file;
+            Current = new RState();
+            SeedInitialState(Current);
+            _snapshots.Add(Current.Clone());
+            Validate();
+        }
+
+        // Leaders and the initial deck/life/don-deck contents never "move" in the RZ1 stream,
+        // so they must be seeded: leader from the PLY line, hidden piles as placeholder cards
+        // sized from the first CHK checksum per player (fallback: 50 deck / 10 don).
+        private void SeedInitialState(RState st)
+        {
+            for (int p = 0; p < 2; p++)
+            {
+                string leader = (p == 0) ? File.Leader1 : File.Leader2;
+                if (!string.IsNullOrEmpty(leader))
+                    st.P[p][8].Add(new RCard { Id = leader });
+                int[] c = File.InitialCounts[p];
+                int deck = (c != null) ? c[0] : 50;
+                int life = (c != null) ? c[3] : 0;
+                int don = (c != null) ? c[4] : 10;
+                for (int i = 0; i < deck; i++)
+                    st.P[p][0].Add(new RCard { Id = "?", VisOwner = false, VisEnemy = false });
+                for (int i = 0; i < life; i++)
+                    st.P[p][3].Add(new RCard { Id = "?", VisOwner = false, VisEnemy = false });
+                for (int i = 0; i < don; i++)
+                    st.P[p][4].Add(new RCard { Id = "Don", VisOwner = false, VisEnemy = false });
+            }
+        }
+
+        // Replays the whole file once against the CHK checksums embedded in the stream and
+        // records how faithful the reconstruction is.
+        private void Validate()
+        {
+            var st = new RState();
+            SeedInitialState(st);
+            int checks = 0, bad = 0;
+            var firstBad = "";
+            for (int i = 0; i < File.Events.Count; i++)
+            {
+                Rz1Event ev = File.Events[i];
+                ApplyTo(st, ev);
+                if (ev.Check == null)
+                    continue;
+                checks++;
+                int p = (ev.CheckPlayer == 2) ? 1 : 0;
+                List<RCard>[] z = st.P[p];
+                int eqDon = 0;
+                if (z[8].Count > 0) eqDon += z[8][0].AttachedDon.Count;
+                foreach (RCard dc in z[2]) eqDon += dc.AttachedDon.Count;
+                int[] mine =
+                {
+                    z[0].Count, z[1].Count, z[2].Count, z[3].Count, z[4].Count,
+                    z[5].Count, z[6].Count, z[7].Count, z[8].Count, eqDon,
+                };
+                for (int k = 0; k < 10; k++)
+                {
+                    if (mine[k] != ev.Check[k])
+                    {
+                        bad++;
+                        if (firstBad == "")
+                            firstBad = string.Format("first mismatch at event {0} (seq {1}) p{2} zone#{3}: mine={4} chk={5}",
+                                i, ev.Seq, ev.CheckPlayer, k, mine[k], ev.Check[k]);
+                        break;
+                    }
+                }
+            }
+            ValidationSummary = string.Format("{0}/{1} checksums OK{2}",
+                checks - bad, checks, firstBad == "" ? "" : " — " + firstBad);
+            Plugin.Log.LogInfo("Replay validation: " + ValidationSummary);
+        }
+
+        public int EventCount { get { return File.Events.Count; } }
+
+        public void SeekTo(int eventIndex)
+        {
+            eventIndex = Math.Max(0, Math.Min(eventIndex, EventCount));
+            if (eventIndex < Current.EventIndex)
+            {
+                int snap = Math.Min(eventIndex / SnapshotEvery, _snapshots.Count - 1);
+                Current = _snapshots[snap].Clone();
+            }
+            while (Current.EventIndex < eventIndex)
+            {
+                Apply(File.Events[Current.EventIndex]);
+                Current.EventIndex++;
+                if (Current.EventIndex % SnapshotEvery == 0 && Current.EventIndex / SnapshotEvery >= _snapshots.Count)
+                    _snapshots.Add(Current.Clone());
+            }
+        }
+
+        // Turn number at the current position (1-based; marker list indexes are event indexes).
+        public int TurnAt(int eventIndex)
+        {
+            int t = 1;
+            foreach (int m in File.TurnMarks)
+                if (m < eventIndex) t++; else break;
+            return t;
+        }
+
+        public int NextTurnMark(int eventIndex)
+        {
+            foreach (int m in File.TurnMarks)
+                if (m > eventIndex) return m;
+            return EventCount;
+        }
+
+        public int PrevTurnMark(int eventIndex)
+        {
+            int best = 0;
+            foreach (int m in File.TurnMarks)
+                if (m < eventIndex - 1) best = m; else break;
+            return best;
+        }
+
+        private void Apply(Rz1Event ev)
+        {
+            ApplyTo(Current, ev);
+        }
+
+        private static void ApplyTo(RState state, Rz1Event ev)
+        {
+            int p = (ev.Player == 2) ? 1 : 0;
+            List<RCard>[] zones = state.P[p];
+
+            bool inPlace = ev.Oz == ev.Dz && ev.Os == ev.Ds;
+            if (inPlace)
+            {
+                RCard c = FindAt(zones, ev.Dz, ev.Ds, ev.CardId);
+                if (c != null)
+                {
+                    c.Tapped = ev.Tapped;
+                    c.VisOwner = ev.Vp == 1;
+                    c.VisEnemy = ev.Ve == 1;
+                }
+                return;
+            }
+
+            RCard card = RemoveAt(zones, ev.Oz, ev.Os, ev.CardId) ?? new RCard { Id = ev.CardId };
+            card.Tapped = ev.Tapped;
+            card.VisOwner = ev.Vp == 1;
+            card.VisEnemy = ev.Ve == 1;
+            InsertAt(zones, ev.Dz, ev.Ds, card);
+        }
+
+        private static RCard ParentOf(List<RCard>[] zones, int encodedSlot, out int attachIdx)
+        {
+            int parent = encodedSlot / 100;
+            attachIdx = encodedSlot % 100;
+            if (parent == 99)
+                return zones[8].Count > 0 ? zones[8][0] : null;
+            return (parent >= 0 && parent < zones[2].Count) ? zones[2][parent] : null;
+        }
+
+        private static RCard FindAt(List<RCard>[] zones, int zone, int slot, string id)
+        {
+            if (zone == 9)
+            {
+                int ai;
+                RCard par = ParentOf(zones, slot, out ai);
+                if (par != null && ai >= 0 && ai < par.AttachedDon.Count)
+                    return par.AttachedDon[ai];
+                return null;
+            }
+            if (zone < 0 || zone > 8)
+                return null;
+            List<RCard> list = zones[zone];
+            if (slot >= 0 && slot < list.Count && list[slot].Id == id)
+                return list[slot];
+            return list.Find(c => c.Id == id);
+        }
+
+        private static RCard RemoveAt(List<RCard>[] zones, int zone, int slot, string id)
+        {
+            if (zone == 9)
+            {
+                int ai;
+                RCard par = ParentOf(zones, slot, out ai);
+                if (par != null && par.AttachedDon.Count > 0)
+                {
+                    int take = (ai >= 0 && ai < par.AttachedDon.Count) ? ai : 0;
+                    RCard don = par.AttachedDon[take];
+                    par.AttachedDon.RemoveAt(take);
+                    return don;
+                }
+                // Encoded parent didn't match — a don is definitely attached somewhere, so
+                // scan leader then characters rather than fabricating a duplicate.
+                if (zones[8].Count > 0 && zones[8][0].AttachedDon.Count > 0)
+                {
+                    RCard don = zones[8][0].AttachedDon[0];
+                    zones[8][0].AttachedDon.RemoveAt(0);
+                    return don;
+                }
+                foreach (RCard ch in zones[2])
+                {
+                    if (ch.AttachedDon.Count > 0)
+                    {
+                        RCard don = ch.AttachedDon[0];
+                        ch.AttachedDon.RemoveAt(0);
+                        return don;
+                    }
+                }
+                return null;
+            }
+            if (zone < 0 || zone > 8)
+                return null;
+            List<RCard> list = zones[zone];
+            if (slot >= 0 && slot < list.Count && list[slot].Id == id)
+            {
+                RCard c = list[slot];
+                list.RemoveAt(slot);
+                return c;
+            }
+            int idx = list.FindIndex(c => c.Id == id);
+            if (idx >= 0)
+            {
+                RCard c = list[idx];
+                list.RemoveAt(idx);
+                return c;
+            }
+            // Hidden piles (deck/life/don deck) are seeded with placeholders — a move out of
+            // them is the moment the card's identity is revealed, so consume the placeholder
+            // at that slot instead of inventing an extra card.
+            if ((zone == 0 || zone == 3 || zone == 4) && list.Count > 0)
+            {
+                int take = (slot >= 0 && slot < list.Count) ? slot : list.Count - 1;
+                RCard c = list[take];
+                list.RemoveAt(take);
+                c.Id = id;
+                return c;
+            }
+            return null;
+        }
+
+        private static void InsertAt(List<RCard>[] zones, int zone, int slot, RCard card)
+        {
+            if (zone == 9)
+            {
+                int ai;
+                RCard par = ParentOf(zones, slot, out ai);
+                if (par == null)
+                    par = zones[8].Count > 0 ? zones[8][0] : null; // fall back to leader
+                if (par == null)
+                    return;
+                par.AttachedDon.Insert(Math.Max(0, Math.Min(ai, par.AttachedDon.Count)), card);
+                return;
+            }
+            if (zone < 0 || zone > 8)
+                return;
+            List<RCard> list = zones[zone];
+            list.Insert(Math.Max(0, Math.Min(slot, list.Count)), card);
+        }
+    }
+}

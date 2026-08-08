@@ -1,0 +1,258 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using UnityEngine;
+
+namespace LogPose.Replay
+{
+    // F7 panel. Open it from a Solo v Self game: pick an .rz1, scrub with the transport
+    // controls, and the real board re-renders each position through ReplayBridge.
+    internal static class ReplayUI
+    {
+        private static bool _visible;
+        private static Vector2 _scroll;
+        private static Rect _windowRect = new Rect(60f, 60f, 470f, 420f);
+        private static string[] _files = new string[0];
+        private static List<Rz1File> _pendingGames;
+        private static ReplaySession _session;
+        private static int _pos;
+        private static bool _revealAll;
+        private static bool _autoPlay;
+        private static float _autoSpeed = 4f; // events per second
+        private static float _autoAccum;
+        private static string _status = "";
+
+        internal static void Update()
+        {
+            if (Input.GetKeyDown(Plugin.CfgReplayKey.Value))
+            {
+                _visible = !_visible;
+                if (_visible)
+                    RefreshFileList();
+            }
+            // Quick-open: load the newest replay immediately.
+            if (Input.GetKeyDown(Plugin.CfgReplayQuickKey.Value))
+            {
+                GameplayLogicScript board = ReplayBridge.FindBoard();
+                if (board != null && ReplayBridge.IsSoloBoard(board))
+                {
+                    RefreshFileList();
+                    if (_files.Length > 0)
+                    {
+                        try
+                        {
+                            List<Rz1File> games = Rz1Parser.ParseGames(_files[0]);
+                            if (games.Count > 0)
+                            {
+                                // Quick-open jumps straight into the last game in the file
+                                // (the most recent match).
+                                OpenGame(games[games.Count - 1]);
+                                _visible = true;
+                                Plugin.Log.LogInfo("Replay: quick-opened " + _files[0] +
+                                    " (game " + games.Count + "/" + games.Count + ")");
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            Plugin.Log.LogWarning("Replay quick-open failed: " + e);
+                        }
+                    }
+                }
+            }
+            // Keyboard transport while a replay is open.
+            if (_session != null)
+            {
+                if (Input.GetKeyDown(KeyCode.RightArrow)) Seek(_pos + 1);
+                if (Input.GetKeyDown(KeyCode.LeftArrow)) Seek(_pos - 1);
+                if (Input.GetKeyDown(KeyCode.PageDown)) Seek(_session.NextTurnMark(_pos));
+                if (Input.GetKeyDown(KeyCode.PageUp)) Seek(_session.PrevTurnMark(_pos));
+                if (Input.GetKeyDown(KeyCode.End)) Seek(_session.EventCount);
+                if (Input.GetKeyDown(KeyCode.Home)) Seek(0);
+            }
+            if (_autoPlay && _session != null)
+            {
+                _autoAccum += Time.deltaTime * _autoSpeed;
+                int steps = (int)_autoAccum;
+                if (steps > 0)
+                {
+                    _autoAccum -= steps;
+                    Seek(_pos + steps);
+                    if (_pos >= _session.EventCount)
+                        _autoPlay = false;
+                }
+            }
+        }
+
+        internal static void OnGUI()
+        {
+            if (!_visible)
+                return;
+            _windowRect = GUILayout.Window(0x10905E2, _windowRect, DrawWindow, "LogPose Replay");
+        }
+
+        private static void RefreshFileList()
+        {
+            try
+            {
+                string dir = Path.Combine("CombatLogs", "AutoSaved");
+                _files = Directory.Exists(dir)
+                    ? Directory.GetFiles(dir, "*.rz1").OrderByDescending(f => File.GetLastWriteTime(f)).Take(15).ToArray()
+                    : new string[0];
+            }
+            catch
+            {
+                _files = new string[0];
+            }
+        }
+
+        private static void OpenGame(Rz1File game)
+        {
+            _session = new ReplaySession(game);
+            _pos = 0;
+            _autoPlay = false;
+            Seek(0);
+        }
+
+        private static void Seek(int target)
+        {
+            if (_session == null)
+                return;
+            _pos = Mathf.Clamp(target, 0, _session.EventCount);
+            _session.SeekTo(_pos);
+            GameplayLogicScript board = ReplayBridge.FindBoard();
+            if (board != null)
+                ReplayBridge.Apply(board, _session, _revealAll);
+        }
+
+        private static void DrawWindow(int id)
+        {
+            GameplayLogicScript board = ReplayBridge.FindBoard();
+            if (board == null)
+            {
+                GUILayout.Label("No game board active.\nStart a Solo v Self game first, then open a replay here.");
+                if (GUILayout.Button("Close"))
+                    _visible = false;
+                GUI.DragWindow();
+                return;
+            }
+            if (!ReplayBridge.IsSoloBoard(board))
+            {
+                GUILayout.Label("Replay viewing is only available in Solo v Self\n(not during a live multiplayer match).");
+                if (GUILayout.Button("Close"))
+                    _visible = false;
+                GUI.DragWindow();
+                return;
+            }
+
+            if (_session == null && _pendingGames != null)
+            {
+                GUILayout.Label("This log holds " + _pendingGames.Count + " games — pick one:");
+                for (int i = 0; i < _pendingGames.Count; i++)
+                {
+                    Rz1File g = _pendingGames[i];
+                    if (GUILayout.Button("Game " + (i + 1) + ": " + g.Player1 + " vs " + g.Player2 +
+                        "  (" + g.Events.Count + " events)"))
+                    {
+                        OpenGame(g);
+                        _pendingGames = null;
+                    }
+                }
+                if (GUILayout.Button("Back"))
+                    _pendingGames = null;
+                GUI.DragWindow();
+                return;
+            }
+
+            if (_session == null)
+            {
+                GUILayout.Label("Pick a replay (.rz1) file:");
+                _scroll = GUILayout.BeginScrollView(_scroll, GUILayout.Height(260f));
+                foreach (string f in _files)
+                {
+                    if (GUILayout.Button(Path.GetFileNameWithoutExtension(f)))
+                    {
+                        try
+                        {
+                            List<Rz1File> games = Rz1Parser.ParseGames(f);
+                            if (games.Count == 0)
+                                _status = "No replay events in that file.";
+                            else if (games.Count == 1)
+                            {
+                                OpenGame(games[0]);
+                                _status = "";
+                            }
+                            else
+                            {
+                                _pendingGames = games;
+                                _status = "";
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            _status = "Failed to load: " + e.Message;
+                        }
+                    }
+                }
+                GUILayout.EndScrollView();
+                if (GUILayout.Button("Refresh list"))
+                    RefreshFileList();
+                if (!string.IsNullOrEmpty(_status))
+                    GUILayout.Label(_status);
+                if (GUILayout.Button("Close"))
+                    _visible = false;
+                GUI.DragWindow();
+                return;
+            }
+
+            Rz1File rf = _session.File;
+            GUILayout.Label(rf.Player1 + " (" + rf.Leader1 + ")  vs  " + rf.Player2 + " (" + rf.Leader2 + ")");
+            GUILayout.Label("Accuracy: " + _session.ValidationSummary);
+            GUILayout.Label("Event " + _pos + " / " + _session.EventCount +
+                "   Turn " + _session.TurnAt(_pos) + " / " + (rf.TurnMarks.Count + 1));
+
+            int slider = (int)GUILayout.HorizontalSlider(_pos, 0f, _session.EventCount);
+            if (slider != _pos)
+                Seek(slider);
+
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("|<")) Seek(0);
+            if (GUILayout.Button("< Turn")) Seek(_session.PrevTurnMark(_pos));
+            if (GUILayout.Button("< 1")) Seek(_pos - 1);
+            if (GUILayout.Button("1 >")) Seek(_pos + 1);
+            if (GUILayout.Button("Turn >")) Seek(_session.NextTurnMark(_pos));
+            if (GUILayout.Button(">|")) Seek(_session.EventCount);
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button(_autoPlay ? "Pause" : "Play"))
+            {
+                _autoPlay = !_autoPlay;
+                _autoAccum = 0f;
+            }
+            GUILayout.Label("Speed", GUILayout.Width(45f));
+            _autoSpeed = GUILayout.HorizontalSlider(_autoSpeed, 1f, 20f, GUILayout.Width(110f));
+            GUILayout.Label(_autoSpeed.ToString("0") + "/s", GUILayout.Width(35f));
+            bool reveal = GUILayout.Toggle(_revealAll, "Reveal hidden");
+            if (reveal != _revealAll)
+            {
+                _revealAll = reveal;
+                Seek(_pos);
+            }
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("Different replay"))
+            {
+                _session = null;
+                _autoPlay = false;
+                RefreshFileList();
+            }
+            if (GUILayout.Button("Close"))
+                _visible = false;
+            GUILayout.EndHorizontal();
+            GUILayout.Label("Tip: don't interact with the board while replaying —\nrestart Solo v Self to return to normal play.");
+            GUI.DragWindow();
+        }
+    }
+}
