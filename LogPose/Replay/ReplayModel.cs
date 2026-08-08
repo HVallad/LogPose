@@ -97,6 +97,27 @@ namespace LogPose.Replay
             }
         }
 
+        // The game prints an action's log line AFTER emitting its moves, so the lines that
+        // describe an action sit at its END boundary.
+        private bool ActionSaysRevealDraw(int actionEnd)
+        {
+            if (File.HumanLines == null || File.Events.Count == 0)
+                return false;
+            int key = actionEnd < File.Events.Count
+                ? File.Events[actionEnd].GlobalIndex
+                : File.Events[File.Events.Count - 1].GlobalIndex + 1;
+            foreach (KeyValuePair<int, string> kv in File.HumanLines)
+            {
+                if (kv.Key < key)
+                    continue;
+                if (kv.Key > key)
+                    break;
+                if (kv.Value.IndexOf("Reveal and Draw", StringComparison.OrdinalIgnoreCase) >= 0)
+                    return true;
+            }
+            return false;
+        }
+
         public int NextActionMark(int eventIndex)
         {
             foreach (int m in ActionMarks)
@@ -129,6 +150,7 @@ namespace LogPose.Replay
             public int Player;       // 1 or 2
             public readonly List<string> CardIds = new List<string>();
             public readonly List<bool> ToHand = new List<bool>();
+            public readonly List<int> EventIdx = new List<int>();  // when each card's move applies
         }
         public readonly List<DeckActivity> DeckActivities = new List<DeckActivity>();
 
@@ -142,6 +164,7 @@ namespace LogPose.Replay
             if (bounds.Count == 0 || bounds[0] != 0)
                 bounds.Insert(0, 0);
             bounds.Add(File.Events.Count);
+            DeckActivity pendingRevealDraw = null;
             for (int a = 0; a + 1 < bounds.Count; a++)
             {
                 int start = bounds[a], end = bounds[a + 1];
@@ -172,6 +195,7 @@ namespace LogPose.Replay
                             {
                                 activity.CardIds.Add(ev.CardId);
                                 activity.ToHand.Add(false);
+                                activity.EventIdx.Add(i);
                             }
                             continue;
                         }
@@ -191,10 +215,12 @@ namespace LogPose.Replay
                         {
                             activity.CardIds.Add(ev.CardId);
                             activity.ToHand.Add(ev.Oz == 0 && ev.Dz == 1);
+                            activity.EventIdx.Add(i);
                         }
                         else if (ev.Oz == 0 && ev.Dz == 1)
                         {
                             activity.ToHand[existing] = true;
+                            activity.EventIdx[existing] = i;
                         }
                     }
                 }
@@ -205,15 +231,71 @@ namespace LogPose.Replay
                     parts.Add("shuffled the deck");
                     activity.CardIds.Clear();
                     activity.ToHand.Clear();
+                    activity.EventIdx.Clear();
                 }
                 else
                     parts.AddRange(reorders);
-                // A plain draw is already narrated by the game's own log line.
+                // A plain draw is already narrated by the game's own log line — but a search
+                // take ("Reveal and Draw X") looks identical in the stream, so remember it in
+                // case the next action bottoms the rest of the looked-at cards.
                 if (parts.Count == 0 || (!searchy && deckTouches <= 1))
+                {
+                    if (activity.CardIds.Count > 0 && ActionSaysRevealDraw(end))
+                    {
+                        activity.Player = player;
+                        pendingRevealDraw = activity;
+                    }
+                    else
+                    {
+                        pendingRevealDraw = null;
+                    }
                     continue;
+                }
                 activity.Player = player;
+                if (pendingRevealDraw != null && pendingRevealDraw.Player == player
+                    && pendingRevealDraw.End == activity.Start)
+                {
+                    for (int c = pendingRevealDraw.CardIds.Count - 1; c >= 0; c--)
+                    {
+                        if (activity.CardIds.Contains(pendingRevealDraw.CardIds[c]))
+                            continue;
+                        activity.CardIds.Insert(0, pendingRevealDraw.CardIds[c]);
+                        activity.ToHand.Insert(0, pendingRevealDraw.ToHand[c]);
+                        activity.EventIdx.Insert(0, pendingRevealDraw.EventIdx[c]);
+                    }
+                    activity.Start = pendingRevealDraw.Start;
+                }
+                pendingRevealDraw = null;
                 if (activity.CardIds.Count > 0)
-                    DeckActivities.Add(activity);
+                {
+                    // A search spans consecutive actions: "Reveal and Draw X" (the take)
+                    // followed by "Placing Cards on Bottom" (the rejects). Merge them so the
+                    // reveal row shows the whole looked-at set together.
+                    DeckActivity prev = DeckActivities.Count > 0 ? DeckActivities[DeckActivities.Count - 1] : null;
+                    if (prev != null && prev.Player == player && prev.End == activity.Start)
+                    {
+                        for (int c = 0; c < activity.CardIds.Count; c++)
+                        {
+                            int existing = prev.CardIds.IndexOf(activity.CardIds[c]);
+                            if (existing < 0)
+                            {
+                                prev.CardIds.Add(activity.CardIds[c]);
+                                prev.ToHand.Add(activity.ToHand[c]);
+                                prev.EventIdx.Add(activity.EventIdx[c]);
+                            }
+                            else if (activity.ToHand[c])
+                            {
+                                prev.ToHand[existing] = true;
+                                prev.EventIdx[existing] = activity.EventIdx[c];
+                            }
+                        }
+                        prev.End = activity.End;
+                    }
+                    else
+                    {
+                        DeckActivities.Add(activity);
+                    }
+                }
                 const int maxShown = 6;
                 string body = string.Join(" · ", parts.GetRange(0, Math.Min(parts.Count, maxShown)).ToArray());
                 if (parts.Count > maxShown)

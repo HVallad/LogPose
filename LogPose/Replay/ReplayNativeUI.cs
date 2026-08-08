@@ -122,7 +122,7 @@ namespace LogPose.Replay
                 foreach (ReplaySession.DeckActivity a in session.DeckActivities)
                     if (pos > a.Start && pos <= a.End)
                         current = a;
-                Show(gls, current);
+                Show(gls, current, pos);
             }
             catch (Exception e)
             {
@@ -138,7 +138,7 @@ namespace LogPose.Replay
             _cards.Clear();
         }
 
-        private static void Show(GameplayLogicScript gls, ReplaySession.DeckActivity activity)
+        private static void Show(GameplayLogicScript gls, ReplaySession.DeckActivity activity, int pos)
         {
             Clear();
             if (activity == null || gls == null || CardDatabaseScript.Instance == null)
@@ -146,10 +146,30 @@ namespace LogPose.Replay
             int count = Math.Min(activity.CardIds.Count, MaxCards);
             if (count == 0)
                 return;
-            // Player 1 = bottom (recorder): row above their hand; player 2 = top: row below theirs.
-            float y = activity.Player == 2 ? 150f : -150f;
-            float spacing = 95f;
-            float x0 = -spacing * (count - 1) / 2f;
+            // Use the game's own top-deck reveal location (where real searches display) —
+            // player 1 uses their strip, player 2's mirrors on the opposite side.
+            LocationSet loc = null;
+            try
+            {
+                int idx = activity.Player == 2 ? 1 : 0;
+                if (gls.sc_Locations != null && gls.sc_Locations.playerLocations != null
+                    && gls.sc_Locations.playerLocations.Count > idx)
+                    loc = gls.sc_Locations.playerLocations[idx].topDeck;
+            }
+            catch { }
+            float x0, y, spacing;
+            if (loc != null && (loc.x != 0f || loc.y != 0f))
+            {
+                x0 = loc.x;
+                y = loc.y;
+                spacing = count > 1 ? Mathf.Min(loc.width / (count - 1), loc.step) : loc.step;
+            }
+            else
+            {
+                y = activity.Player == 2 ? 150f : -150f;
+                spacing = 95f;
+                x0 = -spacing * (count - 1) / 2f;
+            }
             for (int i = 0; i < count; i++)
             {
                 CardDefinition def = CardDatabaseScript.Instance.FindDefinition(activity.CardIds[i]);
@@ -162,7 +182,10 @@ namespace LogPose.Replay
                 CardLogicScript cls = go.GetComponent<CardLogicScript>();
                 cls.LoadCardDefinition(def);
                 cls.SetFaceUp(true);
-                bool toHand = i < activity.ToHand.Count && activity.ToHand[i];
+                // Raise the taken card only once its to-hand move has actually applied, so
+                // stepping shows: whole set revealed -> the pick lifts -> the rest bottom.
+                bool toHand = i < activity.ToHand.Count && activity.ToHand[i]
+                    && i < activity.EventIdx.Count && pos > activity.EventIdx[i];
                 go.transform.localPosition = new Vector3(x0 + i * spacing, y + (toHand ? 30f : 0f));
                 cls.vDestination = go.transform.localPosition;
                 Canvas cv = go.GetComponent<Canvas>();
