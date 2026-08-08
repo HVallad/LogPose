@@ -176,7 +176,7 @@ namespace LogPose.Replay
             // Wide enough that a search's take and its bottoming survive a few interleaved
             // non-deck events, but with a hard span cap so clusters can't chain across turn
             // draws into one game-wide blob that gets classified as a shuffle.
-            const int MaxGap = 5;
+            const int MaxGap = 8;
             const int MaxSpan = 40;
             int i2 = 0;
             while (i2 < n)
@@ -189,11 +189,18 @@ namespace LogPose.Replay
                 }
                 int start = i2;
                 int last = i2;
+                int owner = File.Events[i2].Player;
                 int j = i2 + 1;
                 while (j < n && j - last <= MaxGap && j - start <= MaxSpan)
                 {
                     if (IsDeckEvent(File.Events[j]))
+                    {
+                        // A different player's deck event is a different action — never
+                        // mix both players' cards into one reveal row.
+                        if (File.Events[j].Player != owner)
+                            break;
                         last = j;
+                    }
                     j++;
                 }
                 BuildCluster(start, last, nameOf);
