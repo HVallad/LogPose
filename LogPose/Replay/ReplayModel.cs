@@ -173,7 +173,9 @@ namespace LogPose.Replay
             int n = File.Events.Count;
             if (n == 0)
                 return;
-            const int MaxGap = 3;
+            // Wide enough that a search's take and its bottoming survive interleaved
+            // non-deck events (attaches, rests) without splitting the cluster.
+            const int MaxGap = 8;
             int i2 = 0;
             while (i2 < n)
             {
