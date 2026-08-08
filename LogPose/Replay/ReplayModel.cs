@@ -163,20 +163,50 @@ namespace LogPose.Replay
         }
         public readonly List<DeckActivity> DeckActivities = new List<DeckActivity>();
 
+        // Deck activity is grouped by EVENT ADJACENCY, not by log lines: a search is a
+        // contiguous burst of deck-touching events (reveal, take, bottoms) in the stream, so
+        // clustering works even for recordings that have no sibling .log at all.
         public void BuildDeckActivityLines(Func<string, string> nameOf)
         {
             DeckActivityLines.Clear();
             DeckActivities.Clear();
-            if (File.Events.Count == 0)
+            int n = File.Events.Count;
+            if (n == 0)
                 return;
-            var bounds = new List<int>(ActionMarks);
-            if (bounds.Count == 0 || bounds[0] != 0)
-                bounds.Insert(0, 0);
-            bounds.Add(File.Events.Count);
-            DeckActivity pendingRevealDraw = null;
-            for (int a = 0; a + 1 < bounds.Count; a++)
+            const int MaxGap = 3;
+            int i2 = 0;
+            while (i2 < n)
             {
-                int start = bounds[a], end = bounds[a + 1];
+                // find the next deck-touching event
+                if (!IsDeckEvent(File.Events[i2]))
+                {
+                    i2++;
+                    continue;
+                }
+                int start = i2;
+                int last = i2;
+                int j = i2 + 1;
+                while (j < n && j - last <= MaxGap)
+                {
+                    if (IsDeckEvent(File.Events[j]))
+                        last = j;
+                    j++;
+                }
+                BuildCluster(start, last, nameOf);
+                i2 = last + 1;
+            }
+        }
+
+        private static bool IsDeckEvent(Rz1Event ev)
+        {
+            return (ev.Oz == 0 || ev.Dz == 0)
+                && !string.IsNullOrEmpty(ev.CardId) && ev.CardId != "?" && ev.CardId != "Don";
+        }
+
+        private void BuildCluster(int start, int last, Func<string, string> nameOf)
+        {
+            {
+                int end = last + 1;
                 var parts = new List<string>();
                 var reorders = new List<string>();
                 var activity = new DeckActivity { Start = start, End = end };
@@ -244,71 +274,16 @@ namespace LogPose.Replay
                 }
                 else
                     parts.AddRange(reorders);
-                // A plain draw is already narrated by the game's own log line — but a search
-                // take ("Reveal and Draw X") looks identical in the stream, so remember it in
-                // case the next action bottoms the rest of the looked-at cards.
+                // A lone plain draw is already narrated by the game's own log line; anything
+                // more (reveals, bottoms, mills, multi-card digs) is a search-like cluster.
                 if (parts.Count == 0 || (!searchy && deckTouches <= 1))
-                {
-                    if (activity.CardIds.Count > 0 && ActionSaysRevealDraw(end))
-                    {
-                        activity.Player = player;
-                        activity.RecomputeDisplayEnd();
-                        pendingRevealDraw = activity;
-                    }
-                    else
-                    {
-                        pendingRevealDraw = null;
-                    }
-                    continue;
-                }
+                    return;
                 activity.Player = player;
+                activity.Start = start - 1;
+                activity.End = end;
                 activity.RecomputeDisplayEnd();
-                if (pendingRevealDraw != null && pendingRevealDraw.Player == player
-                    && pendingRevealDraw.End == activity.Start)
-                {
-                    for (int c = pendingRevealDraw.CardIds.Count - 1; c >= 0; c--)
-                    {
-                        if (activity.CardIds.Contains(pendingRevealDraw.CardIds[c]))
-                            continue;
-                        activity.CardIds.Insert(0, pendingRevealDraw.CardIds[c]);
-                        activity.ToHand.Insert(0, pendingRevealDraw.ToHand[c]);
-                        activity.EventIdx.Insert(0, pendingRevealDraw.EventIdx[c]);
-                    }
-                    activity.Start = pendingRevealDraw.Start;
-                    activity.RecomputeDisplayEnd();
-                }
-                pendingRevealDraw = null;
                 if (activity.CardIds.Count > 0)
-                {
-                    // A search spans consecutive actions: "Reveal and Draw X" (the take)
-                    // followed by "Placing Cards on Bottom" (the rejects). Merge them so the
-                    // reveal row shows the whole looked-at set together.
-                    DeckActivity prev = DeckActivities.Count > 0 ? DeckActivities[DeckActivities.Count - 1] : null;
-                    if (prev != null && prev.Player == player && prev.End == activity.Start)
-                    {
-                        for (int c = 0; c < activity.CardIds.Count; c++)
-                        {
-                            int existing = prev.CardIds.IndexOf(activity.CardIds[c]);
-                            if (existing < 0)
-                            {
-                                prev.CardIds.Add(activity.CardIds[c]);
-                                prev.ToHand.Add(activity.ToHand[c]);
-                                prev.EventIdx.Add(activity.EventIdx[c]);
-                            }
-                            else if (activity.ToHand[c])
-                            {
-                                prev.ToHand[existing] = true;
-                                prev.EventIdx[existing] = activity.EventIdx[c];
-                            }
-                        }
-                        prev.End = activity.End;
-                        prev.RecomputeDisplayEnd();
-                    }
-                    else
-                    {
-                        DeckActivities.Add(activity);
-                    }
-                }
+                    DeckActivities.Add(activity);
                 const int maxShown = 6;
                 string body = string.Join(" · ", parts.GetRange(0, Math.Min(parts.Count, maxShown)).ToArray());
                 if (parts.Count > maxShown)
