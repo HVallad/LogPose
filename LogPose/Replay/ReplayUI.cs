@@ -25,6 +25,16 @@ namespace LogPose.Replay
 
         internal static void Update()
         {
+            if (_pendingOpen != null)
+            {
+                GameplayLogicScript pendingBoard = ReplayBridge.FindBoard();
+                if (pendingBoard != null && ReplayBridge.IsSoloBoard(pendingBoard) && --_pendingDelay <= 0)
+                {
+                    Rz1File game = _pendingOpen;
+                    _pendingOpen = null;
+                    OpenGame(game);
+                }
+            }
             if (Input.GetKeyDown(Plugin.CfgReplayKey.Value))
             {
                 _visible = !_visible;
@@ -174,6 +184,21 @@ namespace LogPose.Replay
         {
             _autoSpeed = Mathf.Clamp(_autoSpeed + delta, 1f, 20f);
         }
+        private static Rz1File _pendingOpen;
+        private static int _pendingDelay;
+
+        // Called by the match-history page: open this game once a solo board exists.
+        internal static void QueuePendingOpen(Rz1File game)
+        {
+            _pendingOpen = game;
+            _pendingDelay = 45;
+        }
+
+        internal static void OpenExternal(Rz1File game)
+        {
+            OpenGame(game);
+        }
+
         internal static void ExitReplay()
         {
             _session = null;

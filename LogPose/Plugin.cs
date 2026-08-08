@@ -58,6 +58,7 @@ namespace LogPose
         {
             AltArtUI.Update();
             Replay.ReplayUI.Update();
+            Replay.MatchHistoryUI.Update();
         }
 
         private void OnGUI()

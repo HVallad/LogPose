@@ -24,6 +24,11 @@ states. Config: `EmitMissingReplayLines`.
 `<stamp>.clean.log` (markup + zero-width chars stripped, UTF-8, human lines only) and
 `<stamp>.rz1` (replay lines only). Config: `WriteCleanLog`, `WriteReplayFile`, `LogFontSize`.
 
+**Match History** (`Replay/MatchHistoryUI.cs`) — a native-styled button on the main menu opens a
+browser of every recorded game: your leader left, the opponent's right, colored WIN/LOSS
+(detected from log lines, falling back to final life totals for lethal endings), date and game
+number. Clicking a match auto-starts a Solo v Self board and opens that replay.
+
 **In-game replay viewer** (`Replay/*.cs`) — start a Solo v Self game, then press **F7** (file
 picker) or **F8** (instantly open the newest replay). Scrub any recorded `.rz1` on the real
 board: slider, per-event stepping (arrow keys), turn jumps (PageUp/PageDown), autoplay, and a
