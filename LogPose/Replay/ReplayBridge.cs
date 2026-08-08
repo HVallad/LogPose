@@ -77,8 +77,12 @@ namespace LogPose.Replay
             if (gls.gsv_CurrentGame != null)
                 gls.gsv_CurrentGame.iTurnNumber = session.TurnAt(st.EventIndex);
 
+            // Park in the same inert state the game uses after a match ends — with
+            // bHasGameEnded raised the engine fully idles there. PlayerTurn_Action is NOT
+            // safe: the live solo engine keeps processing it (auto-draw, choice prompts)
+            // and fights the replayed board.
             var t = Traverse.Create(gls);
-            TrySet(t, "e_CurrentState", GameplayState.PlayerTurn_Action);
+            TrySet(t, "e_CurrentState", GameplayState.OpponentDisconnect);
             TrySet(t, "go_Attacker", null);
             TrySet(t, "go_Defender", null);
             TrySet(t, "go_PendingChoice", null);

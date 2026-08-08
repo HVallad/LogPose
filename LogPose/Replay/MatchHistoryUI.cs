@@ -31,6 +31,8 @@ namespace LogPose.Replay
 
         public static void Update()
         {
+            if (_loadingCover != null && Time.unscaledTime - _coverShownAt > 8f)
+                HideLoadingCover();
             if (Time.frameCount % 30 != 0)
                 return;
             HostJoinScript hjs = UnityEngine.Object.FindFirstObjectByType<HostJoinScript>();
@@ -339,12 +341,50 @@ namespace LogPose.Replay
             rt.sizeDelta = new Vector2(170f, 60f);
         }
 
+        private static GameObject _loadingCover;
+        private static float _coverShownAt;
+
+        // Full-screen curtain over the solo-start flash while the replay loads underneath.
+        private static void ShowLoadingCover(HostJoinScript hjs)
+        {
+            HideLoadingCover();
+            Canvas canvas = hjs.go_SoloVSelf != null ? hjs.go_SoloVSelf.GetComponentInParent<Canvas>() : null;
+            if (canvas == null)
+                return;
+            _loadingCover = new GameObject("LogPoseLoadingCover", typeof(RectTransform));
+            _loadingCover.transform.SetParent(canvas.transform, false);
+            RectTransform rt = _loadingCover.GetComponent<RectTransform>();
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.one;
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
+            Image img = _loadingCover.AddComponent<Image>();
+            img.color = new Color(0.07f, 0.05f, 0.03f, 1f);
+            MakeLabel(hjs.go_SoloVSelf, _loadingCover, "Loading replay...", Vector2.zero, new Vector2(600f, 80f), 40f);
+            TMP_Text lbl = _loadingCover.GetComponentInChildren<TMP_Text>(true);
+            if (lbl != null)
+                lbl.color = new Color(0.9f, 0.84f, 0.7f);
+            Canvas cv = _loadingCover.AddComponent<Canvas>();
+            cv.overrideSorting = true;
+            cv.sortingOrder = 5000;
+            _loadingCover.AddComponent<GraphicRaycaster>();
+            _coverShownAt = Time.unscaledTime;
+        }
+
+        public static void HideLoadingCover()
+        {
+            if (_loadingCover != null)
+                UnityEngine.Object.Destroy(_loadingCover);
+            _loadingCover = null;
+        }
+
         private static void Watch(Entry e, HostJoinScript hjs)
         {
             ClosePage();
             bool atMenu = hjs.go_SoloVSelf != null && hjs.go_SoloVSelf.activeSelf;
             if (atMenu)
             {
+                ShowLoadingCover(hjs);
                 try
                 {
                     hjs.SinglePlayer();
@@ -353,6 +393,7 @@ namespace LogPose.Replay
                 catch (Exception ex)
                 {
                     Plugin.Log.LogWarning("Match history: solo start failed: " + ex.Message);
+                    HideLoadingCover();
                     return;
                 }
                 ReplayUI.QueuePendingOpen(e.Game);

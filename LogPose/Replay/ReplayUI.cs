@@ -33,7 +33,15 @@ namespace LogPose.Replay
                     Rz1File game = _pendingOpen;
                     _pendingOpen = null;
                     OpenGame(game);
+                    MatchHistoryUI.HideLoadingCover();
                 }
+            }
+            // Leaving the board (Back to Main, Cancel Match) must tear the replay UI down too.
+            if (_session != null && Time.frameCount % 15 == 0)
+            {
+                HostJoinScript hjs = UnityEngine.Object.FindFirstObjectByType<HostJoinScript>();
+                if (hjs != null && hjs.go_SoloVSelf != null && hjs.go_SoloVSelf.activeSelf)
+                    ExitReplay();
             }
             if (Input.GetKeyDown(Plugin.CfgReplayKey.Value))
             {
@@ -172,6 +180,13 @@ namespace LogPose.Replay
         {
             if (_session == null)
                 return;
+            // Recordings without a sibling .log have no action marks — step coarsely instead
+            // of leaping to the ends.
+            if (_session.ActionMarks.Count == 0)
+            {
+                Seek(_pos + dir * 10);
+                return;
+            }
             Seek(dir > 0 ? _session.NextActionMark(_pos) : _session.PrevActionMark(_pos));
         }
         internal static void TogglePlay()

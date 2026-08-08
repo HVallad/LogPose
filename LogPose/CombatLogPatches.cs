@@ -20,6 +20,8 @@ namespace LogPose
         [HarmonyPostfix, HarmonyPatch(typeof(GameplayLogicScript), nameof(GameplayLogicScript.SaveMyLogLines))]
         private static void SaveMyLogLines_Postfix(GameplayLogicScript __instance)
         {
+            if (Replay.ReplayBridge.InReplay)
+                return; // the vanilla save is blocked during replays; match it
             try
             {
                 WriteCleanedLogs(__instance);

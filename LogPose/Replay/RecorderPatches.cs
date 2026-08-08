@@ -41,6 +41,8 @@ namespace LogPose.Replay
         private static void GameStartMultiplayer_Prefix(GameplayLogicScript __instance)
         {
             Reset(__instance);
+            // A real match is starting — replay mode is over, logs must record again.
+            ReplayBridge.InReplay = false;
         }
     }
 }
