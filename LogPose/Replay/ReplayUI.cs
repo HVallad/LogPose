@@ -142,6 +142,7 @@ namespace LogPose.Replay
             {
                 ReplayBridge.Apply(board, _session, _revealAll);
                 ReplayLogView.Sync(board, _session, _pos);
+                RevealRow.Sync(board, _session, _pos);
             }
             NativeReplayPanel.Refresh(_session, _pos, _autoPlay);
         }
@@ -177,6 +178,7 @@ namespace LogPose.Replay
             _session = null;
             _autoPlay = false;
             NativeReplayPanel.Hide();
+            RevealRow.Clear();
             _visible = false;
         }
 

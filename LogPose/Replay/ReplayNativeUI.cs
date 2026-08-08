@@ -106,6 +106,76 @@ namespace LogPose.Replay
         }
     }
 
+    // Renders the cards a search/mill/scry touched as a face-up reveal row — like the game's
+    // own search display — below the enemy's side or above yours, while the replay position
+    // sits inside that action. The card taken to hand is raised slightly.
+    internal static class RevealRow
+    {
+        private static readonly List<GameObject> _cards = new List<GameObject>();
+        private const int MaxCards = 8;
+
+        public static void Sync(GameplayLogicScript gls, ReplaySession session, int pos)
+        {
+            try
+            {
+                ReplaySession.DeckActivity current = null;
+                foreach (ReplaySession.DeckActivity a in session.DeckActivities)
+                    if (pos > a.Start && pos <= a.End)
+                        current = a;
+                Show(gls, current);
+            }
+            catch (Exception e)
+            {
+                Plugin.Log.LogWarning("Reveal row failed: " + e.Message);
+            }
+        }
+
+        public static void Clear()
+        {
+            foreach (GameObject go in _cards)
+                if (go != null)
+                    UnityEngine.Object.Destroy(go);
+            _cards.Clear();
+        }
+
+        private static void Show(GameplayLogicScript gls, ReplaySession.DeckActivity activity)
+        {
+            Clear();
+            if (activity == null || gls == null || CardDatabaseScript.Instance == null)
+                return;
+            int count = Math.Min(activity.CardIds.Count, MaxCards);
+            if (count == 0)
+                return;
+            // Player 1 = bottom (recorder): row above their hand; player 2 = top: row below theirs.
+            float y = activity.Player == 2 ? 150f : -150f;
+            float spacing = 95f;
+            float x0 = -spacing * (count - 1) / 2f;
+            for (int i = 0; i < count; i++)
+            {
+                CardDefinition def = CardDatabaseScript.Instance.FindDefinition(activity.CardIds[i]);
+                if (def == null)
+                    continue;
+                GameObject go = UnityEngine.Object.Instantiate(gls.prefab_CardTemplate);
+                go.name = "LogPoseReveal_" + activity.CardIds[i];
+                go.transform.SetParent(gls.cn_Canvas.transform, false);
+                go.transform.localScale = new Vector3(0.9f, 0.9f);
+                CardLogicScript cls = go.GetComponent<CardLogicScript>();
+                cls.LoadCardDefinition(def);
+                cls.SetFaceUp(true);
+                bool toHand = i < activity.ToHand.Count && activity.ToHand[i];
+                go.transform.localPosition = new Vector3(x0 + i * spacing, y + (toHand ? 30f : 0f));
+                cls.vDestination = go.transform.localPosition;
+                Canvas cv = go.GetComponent<Canvas>();
+                if (cv != null)
+                {
+                    cv.overrideSorting = true;
+                    cv.sortingOrder = 700 + i;
+                }
+                _cards.Add(go);
+            }
+        }
+    }
+
     // Transport controls built from the game's own button prefab and font, docked under the
     // right-hand button stack so the viewer reads as a built-in feature.
     internal static class NativeReplayPanel

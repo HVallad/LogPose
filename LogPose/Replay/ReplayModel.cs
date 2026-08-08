@@ -121,9 +121,21 @@ namespace LogPose.Replay
         // records real card ids for these moves — including the opponent's searches.
         public readonly List<KeyValuePair<int, string>> DeckActivityLines = new List<KeyValuePair<int, string>>();
 
+        // Same data in visual form: the cards each deck-digging action touched, with the
+        // action's event range, so the viewer can display them like the game's own reveal row.
+        public class DeckActivity
+        {
+            public int Start, End;   // event-index range (start exclusive of prior action)
+            public int Player;       // 1 or 2
+            public readonly List<string> CardIds = new List<string>();
+            public readonly List<bool> ToHand = new List<bool>();
+        }
+        public readonly List<DeckActivity> DeckActivities = new List<DeckActivity>();
+
         public void BuildDeckActivityLines(Func<string, string> nameOf)
         {
             DeckActivityLines.Clear();
+            DeckActivities.Clear();
             if (File.Events.Count == 0)
                 return;
             var bounds = new List<int>(ActionMarks);
@@ -135,6 +147,7 @@ namespace LogPose.Replay
                 int start = bounds[a], end = bounds[a + 1];
                 var parts = new List<string>();
                 var reorders = new List<string>();
+                var activity = new DeckActivity { Start = start, End = end };
                 int deckTouches = 0;
                 bool searchy = false;
                 int player = 0;
@@ -155,6 +168,11 @@ namespace LogPose.Replay
                         else
                         {
                             reorders.Add(nameOf(ev.CardId) + (ev.Ds == 0 ? " to deck bottom" : " reordered"));
+                            if (!activity.CardIds.Contains(ev.CardId))
+                            {
+                                activity.CardIds.Add(ev.CardId);
+                                activity.ToHand.Add(false);
+                            }
                             continue;
                         }
                     }
@@ -166,17 +184,36 @@ namespace LogPose.Replay
                     else if (ev.Dz == 0) { what = "to deck"; searchy = true; }
                     else if (ev.Oz == 0) what = "out of deck";
                     if (what != null)
+                    {
                         parts.Add(nameOf(ev.CardId) + " " + what);
+                        int existing = activity.CardIds.IndexOf(ev.CardId);
+                        if (existing < 0)
+                        {
+                            activity.CardIds.Add(ev.CardId);
+                            activity.ToHand.Add(ev.Oz == 0 && ev.Dz == 1);
+                        }
+                        else if (ev.Oz == 0 && ev.Dz == 1)
+                        {
+                            activity.ToHand[existing] = true;
+                        }
+                    }
                 }
                 // Many reorders in one action = a shuffle, not a search — don't spell out
-                // the whole deck.
+                // the whole deck (or show a reveal row for it).
                 if (reorders.Count >= 8)
+                {
                     parts.Add("shuffled the deck");
+                    activity.CardIds.Clear();
+                    activity.ToHand.Clear();
+                }
                 else
                     parts.AddRange(reorders);
                 // A plain draw is already narrated by the game's own log line.
                 if (parts.Count == 0 || (!searchy && deckTouches <= 1))
                     continue;
+                activity.Player = player;
+                if (activity.CardIds.Count > 0)
+                    DeckActivities.Add(activity);
                 const int maxShown = 6;
                 string body = string.Join(" · ", parts.GetRange(0, Math.Min(parts.Count, maxShown)).ToArray());
                 if (parts.Count > maxShown)
