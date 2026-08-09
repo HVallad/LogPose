@@ -114,7 +114,11 @@ The csproj references game assemblies from `D:\OPSIM\OPTCGSim_Data\Managed` and 
 
 ## Fetching more alt arts
 
-OP01 is already populated (110 parallels). For more sets:
+The easy way: open the Alt Art Selector on a deck and click **Fetch Arts** — the mod probes
+the official card sites for every card in that deck (EN first, JP fallback), generates
+thumbnails, and the rows fill in live. Takes ~20 seconds for a typical deck.
+
+For whole sets at once, use the script:
 
 ```
 powershell -ExecutionPolicy Bypass -File tools\Fetch-AltArts.ps1 -Sets OP02,OP03

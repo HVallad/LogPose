@@ -16,6 +16,7 @@ namespace LogPose
         private static GameObject _menuButton;
         private static GameObject _page;
         private static GameObject _hoverPreview;
+        private static TMP_Text _fetchLabel;
         private static int _pageIdx;
         private const int RowsPerPage = 5;
         private const int MaxArtsPerRow = 10;
@@ -27,14 +28,26 @@ namespace LogPose
 
         internal static void Update()
         {
+            // Thumbnails and fetch completion must process even if the user left the editor
+            // while a fetch was still streaming in.
+            AltArtFetcher.MainThreadPump();
+            bool fetchDone = AltArtFetcher.ConsumeFinished();
+            if (fetchDone)
+                AltArtManager.InvalidateVariantCache();
+
             DeckEditorScript editor = UnityEngine.Object.FindFirstObjectByType<DeckEditorScript>();
             if (editor == null)
             {
                 _page = null;        // scene unloaded; clones died with it
                 _menuButton = null;
                 _hoverPreview = null;
+                _fetchLabel = null;
                 return;
             }
+            if (fetchDone && _page != null)
+                Rebuild();
+            if (_page != null && AltArtFetcher.Running && _fetchLabel != null)
+                _fetchLabel.text = AltArtFetcher.Status;
             if (_menuButton == null && Time.frameCount % 30 == 0)
                 CreateMenuButton(editor);
             if (Input.GetKeyDown(Plugin.CfgAltArtKey.Value))
@@ -80,6 +93,9 @@ namespace LogPose
                     return;
                 _menuButton = UnityEngine.Object.Instantiate(donor, donor.transform.parent);
                 _menuButton.name = "LogPoseAltArts";
+                // Right after the donor in the hierarchy, so the enlarged card hover preview
+                // (drawn later on the canvas) stays on top of it like it does for the donor.
+                _menuButton.transform.SetSiblingIndex(donor.transform.GetSiblingIndex() + 1);
                 _menuButton.SetActive(true);
                 Button b = _menuButton.GetComponent<Button>();
                 if (b == null)
@@ -168,7 +184,7 @@ namespace LogPose
             List<string> cards = DeckCardsWithVariants(editor);
             if (cards.Count == 0)
                 MakeLabel(donor, panel,
-                    "No variant art found for the cards in this deck.\n\nRun tools\\Fetch-AltArts.ps1 to download official parallel arts.",
+                    "No variant art found for the cards in this deck.\n\nClick Fetch Arts to download the official parallel arts for this deck.",
                     new Vector2(0f, 0f), new Vector2(1100f, 220f), 28f);
 
             int start = _pageIdx * RowsPerPage;
@@ -186,6 +202,10 @@ namespace LogPose
                 if ((_pageIdx + 1) * RowsPerPage < cards.Count) { _pageIdx++; Rebuild(); }
             });
             MakeSmallButton(donor, panel, "Close", new Vector2(700f, 450f), ClosePage);
+            GameObject fetchBtn = MakeSmallButton(donor, panel,
+                AltArtFetcher.Running ? AltArtFetcher.Status : "Fetch Arts",
+                new Vector2(-700f, 450f), StartFetchForDeck);
+            _fetchLabel = fetchBtn.GetComponentInChildren<TMP_Text>(true);
 
             // Enlarged art shown while the pointer rests on a thumbnail; never a raycast
             // target so it can't steal the hover it's illustrating.
@@ -305,7 +325,28 @@ namespace LogPose
             rt.sizeDelta = size;
         }
 
-        private static void MakeSmallButton(GameObject donor, GameObject parent, string label, Vector2 pos, Action onClick)
+        // Probe the official card sites for every unique card in the current deck — the
+        // in-game, per-deck version of tools\Fetch-AltArts.ps1.
+        private static void StartFetchForDeck()
+        {
+            if (AltArtFetcher.Running)
+                return;
+            DeckEditorScript editor = UnityEngine.Object.FindFirstObjectByType<DeckEditorScript>();
+            if (editor == null || editor.lgo_CurrentDeck == null)
+                return;
+            var ids = new List<string>();
+            foreach (GameObject go in editor.lgo_CurrentDeck)
+            {
+                if (go == null)
+                    continue;
+                CardLogicScript cls = go.GetComponent<CardLogicScript>();
+                if (cls != null && cls.myCard.cardDef != null && !ids.Contains(cls.myCard.cardDef.cardID))
+                    ids.Add(cls.myCard.cardDef.cardID);
+            }
+            AltArtFetcher.StartFetch(ids);
+        }
+
+        private static GameObject MakeSmallButton(GameObject donor, GameObject parent, string label, Vector2 pos, Action onClick)
         {
             GameObject btn = UnityEngine.Object.Instantiate(donor, parent.transform);
             btn.name = "LogPoseBtn_" + label;
@@ -326,6 +367,7 @@ namespace LogPose
             rt.pivot = new Vector2(0.5f, 0.5f);
             rt.anchoredPosition = pos;
             rt.sizeDelta = new Vector2(190f, 58f);
+            return btn;
         }
     }
 }
