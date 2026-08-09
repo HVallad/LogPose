@@ -173,11 +173,15 @@ namespace LogPose.Replay
             int n = File.Events.Count;
             if (n == 0)
                 return;
-            // Wide enough that a search's take and its bottoming survive a few interleaved
-            // non-deck events, but with a hard span cap so clusters can't chain across turn
-            // draws into one game-wide blob that gets classified as a shuffle.
-            const int MaxGap = 5;
-            const int MaxSpan = 40;
+            // Every observed search (take + bottom-decks) is emitted as a strictly contiguous
+            // run of one player's deck events, so the gap only needs to absorb the odd stray
+            // interleaved event. Crucially a cluster never crosses players: the opponent's
+            // turn-start draw lands 1-2 events after a search's last bottom, and a wider
+            // player-blind gap used to glue it on as a phantom extra card.
+            // Span must hold a full shuffle (~50 reorders) in ONE cluster so the >=8-reorder
+            // collapse absorbs it; a lower cap leaves a sub-8 tail that renders as a bogus row.
+            const int MaxGap = 2;
+            const int MaxSpan = 60;
             int i2 = 0;
             while (i2 < n)
             {
@@ -187,13 +191,18 @@ namespace LogPose.Replay
                     i2++;
                     continue;
                 }
+                int player = File.Events[i2].Player;
                 int start = i2;
                 int last = i2;
                 int j = i2 + 1;
                 while (j < n && j - last <= MaxGap && j - start <= MaxSpan)
                 {
                     if (IsDeckEvent(File.Events[j]))
+                    {
+                        if (File.Events[j].Player != player)
+                            break;
                         last = j;
+                    }
                     j++;
                 }
                 BuildCluster(start, last, nameOf);
@@ -234,12 +243,11 @@ namespace LogPose.Replay
                         else
                         {
                             reorders.Add(nameOf(ev.CardId) + (ev.Ds == 0 ? " to deck bottom" : " reordered"));
-                            if (!activity.CardIds.Contains(ev.CardId))
-                            {
-                                activity.CardIds.Add(ev.CardId);
-                                activity.ToHand.Add(false);
-                                activity.EventIdx.Add(i);
-                            }
+                            // Duplicate ids are distinct physical copies (a search often
+                            // bottoms two of the same card) — each gets its own row slot.
+                            activity.CardIds.Add(ev.CardId);
+                            activity.ToHand.Add(false);
+                            activity.EventIdx.Add(i);
                             continue;
                         }
                     }
@@ -253,17 +261,27 @@ namespace LogPose.Replay
                     if (what != null)
                     {
                         parts.Add(nameOf(ev.CardId) + " " + what);
-                        int existing = activity.CardIds.IndexOf(ev.CardId);
-                        if (existing < 0)
+                        // A scry that reordered a card and then drew it should upgrade that
+                        // card's existing slot, not add a second copy; otherwise every event
+                        // is its own physical card and gets its own slot (duplicates included).
+                        int existing = -1;
+                        if (ev.Oz == 0 && ev.Dz == 1)
+                            for (int k = 0; k < activity.CardIds.Count; k++)
+                                if (!activity.ToHand[k] && activity.CardIds[k] == ev.CardId)
+                                {
+                                    existing = k;
+                                    break;
+                                }
+                        if (existing >= 0)
+                        {
+                            activity.ToHand[existing] = true;
+                            activity.EventIdx[existing] = i;
+                        }
+                        else
                         {
                             activity.CardIds.Add(ev.CardId);
                             activity.ToHand.Add(ev.Oz == 0 && ev.Dz == 1);
                             activity.EventIdx.Add(i);
-                        }
-                        else if (ev.Oz == 0 && ev.Dz == 1)
-                        {
-                            activity.ToHand[existing] = true;
-                            activity.EventIdx[existing] = i;
                         }
                     }
                 }
