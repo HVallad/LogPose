@@ -41,8 +41,10 @@ namespace LogPose
             AltArtManager.LoadSidecar(sFile);
         }
 
-        // Japanese-text parallels stay on the board, but the enlarged hover preview swaps to
-        // the base English card — the readable rules text is always one hover away.
+        // Hold Shift while hovering a card and the enlarged preview shows the BASE art
+        // instead of the selected variant — the original English card (with readable rules
+        // text) is always one key away, without giving up the parallel art anywhere else.
+        // ShowFocusedCard runs every frame, so releasing Shift restores the variant instantly.
         [HarmonyPostfix, HarmonyPatch(typeof(GameplayLogicScript), "ShowFocusedCard")]
         private static void GameplayPreview_Postfix(GameplayLogicScript __instance)
         {
@@ -57,7 +59,7 @@ namespace LogPose
                 if (cls != null && cls.myCard.bFaceUp && cls.myCard.cardDef != null)
                     cardID = cls.myCard.cardDef.cardID;
             }
-            SwapPreviewToEnglish(__instance.img_CardPreview, cardID);
+            SwapPreviewToBase(__instance.img_CardPreview, cardID);
         }
 
         [HarmonyPostfix, HarmonyPatch(typeof(DeckEditorScript), "ShowFocusedCard")]
@@ -68,18 +70,19 @@ namespace LogPose
             CardLogicScript cls = __instance.go_FocusedObject.GetComponent<CardLogicScript>();
             if (cls == null || cls.myCard.cardDef == null)
                 return;
-            SwapPreviewToEnglish(__instance.img_CardPreview, cls.myCard.cardDef.cardID);
+            SwapPreviewToBase(__instance.img_CardPreview, cls.myCard.cardDef.cardID);
         }
 
-        private static void SwapPreviewToEnglish(UnityEngine.UI.Image img, string cardID)
+        private static void SwapPreviewToBase(UnityEngine.UI.Image img, string cardID)
         {
             try
             {
-                if (!Plugin.CfgEnglishPreviewForJpArts.Value)
+                if (!UnityEngine.Input.GetKey(UnityEngine.KeyCode.LeftShift)
+                    && !UnityEngine.Input.GetKey(UnityEngine.KeyCode.RightShift))
                     return;
                 if (img == null || img.sprite == null || string.IsNullOrEmpty(cardID))
                     return;
-                if (!AltArtManager.IsActiveVariantJapanese(cardID))
+                if (!AltArtManager.HasActiveVariant(cardID))
                     return;
                 AltArtManager.BypassVariant = true;
                 try

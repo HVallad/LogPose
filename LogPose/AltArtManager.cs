@@ -23,43 +23,13 @@ namespace LogPose
 
         private static readonly Dictionary<string, Sprite> SpriteCache = new Dictionary<string, Sprite>();
         private static readonly Dictionary<string, List<string>> VariantCache = new Dictionary<string, List<string>>();
-        private static HashSet<string> _jpVariants;
 
-        // Cards\jp-variants.txt lists variant names (e.g. "OP13-040_p2") whose image came from
-        // the Japanese card site — same art, Japanese rules text. Maintained by
-        // tools\Fetch-AltArts.ps1 (new downloads and the -TagJapanese retro pass).
-        private static HashSet<string> JpVariants()
-        {
-            if (_jpVariants != null)
-                return _jpVariants;
-            _jpVariants = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            try
-            {
-                string path = Path.Combine(Application.streamingAssetsPath, Path.Combine("Cards", "jp-variants.txt"));
-                if (File.Exists(path))
-                    foreach (string line in File.ReadAllLines(path))
-                    {
-                        string t = line.Trim();
-                        if (t.Length > 0 && !t.StartsWith("#", StringComparison.Ordinal))
-                            _jpVariants.Add(t);
-                    }
-                Plugin.Log.LogInfo("AltArt: " + _jpVariants.Count + " variants tagged as Japanese-text.");
-            }
-            catch { }
-            return _jpVariants;
-        }
-
-        internal static bool IsJapaneseVariant(string cardID, string suffix)
-        {
-            return !string.IsNullOrEmpty(suffix) && JpVariants().Contains(cardID + suffix);
-        }
-
-        internal static bool IsActiveVariantJapanese(string cardID)
+        internal static bool HasActiveVariant(string cardID)
         {
             string suffix;
             return !string.IsNullOrEmpty(cardID)
                 && ActiveMap.TryGetValue(cardID, out suffix)
-                && IsJapaneseVariant(cardID, suffix);
+                && !string.IsNullOrEmpty(suffix);
         }
 
         internal static string SidecarPathFor(string deckFile)

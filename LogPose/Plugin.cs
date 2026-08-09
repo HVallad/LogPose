@@ -24,7 +24,6 @@ namespace LogPose
         internal static ConfigEntry<KeyCode> CfgReplayKey;
         internal static ConfigEntry<KeyCode> CfgReplayQuickKey;
         internal static ConfigEntry<bool> CfgCheckForUpdates;
-        internal static ConfigEntry<bool> CfgEnglishPreviewForJpArts;
 
         private void Awake()
         {
@@ -49,8 +48,6 @@ namespace LogPose
 
             CfgCheckForUpdates = Config.Bind("General", "CheckForUpdates", true,
                 "Check GitHub for a newer LogPose release on startup and show an update button on the main menu when one exists.");
-            CfgEnglishPreviewForJpArts = Config.Bind("AltArt", "EnglishPreviewForJapaneseArts", true,
-                "When the selected alt art is a Japanese-text parallel, the enlarged hover preview shows the base English card so the rules text stays readable (needs Cards\\jp-variants.txt from Fetch-AltArts.ps1).");
 
             var harmony = new Harmony(GUID);
             harmony.PatchAll(typeof(ReplaySyncPatches));

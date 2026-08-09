@@ -64,11 +64,10 @@ as `Cards\<SET>\<ID>_p1.png` / `_alt1.png` (+ optional `_p1_small.jpg` thumbnail
 
 Note: art is client-side — opponents see their own local art, not your selection.
 
-For Japanese-text parallels (fetched via the JP fallback), the enlarged hover preview shows
-the **base English card** instead, so the rules text stays readable while the board keeps the
-JP art. This uses `Cards\jp-variants.txt`, maintained by the fetch script (new downloads tag
-themselves; `-TagJapanese -All` back-fills tags for variants downloaded before this existed).
-Disable via `AltArt.EnglishPreviewForJapaneseArts` in the config.
+**Hold Shift while hovering** a card with a selected variant and the enlarged preview shows
+the base (original English) card instead — handy when a parallel has Japanese text and you
+want to read what it does. Release Shift and the variant art is back. Works in gameplay, the
+deck editor, and replays.
 
 ## Install
 
