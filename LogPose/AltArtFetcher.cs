@@ -17,12 +17,20 @@ namespace LogPose
     {
         private const string EnBase = "https://en.onepiece-cardgame.com/images/cardlist/card/";
         private const string JpBase = "https://www.onepiece-cardgame.com/images/cardlist/card/";
+        private const string ManifestUrl = "https://raw.githubusercontent.com/HVallad/LogPose/main/variant-manifest.txt";
         private const int MaxVariants = 9;
+        private const int Workers = 4;
 
         internal static volatile bool Running;
         internal static volatile string Status = "";
         private static volatile bool _finished;
         private static int _added;
+
+        // cardID -> (suffix, jp-only) for every variant known to exist, published in the
+        // repo. With it, fetching requests exactly the files that exist instead of probing
+        // slot by slot — most of the old fetch time was 404s for cards with no parallels.
+        private static Dictionary<string, List<KeyValuePair<string, bool>>> _manifest;
+        private static bool _manifestTried;
 
         private static readonly ConcurrentQueue<KeyValuePair<string, string>> ThumbJobs =
             new ConcurrentQueue<KeyValuePair<string, string>>();
@@ -79,60 +87,161 @@ namespace LogPose
 
         private static void Work(List<Job> jobs, string manifest)
         {
+            int start = Environment.TickCount;
+            ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12;
+            LoadManifest();
+
+            int next = -1;
+            int done = 0;
+            int active = Math.Min(Workers, jobs.Count);
+            for (int w = 0; w < Math.Min(Workers, jobs.Count); w++)
+            {
+                ThreadPool.QueueUserWorkItem(_ =>
+                {
+                    while (true)
+                    {
+                        int i = Interlocked.Increment(ref next);
+                        if (i >= jobs.Count)
+                            break;
+                        try
+                        {
+                            ProcessCard(jobs[i], manifest);
+                        }
+                        catch (Exception e)
+                        {
+                            Plugin.Log.LogWarning("Alt art fetch failed for " + jobs[i].CardId + ": " + e.Message);
+                        }
+                        Status = "Fetching " + Interlocked.Increment(ref done) + "/" + jobs.Count;
+                    }
+                    if (Interlocked.Decrement(ref active) == 0)
+                    {
+                        Plugin.Log.LogInfo("Alt art fetch finished: " + _added + " new art(s) in "
+                            + ((Environment.TickCount - start) / 1000f).ToString("0.0") + "s.");
+                        Status = "";
+                        Running = false;
+                        _finished = true;
+                    }
+                });
+            }
+        }
+
+        private static void LoadManifest()
+        {
+            if (_manifestTried)
+                return;
+            _manifestTried = true;
             try
             {
-                ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12;
-                for (int i = 0; i < jobs.Count; i++)
+                HttpWebRequest req = (HttpWebRequest)WebRequest.Create(ManifestUrl);
+                req.UserAgent = "LogPose/" + Plugin.VERSION;
+                req.Timeout = 10000;
+                var dict = new Dictionary<string, List<KeyValuePair<string, bool>>>(StringComparer.OrdinalIgnoreCase);
+                int count = 0;
+                using (WebResponse resp = req.GetResponse())
+                using (StreamReader r = new StreamReader(resp.GetResponseStream()))
                 {
-                    Job job = jobs[i];
-                    Status = "Fetching " + (i + 1) + "/" + jobs.Count;
-                    int missStreak = 0;
-                    for (int n = 1; n <= MaxVariants; n++)
+                    string line;
+                    while ((line = r.ReadLine()) != null)
                     {
-                        string name = job.CardId + "_p" + n;
-                        string png = Path.Combine(job.Folder, name + ".png");
-                        string thumb = Path.Combine(job.Folder, name + "_small.jpg");
-                        if (File.Exists(png))
-                        {
-                            missStreak = 0;
-                            if (!File.Exists(thumb))
-                                ThumbJobs.Enqueue(new KeyValuePair<string, string>(png, thumb));
+                        line = line.Trim();
+                        if (line.Length == 0 || line.StartsWith("#", StringComparison.Ordinal))
                             continue;
-                        }
-                        byte[] data = TryDownload(EnBase + name + ".png");
-                        bool jp = false;
-                        if (data == null && job.JpAllowed)
-                        {
-                            data = TryDownload(JpBase + name + ".png");
-                            jp = data != null;
-                        }
-                        if (data == null)
-                        {
-                            missStreak++;
-                            if (missStreak >= 2)
-                                break;
+                        string[] parts = line.Split(' ');
+                        string name = parts[0];
+                        bool jp = parts.Length > 1 && string.Equals(parts[1], "jp", StringComparison.OrdinalIgnoreCase);
+                        int idx = name.LastIndexOf("_p", StringComparison.OrdinalIgnoreCase);
+                        if (idx <= 0)
                             continue;
-                        }
-                        missStreak = 0;
-                        File.WriteAllBytes(png, data);
-                        ThumbJobs.Enqueue(new KeyValuePair<string, string>(png, thumb));
-                        if (jp)
-                            TagJapanese(manifest, name);
-                        Interlocked.Increment(ref _added);
-                        Thread.Sleep(40);   // stay polite to the official site
+                        string cardId = name.Substring(0, idx);
+                        string suffix = name.Substring(idx);
+                        List<KeyValuePair<string, bool>> list;
+                        if (!dict.TryGetValue(cardId, out list))
+                            dict[cardId] = list = new List<KeyValuePair<string, bool>>();
+                        list.Add(new KeyValuePair<string, bool>(suffix, jp));
+                        count++;
                     }
                 }
-                Plugin.Log.LogInfo("Alt art fetch finished: " + _added + " new art(s).");
+                _manifest = dict;
+                Plugin.Log.LogInfo("AltArt: variant manifest loaded (" + count + " entries).");
             }
             catch (Exception e)
             {
-                Plugin.Log.LogWarning("Alt art fetch failed: " + e.Message);
+                _manifest = null;   // offline or repo unreachable — probing still works
+                Plugin.Log.LogDebug("AltArt: manifest unavailable, probing instead: " + e.Message);
             }
-            finally
+        }
+
+        private static void ProcessCard(Job job, string manifest)
+        {
+            List<KeyValuePair<string, bool>> known;
+            if (_manifest != null && _manifest.TryGetValue(job.CardId, out known))
             {
-                Status = "";
-                Running = false;
-                _finished = true;
+                // Known inventory: request exactly the files that exist, from the right site.
+                foreach (KeyValuePair<string, bool> kv in known)
+                {
+                    string name = job.CardId + kv.Key;
+                    string png = Path.Combine(job.Folder, name + ".png");
+                    string thumb = Path.Combine(job.Folder, name + "_small.jpg");
+                    if (File.Exists(png))
+                    {
+                        if (!File.Exists(thumb))
+                            ThumbJobs.Enqueue(new KeyValuePair<string, string>(png, thumb));
+                        continue;
+                    }
+                    bool jp = kv.Value;
+                    byte[] data = TryDownload((jp ? JpBase : EnBase) + name + ".png");
+                    if (data == null && !jp && job.JpAllowed)
+                    {
+                        data = TryDownload(JpBase + name + ".png");
+                        jp = data != null;
+                    }
+                    if (data == null)
+                        continue;
+                    File.WriteAllBytes(png, data);
+                    ThumbJobs.Enqueue(new KeyValuePair<string, string>(png, thumb));
+                    if (jp)
+                        TagJapanese(manifest, name);
+                    Interlocked.Increment(ref _added);
+                }
+                return;
+            }
+
+            // Not in the manifest (newer card, or the manifest didn't load): probe slot by
+            // slot with the classic 2-miss cutoff.
+            int missStreak = 0;
+            for (int n = 1; n <= MaxVariants; n++)
+            {
+                string name = job.CardId + "_p" + n;
+                string png = Path.Combine(job.Folder, name + ".png");
+                string thumb = Path.Combine(job.Folder, name + "_small.jpg");
+                if (File.Exists(png))
+                {
+                    missStreak = 0;
+                    if (!File.Exists(thumb))
+                        ThumbJobs.Enqueue(new KeyValuePair<string, string>(png, thumb));
+                    continue;
+                }
+                byte[] data = TryDownload(EnBase + name + ".png");
+                bool jp = false;
+                if (data == null && job.JpAllowed)
+                {
+                    data = TryDownload(JpBase + name + ".png");
+                    jp = data != null;
+                }
+                if (data == null)
+                {
+                    missStreak++;
+                    if (missStreak >= 2)
+                        break;
+                    continue;
+                }
+                missStreak = 0;
+                File.WriteAllBytes(png, data);
+                ThumbJobs.Enqueue(new KeyValuePair<string, string>(png, thumb));
+                if (jp)
+                    TagJapanese(manifest, name);
+                Interlocked.Increment(ref _added);
+                Thread.Sleep(40);   // probing stays polite
             }
         }
 
