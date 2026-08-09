@@ -66,8 +66,24 @@ Note: art is client-side — opponents see their own local art, not your selecti
 
 ## Install
 
-Grab `LogPose.dll` from the [latest release](https://github.com/HVallad/LogPose/releases) and
-drop it into `<game>\BepInEx\plugins\`. Requires [BepInEx 5.4.23+ win-x64](https://github.com/BepInEx/BepInEx/releases)
+One command in PowerShell — installs BepInEx if it's missing and the latest LogPose release
+(auto-detects the game folder, or asks; re-run it anytime to update):
+
+```
+irm https://raw.githubusercontent.com/HVallad/LogPose/main/install.ps1 | iex
+```
+
+From a downloaded copy of [install.ps1](install.ps1) you can also pass the folder explicitly,
+or uninstall:
+
+```
+powershell -ExecutionPolicy Bypass -File install.ps1 -GamePath "C:\path\to\OPTCGSim"
+powershell -ExecutionPolicy Bypass -File install.ps1 -Uninstall
+```
+
+Manual alternative: grab `LogPose.dll` from the
+[latest release](https://github.com/HVallad/LogPose/releases) and drop it into
+`<game>\BepInEx\plugins\`, with [BepInEx 5.4.23+ win-x64](https://github.com/BepInEx/BepInEx/releases)
 extracted into the game folder first (`winhttp.dll` + `BepInEx\` next to `OPTCGSim.exe`).
 Config appears at `BepInEx\config\com.hunter.logpose.cfg` after first run.
 
