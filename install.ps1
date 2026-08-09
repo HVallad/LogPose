@@ -25,6 +25,10 @@ $ProgressPreference = 'SilentlyContinue'
 function Write-Step([string]$msg) { Write-Host "==> $msg" -ForegroundColor Cyan }
 
 # --- Locate the game -------------------------------------------------------
+# Tolerate a path to the exe itself ("...\OPTCGSim.exe") — people paste that.
+if ($GamePath -and $GamePath -match '\.exe$') {
+    $GamePath = Split-Path $GamePath -Parent
+}
 if (-not $GamePath) {
     $candidates = @()
     if ($PSScriptRoot) { $candidates += $PSScriptRoot }   # empty when piped through iex
