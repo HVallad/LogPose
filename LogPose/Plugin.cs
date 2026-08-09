@@ -1,4 +1,4 @@
-using BepInEx;
+﻿using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
@@ -23,6 +23,7 @@ namespace LogPose
         internal static ConfigEntry<KeyCode> CfgAltArtKey;
         internal static ConfigEntry<KeyCode> CfgReplayKey;
         internal static ConfigEntry<KeyCode> CfgReplayQuickKey;
+        internal static ConfigEntry<bool> CfgCheckForUpdates;
 
         private void Awake()
         {
@@ -45,12 +46,16 @@ namespace LogPose
                 "Key that immediately opens the newest .rz1 replay while in a Solo v Self game. " +
                 "With a replay open: Left/Right arrows step events, PageUp/PageDown jump turns, Home/End jump to start/end.");
 
+            CfgCheckForUpdates = Config.Bind("General", "CheckForUpdates", true,
+                "Check GitHub for a newer LogPose release on startup and show an update button on the main menu when one exists.");
+
             var harmony = new Harmony(GUID);
             harmony.PatchAll(typeof(ReplaySyncPatches));
             harmony.PatchAll(typeof(CombatLogPatches));
             harmony.PatchAll(typeof(AltArtPatches));
             harmony.PatchAll(typeof(Replay.RecorderPatches));
 
+            UpdateCheck.Init();
             Log.LogInfo(NAME + " " + VERSION + " loaded.");
         }
 
@@ -59,6 +64,7 @@ namespace LogPose
             AltArtUI.Update();
             Replay.ReplayUI.Update();
             Replay.MatchHistoryUI.Update();
+            UpdateCheck.Update();
         }
 
         private void OnGUI()
