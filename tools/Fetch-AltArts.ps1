@@ -29,6 +29,7 @@ param(
     [string[]]$Sets = @("OP01"),
     [switch]$All,
     [switch]$IncludeJapanese,
+    [switch]$TagJapanese,
     [string]$GameDir = "D:\OPSIM",
     [int]$MaxVariantsPerCard = 9,
     [int]$DelayMs = 150
@@ -36,9 +37,31 @@ param(
 
 $ErrorActionPreference = "Stop"
 Add-Type -AssemblyName System.Drawing
+[Net.ServicePointManager]::SecurityProtocol = `
+    [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
 
 $cardsRoot = Join-Path $GameDir "OPTCGSim_Data\StreamingAssets\Cards"
 if (-not (Test-Path $cardsRoot)) { throw "Cards folder not found: $cardsRoot" }
+
+# Variants whose image came from the JP site (Japanese rules text). LogPose reads this to
+# show the base English card in the enlarged hover preview for these.
+$jpManifest = Join-Path $cardsRoot "jp-variants.txt"
+$jpTags = New-Object System.Collections.Generic.HashSet[string]([StringComparer]::OrdinalIgnoreCase)
+if (Test-Path $jpManifest) {
+    foreach ($line in Get-Content $jpManifest) {
+        $t = $line.Trim()
+        if ($t.Length -gt 0 -and -not $t.StartsWith('#')) { [void]$jpTags.Add($t) }
+    }
+}
+$jpTagsDirty = $false
+
+function Save-JpManifest {
+    if (-not $jpTagsDirty) { return }
+    $sorted = @($jpTags) | Sort-Object
+    @('# Variants downloaded from the Japanese card site (Japanese rules text).') + $sorted |
+        Set-Content $jpManifest -Encoding utf8
+    Write-Host "jp-variants.txt updated: $($jpTags.Count) entries." -ForegroundColor Yellow
+}
 
 if ($All) {
     $Sets = Get-ChildItem $cardsRoot -Directory | Where-Object { $_.Name -ne "Don" } | Select-Object -ExpandProperty Name
@@ -77,6 +100,53 @@ function Try-Download([string]$Url, [string]$Dest) {
     return $true
 }
 
+function Test-UrlExists([string]$Url) {
+    try {
+        $req = [System.Net.WebRequest]::Create($Url)
+        $req.Method = "HEAD"
+        $req.UserAgent = "Mozilla/5.0 (OPTCGSim alt-art fetcher; personal use)"
+        $req.Timeout = 10000
+        $resp = $req.GetResponse()
+        $resp.Close()
+        return $true
+    } catch {
+        return $false
+    }
+}
+
+# Retro-tagging: for every already-downloaded _pN variant, ask the EN site whether that
+# variant exists there. If it does not, our local copy came from the JP fallback.
+if ($TagJapanese) {
+    $probe = "$enBase/OP01-001_p1.png"
+    if (-not (Test-UrlExists $probe)) {
+        throw "HEAD probe against a known-good EN url failed ($probe) - cannot tag reliably."
+    }
+    $tagged = 0; $checked = 0
+    foreach ($set in $Sets) {
+        if ($set -eq "P") { continue }   # JP fallback never ran for promos
+        $setDir = Join-Path $cardsRoot $set
+        if (-not (Test-Path $setDir)) { continue }
+        $variants = Get-ChildItem $setDir -File -Filter "*_p*.png" | Where-Object {
+            $_.BaseName -match "_p\d+$"
+        } | Select-Object -ExpandProperty BaseName
+        Write-Host "=== $set : $($variants.Count) variants to check ===" -ForegroundColor Cyan
+        foreach ($v in $variants) {
+            $checked++
+            if ($jpTags.Contains($v)) { continue }
+            if (-not (Test-UrlExists "$enBase/$v.png")) {
+                [void]$jpTags.Add($v)
+                $script:jpTagsDirty = $true
+                $tagged++
+                Write-Host "  $v  [JP]"
+            }
+            Start-Sleep -Milliseconds $DelayMs
+        }
+    }
+    Save-JpManifest
+    Write-Host "Tagging done: checked $checked variants, $tagged newly tagged as JP." -ForegroundColor Green
+    return
+}
+
 $totalEN = 0
 $totalJP = 0
 $totalSkipped = 0
@@ -113,10 +183,15 @@ foreach ($set in $Sets) {
             }
             $missStreak = 0
             New-Thumbnail $destPng $destSmall
-            if ($got -eq "EN") { $totalEN++ } else { $totalJP++ }
+            if ($got -eq "EN") { $totalEN++ }
+            else {
+                $totalJP++
+                if ($jpTags.Add("$cardId$suffix")) { $script:jpTagsDirty = $true }
+            }
             Write-Host "  $cardId$suffix  [$got]  ($([math]::Round((Get-Item $destPng).Length/1KB)) KB)"
             Start-Sleep -Milliseconds $DelayMs
         }
     }
 }
+Save-JpManifest
 Write-Host "Done. Downloaded $totalEN new EN + $totalJP new JP variants (skipped $totalSkipped already present)." -ForegroundColor Green

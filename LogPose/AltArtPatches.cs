@@ -40,5 +40,63 @@ namespace LogPose
         {
             AltArtManager.LoadSidecar(sFile);
         }
+
+        // Japanese-text parallels stay on the board, but the enlarged hover preview swaps to
+        // the base English card — the readable rules text is always one hover away.
+        [HarmonyPostfix, HarmonyPatch(typeof(GameplayLogicScript), "ShowFocusedCard")]
+        private static void GameplayPreview_Postfix(GameplayLogicScript __instance)
+        {
+            if (__instance == null)
+                return;
+            string cardID = null;
+            if (!string.IsNullOrEmpty(__instance.s_FocusedChatPreview))
+                cardID = __instance.s_FocusedChatPreview;
+            else if (__instance.go_FocusedObject != null)
+            {
+                CardLogicScript cls = __instance.go_FocusedObject.GetComponent<CardLogicScript>();
+                if (cls != null && cls.myCard.bFaceUp && cls.myCard.cardDef != null)
+                    cardID = cls.myCard.cardDef.cardID;
+            }
+            SwapPreviewToEnglish(__instance.img_CardPreview, cardID);
+        }
+
+        [HarmonyPostfix, HarmonyPatch(typeof(DeckEditorScript), "ShowFocusedCard")]
+        private static void DeckEditorPreview_Postfix(DeckEditorScript __instance)
+        {
+            if (__instance == null || __instance.go_FocusedObject == null)
+                return;
+            CardLogicScript cls = __instance.go_FocusedObject.GetComponent<CardLogicScript>();
+            if (cls == null || cls.myCard.cardDef == null)
+                return;
+            SwapPreviewToEnglish(__instance.img_CardPreview, cls.myCard.cardDef.cardID);
+        }
+
+        private static void SwapPreviewToEnglish(UnityEngine.UI.Image img, string cardID)
+        {
+            try
+            {
+                if (!Plugin.CfgEnglishPreviewForJpArts.Value)
+                    return;
+                if (img == null || img.sprite == null || string.IsNullOrEmpty(cardID))
+                    return;
+                if (!AltArtManager.IsActiveVariantJapanese(cardID))
+                    return;
+                AltArtManager.BypassVariant = true;
+                try
+                {
+                    Sprite baseSprite = CardDatabaseScript.Instance.GetCardImage(cardID, SpriteState.Full);
+                    if (baseSprite != null)
+                        img.sprite = baseSprite;
+                }
+                finally
+                {
+                    AltArtManager.BypassVariant = false;
+                }
+            }
+            catch
+            {
+                // never break the hover path
+            }
+        }
     }
 }
