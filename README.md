@@ -73,7 +73,15 @@ deck editor, and replays.
 
 ## Install
 
-One command in PowerShell — installs BepInEx if it's missing and the latest LogPose release
+**Easiest — GUI installer**: download `LogPoseSetup.exe` from the
+[latest release](https://github.com/HVallad/LogPose/releases), run it, point it at your game
+folder (it auto-detects common spots), click *Install / Update*. It fetches BepInEx (if
+needed) and the newest LogPose, then offers to launch the game. Re-run it anytime to update.
+Windows SmartScreen may warn about an unknown publisher the first time — click
+*More info → Run anyway* (it's this repo's unsigned open-source tool; `LogPoseSetup/` has the
+full source).
+
+Or, one command in PowerShell — installs BepInEx if it's missing and the latest LogPose release
 (auto-detects the game folder, or asks; re-run it anytime to update):
 
 ```
