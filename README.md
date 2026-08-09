@@ -1,7 +1,8 @@
 # LogPose — OPTCGSim mod
 
-BepInEx plugin for OPTCGSim (v1.42a, Unity 6, Mono) adding combat-log fixes, complete replay
-(RZ1) output, and per-deck alternate card art selection. Game install: `D:\OPSIM`.
+BepInEx plugin for OPTCGSim (v1.42a, Unity 6, Mono) adding a full in-game replay viewer with
+match history, combat-log fixes, complete replay (RZ1) output, and per-deck alternate card art
+selection. Game install: `D:\OPSIM`.
 
 ## Layout
 
@@ -27,16 +28,33 @@ states. Config: `EmitMissingReplayLines`.
 **Match History** (`Replay/MatchHistoryUI.cs`) — a native-styled button on the main menu opens a
 browser of every recorded game: your leader left, the opponent's right, colored WIN/LOSS
 (detected from log lines, falling back to final life totals for lethal endings), date and game
-number. Clicking a match auto-starts a Solo v Self board and opens that replay.
+number. Clicking a match auto-starts a board behind a loading cover and drops you straight into
+that replay — this is the intended way in.
 
-**In-game replay viewer** (`Replay/*.cs`) — start a Solo v Self game, then press **F7** (file
-picker) or **F8** (instantly open the newest replay). Scrub any recorded `.rz1` on the real
-board: slider, per-event stepping (arrow keys), turn jumps (PageUp/PageDown), autoplay, and a
-reveal-hidden toggle. Reconstruction is validated against the CHK checksums embedded in the
-stream and the accuracy is shown in the panel (100% on well-formed LogPose recordings). One
-autosave can contain several games (rematches); the parser splits them via checksum signatures
-and lists each game separately. Don't interact with the board while a replay is loaded —
-restart Solo v Self to return to normal play.
+**In-game replay viewer** (`Replay/*.cs`) — plays any recorded `.rz1` back on the real game
+board using the game's own card objects, so moves glide instead of teleporting and the whole
+thing reads as a built-in feature.
+
+- *Transport*: a native-styled panel (bottom right) with first/last, turn, action, and event
+  stepping plus autoplay with speed control. Keyboard: `←/→` events, `↑/↓` actions,
+  `PgUp/PgDn` turns, `Home/End`. "Actions" are the game's own log-line boundaries, so one step
+  is one meaningful thing happening.
+- *Synced combat log*: the side log panel replays in lockstep with the board, sticky-scrolled
+  to the latest line, and adds synthetic narration for deck activity the vanilla log never
+  describes (searches, mills, scries — with real card names, including the opponent's).
+- *Search X-ray*: when a searcher resolves, every card that was looked at appears in a reveal
+  row by the searching player's deck — the card being taken sits raised, then flies to hand
+  while the rest bottom-deck. Duplicate copies each get their own slot, and clusters never mix
+  the two players' deck activity.
+- *Correctness*: reconstruction is validated against the CHK checksums embedded in the stream
+  and the accuracy is shown in the panel (100% on well-formed LogPose recordings). Rest states
+  (leader, characters, stage, cost-area DON, attached DON) render faithfully. One autosave can
+  contain several games (rematches); the parser splits them via checksum signatures and lists
+  each game separately. Recordings that lack the vanilla `.log` still get a synced combat log —
+  line positions are reconstructed by anchoring narration against the move stream.
+- *Getting in and out*: Match History is the front door; **F7** (file picker) and **F8** (open
+  newest instantly) also work from a Solo v Self board. Exit with the panel's Exit button or
+  just leave via Back to Main — the viewer tears itself down either way.
 
 **Alt art selector** (`AltArt*.cs`) — press **F6** in the deck editor. Cards in the current deck
 with variant art get `<` / `>` cycling; thumbnails refresh live; choices persist to
@@ -46,15 +64,22 @@ as `Cards\<SET>\<ID>_p1.png` / `_alt1.png` (+ optional `_p1_small.jpg` thumbnail
 
 Note: art is client-side — opponents see their own local art, not your selection.
 
-## Build & install
+## Install
+
+Grab `LogPose.dll` from the [latest release](https://github.com/HVallad/LogPose/releases) and
+drop it into `<game>\BepInEx\plugins\`. Requires [BepInEx 5.4.23+ win-x64](https://github.com/BepInEx/BepInEx/releases)
+extracted into the game folder first (`winhttp.dll` + `BepInEx\` next to `OPTCGSim.exe`).
+Config appears at `BepInEx\config\com.hunter.logpose.cfg` after first run.
+
+## Build from source
 
 ```
 dotnet build LogPose/LogPose.csproj -c Release
 copy LogPose\bin\Release\LogPose.dll D:\OPSIM\BepInEx\plugins\
 ```
 
-BepInEx 5.4.23.5 (win x64) is installed in `D:\OPSIM` (winhttp.dll + BepInEx folder). Config
-appears at `D:\OPSIM\BepInEx\config\com.hunter.logpose.cfg` after first run.
+The csproj references game assemblies from `D:\OPSIM\OPTCGSim_Data\Managed` and BepInEx from
+`D:\OPSIM\BepInEx\core` — adjust paths if your install differs.
 
 ## Fetching more alt arts
 
