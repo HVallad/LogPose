@@ -4,6 +4,9 @@ BepInEx plugin for OPTCGSim (v1.42a, Unity 6, Mono) adding a full in-game replay
 match history, combat-log fixes, complete replay (RZ1) output, and per-deck alternate card art
 selection. Game install: `D:\OPSIM`.
 
+<p align="center"><img src="docs/replay-viewer.jpg" width="920" alt="Replay viewer: a recorded match playing back on the real board — reveal row showing a search, synced combat log, native transport controls, alt arts applied"></p>
+<p align="center"><i>A recorded match playing back on the real board — the reveal row shows exactly what a searcher looked at, the combat log follows along, and your alt-art picks apply.</i></p>
+
 ## Layout
 
 | Path | What |
@@ -30,6 +33,8 @@ browser of every recorded game: your leader left, the opponent's right, colored 
 (detected from log lines, falling back to final life totals for lethal endings), date and game
 number. Clicking a match auto-starts a board behind a loading cover and drops you straight into
 that replay — this is the intended way in.
+
+<p align="center"><img src="docs/match-history.jpg" width="480" alt="Match History page listing recorded games with leaders and WIN/LOSS outcomes"></p>
 
 **In-game replay viewer** (`Replay/*.cs`) — plays any recorded `.rz1` back on the real game
 board using the game's own card objects, so moves glide instead of teleporting and the whole
@@ -61,8 +66,10 @@ A native-styled page lists every deck card that has variant art with all of its 
 thumbnails — base first, the active pick highlighted. Click an art to use it (saved to the
 sidecar immediately), hover to enlarge. Choices live in `Decks\<name>.deck.arts.json` (the
 `.deck` file is untouched, so decks stay vanilla-compatible) and apply in-game for the deck
-you play. Art files are looked up as `Cards\<SET>\<ID>_p1.png` / `_alt1.png` (+ optional
-`_p1_small.jpg` thumbnail).
+you play — and in replays. Art files are looked up as `Cards\<SET>\<ID>_p1.png` / `_alt1.png`
+(+ optional `_p1_small.jpg` thumbnail).
+
+<p align="center"><img src="docs/alt-art-selector.jpg" width="860" alt="Alt Art Selector: rows of cards with all their arts as thumbnails, the current pick highlighted, one art enlarged on hover"></p>
 
 Note: art is client-side — opponents see their own local art, not your selection.
 
@@ -73,13 +80,21 @@ deck editor, and replays.
 
 ## Install
 
-**Easiest — GUI installer**: download `LogPoseSetup.exe` from the
-[latest release](https://github.com/HVallad/LogPose/releases), run it, point it at your game
-folder (it auto-detects common spots), click *Install / Update*. It fetches BepInEx (if
-needed) and the newest LogPose, then offers to launch the game. Re-run it anytime to update.
-Windows SmartScreen may warn about an unknown publisher the first time — click
-*More info → Run anyway* (it's this repo's unsigned open-source tool; `LogPoseSetup/` has the
-full source).
+**Easiest — GUI installer**:
+
+<p align="center"><img src="docs/installer.png" width="420" alt="LogPoseSetup window: game folder box with Browse, Install / Update button, progress bar and log"></p>
+
+1. Download `LogPoseSetup.exe` from the [latest release](https://github.com/HVallad/LogPose/releases).
+2. Run it. Windows SmartScreen may warn about an unknown publisher the first time — click
+   *More info → Run anyway* (it's this repo's unsigned open-source tool; `LogPoseSetup/` has
+   the full source).
+3. It auto-detects the game folder in common spots — otherwise click *Browse…* and pick your
+   `OPTCGSim.exe` (pasting the exe path works too).
+4. Click **Install / Update**. It fetches BepInEx (if needed) and the newest LogPose, then
+   offers to launch the game.
+
+Re-run it anytime to update — though after the first install the mod updates itself: when a
+new version exists, an update button appears at the top left of the game's main menu.
 
 Or, one command in PowerShell — installs BepInEx if it's missing and the latest LogPose release
 (auto-detects the game folder, or asks; re-run it anytime to update):
