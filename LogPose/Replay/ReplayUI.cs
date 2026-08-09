@@ -128,6 +128,9 @@ namespace LogPose.Replay
 
         private static void OpenGame(Rz1File game)
         {
+            // The solo board's own deck sidecar is meaningless here — show the user's art
+            // picks from ALL their decks for the cards in this recording.
+            AltArtManager.LoadMergedForReplay();
             _session = new ReplaySession(game);
             _session.BuildDeckActivityLines(id =>
             {

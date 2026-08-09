@@ -24,6 +24,37 @@ namespace LogPose
         private static readonly Dictionary<string, Sprite> SpriteCache = new Dictionary<string, Sprite>();
         private static readonly Dictionary<string, List<string>> VariantCache = new Dictionary<string, List<string>>();
 
+        // Replays reconstruct a recorded match on a programmatic solo board, so no single
+        // deck sidecar applies. Use the union of every saved deck's picks instead — if the
+        // user chose an art for a card anywhere, their replays show it. ActiveSidecarPath is
+        // cleared so nothing can accidentally save this merged view over a real sidecar;
+        // the next deck load (editor or match) replaces the map with the proper one.
+        internal static void LoadMergedForReplay()
+        {
+            var merged = new Dictionary<string, string>();
+            try
+            {
+                if (Directory.Exists("Decks"))
+                    foreach (string f in Directory.GetFiles("Decks", "*.arts.json"))
+                    {
+                        try
+                        {
+                            var map = JsonConvert.DeserializeObject<Dictionary<string, string>>(File.ReadAllText(f));
+                            if (map == null)
+                                continue;
+                            foreach (var kv in map)
+                                if (!string.IsNullOrEmpty(kv.Value))
+                                    merged[kv.Key] = kv.Value;
+                        }
+                        catch { }
+                    }
+            }
+            catch { }
+            ActiveMap = merged;
+            ActiveSidecarPath = null;
+            Plugin.Log.LogInfo("AltArt: merged " + merged.Count + " art choices for replay.");
+        }
+
         internal static bool HasActiveVariant(string cardID)
         {
             string suffix;
