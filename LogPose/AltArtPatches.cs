@@ -41,6 +41,24 @@ namespace LogPose
             AltArtManager.LoadSidecar(sFile);
         }
 
+        // While the alt-art page is open the editor's Physics2D card hover/click must be
+        // suppressed — UI raycasts don't block it, so a click on a thumbnail would also
+        // hit the deck-list card behind the overlay.
+        [HarmonyPrefix, HarmonyPatch(typeof(DeckEditorScript), "HandleMouseClick")]
+        private static bool DeckEditorClick_Prefix()
+        {
+            return !AltArtUI.PageOpen;
+        }
+
+        [HarmonyPrefix, HarmonyPatch(typeof(DeckEditorScript), "HandleMouseHover")]
+        private static bool DeckEditorHover_Prefix(DeckEditorScript __instance)
+        {
+            if (!AltArtUI.PageOpen)
+                return true;
+            __instance.go_FocusedObject = null;
+            return false;
+        }
+
         // Hold Shift while hovering a card and the enlarged preview shows the BASE art
         // instead of the selected variant — the original English card (with readable rules
         // text) is always one key away, without giving up the parallel art anywhere else.

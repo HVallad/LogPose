@@ -145,9 +145,30 @@ namespace LogPose
             string suffix;
             if (string.IsNullOrEmpty(cardID) || !ActiveMap.TryGetValue(cardID, out suffix) || string.IsNullOrEmpty(suffix))
                 return false;
+            sprite = LoadVariantSprite(cardID, suffix, state);
+            return sprite != null;
+        }
+
+        // Art for any (card, suffix) pair regardless of what the active deck selected — the
+        // selector UI uses this to draw every option. Empty suffix = the game's own base art.
+        internal static Sprite GetArtSprite(string cardID, string suffix, SpriteState state)
+        {
+            if (string.IsNullOrEmpty(suffix))
+            {
+                if (CardDatabaseScript.Instance == null)
+                    return null;
+                BypassVariant = true;
+                try { return CardDatabaseScript.Instance.GetCardImage(cardID, state); }
+                finally { BypassVariant = false; }
+            }
+            return LoadVariantSprite(cardID, suffix, state);
+        }
+
+        private static Sprite LoadVariantSprite(string cardID, string suffix, SpriteState state)
+        {
             string rel = FindImageFolderRelative(cardID);
             if (rel == null)
-                return false;
+                return null;
             string basePath = Path.Combine(Path.Combine(Application.streamingAssetsPath, rel), cardID + suffix);
 
             string path = null;
@@ -158,28 +179,28 @@ namespace LogPose
             else if (File.Exists(basePath + ".jpg"))
                 path = basePath + ".jpg";
             if (path == null)
-                return false;
+                return null;
 
             string key = path + "|" + state;
+            Sprite sprite;
             if (SpriteCache.TryGetValue(key, out sprite) && sprite != null)
-                return true;
+                return sprite;
 
             try
             {
                 byte[] bytes = File.ReadAllBytes(path);
                 var tex = new Texture2D(2, 2);
                 if (!tex.LoadImage(bytes))
-                    return false;
+                    return null;
                 sprite = Sprite.Create(tex, new Rect(0f, 0f, tex.width, tex.height),
                     new Vector2(tex.width / 2f, tex.height / 2f), 100f, 0u, SpriteMeshType.FullRect);
                 SpriteCache[key] = sprite;
-                return true;
+                return sprite;
             }
             catch (Exception e)
             {
                 Plugin.Log.LogWarning("AltArt: failed loading " + path + ": " + e.Message);
-                sprite = null;
-                return false;
+                return null;
             }
         }
 

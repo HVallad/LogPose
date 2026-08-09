@@ -69,7 +69,6 @@ namespace LogPose
 
         private void OnGUI()
         {
-            AltArtUI.OnGUI();
             Replay.ReplayUI.OnGUI();
         }
     }

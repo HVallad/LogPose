@@ -56,11 +56,13 @@ thing reads as a built-in feature.
   newest instantly) also work from a Solo v Self board. Exit with the panel's Exit button or
   just leave via Back to Main — the viewer tears itself down either way.
 
-**Alt art selector** (`AltArt*.cs`) — press **F6** in the deck editor. Cards in the current deck
-with variant art get `<` / `>` cycling; thumbnails refresh live; choices persist to
-`Decks\<name>.deck.arts.json` when the deck is saved (the `.deck` file is untouched, so decks
-stay vanilla-compatible). Variants apply in-game for the deck you play. Art files are looked up
-as `Cards\<SET>\<ID>_p1.png` / `_alt1.png` (+ optional `_p1_small.jpg` thumbnail).
+**Alt art selector** (`AltArt*.cs`) — click **Alt Arts** in the deck editor (or press **F6**).
+A native-styled page lists every deck card that has variant art with all of its arts as
+thumbnails — base first, the active pick highlighted. Click an art to use it (saved to the
+sidecar immediately), hover to enlarge. Choices live in `Decks\<name>.deck.arts.json` (the
+`.deck` file is untouched, so decks stay vanilla-compatible) and apply in-game for the deck
+you play. Art files are looked up as `Cards\<SET>\<ID>_p1.png` / `_alt1.png` (+ optional
+`_p1_small.jpg` thumbnail).
 
 Note: art is client-side — opponents see their own local art, not your selection.
 
