@@ -11,7 +11,7 @@ namespace LogPose
     {
         public const string GUID = "com.hunter.logpose";
         public const string NAME = "LogPose";
-        public const string VERSION = "0.2.0";
+        public const string VERSION = "0.3.0";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;
