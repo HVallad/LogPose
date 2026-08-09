@@ -148,28 +148,150 @@ namespace LogPose.Replay
             var result = new List<KeyValuePair<int, string>>();
             try
             {
-                string logPath = rz1Path.EndsWith(".rz1", StringComparison.OrdinalIgnoreCase)
-                    ? rz1Path.Substring(0, rz1Path.Length - 4) + ".log"
-                    : rz1Path + ".log";
-                if (!File.Exists(logPath))
-                    return result;
-                int moveCount = 0;
-                foreach (string raw in File.ReadAllLines(logPath))
+                string basePath = rz1Path.EndsWith(".rz1", StringComparison.OrdinalIgnoreCase)
+                    ? rz1Path.Substring(0, rz1Path.Length - 4)
+                    : rz1Path;
+                string logPath = basePath + ".log";
+                if (File.Exists(logPath))
                 {
-                    if (raw.StartsWith("RZ1|", StringComparison.Ordinal))
+                    int moveCount = 0;
+                    foreach (string raw in File.ReadAllLines(logPath))
                     {
-                        string[] p = raw.Split('|');
-                        if (p.Length >= 13 && p[1] != "CHK" && p[1] != "HDR" && p[1] != "PLY")
-                            moveCount++;
-                        continue;
+                        if (raw.StartsWith("RZ1|", StringComparison.Ordinal))
+                        {
+                            string[] p = raw.Split('|');
+                            if (p.Length >= 13 && p[1] != "CHK" && p[1] != "HDR" && p[1] != "PLY")
+                                moveCount++;
+                            continue;
+                        }
+                        string line = InvisibleChars.Replace(TmpTags.Replace(raw, ""), "").Trim();
+                        if (line.Length > 0)
+                            result.Add(new KeyValuePair<int, string>(moveCount, line));
                     }
-                    string line = InvisibleChars.Replace(TmpTags.Replace(raw, ""), "").Trim();
-                    if (line.Length > 0)
-                        result.Add(new KeyValuePair<int, string>(moveCount, line));
+                    return result;
                 }
+                // Recordings without a vanilla .log (it was blocked while the clean pair still
+                // wrote) keep their narration in .clean.log, but the RZ1 interleaving — and
+                // with it the line-to-move correlation — is lost. Recover approximate keys by
+                // anchoring each line's [CARD-ID] mentions against the move stream in order.
+                string cleanPath = basePath + ".clean.log";
+                if (File.Exists(cleanPath))
+                    AlignCleanLog(cleanPath, rz1Path, result);
             }
             catch { }
             return result;
+        }
+
+        private static readonly System.Text.RegularExpressions.Regex CardIdRef =
+            new System.Text.RegularExpressions.Regex("\\[([A-Za-z0-9]{1,8}-\\d{2,4})\\]");
+        private static readonly System.Text.RegularExpressions.Regex EndTurnRef =
+            new System.Text.RegularExpressions.Regex("^\\[[^\\]]+\\] End Turn$");
+
+        private static void AlignCleanLog(string cleanPath, string rz1Path,
+            List<KeyValuePair<int, string>> result)
+        {
+            var moveIds = new List<string>();
+            var isDraw = new List<bool>();
+            var untaps = new List<int>();
+            foreach (string raw in File.ReadAllLines(rz1Path))
+            {
+                if (!raw.StartsWith("RZ1|", StringComparison.Ordinal))
+                    continue;
+                string[] p = raw.Split('|');
+                if (p.Length < 13 || p[1] == "CHK" || p[1] == "HDR" || p[1] == "PLY")
+                    continue;
+                // Leader in-place untap = the turn-start refresh, same signature TurnMarks use.
+                if (p[4] == "8" && p[6] == "8" && p[5] == "0" && p[7] == "0" && p[10] == "0")
+                    untaps.Add(moveIds.Count);
+                isDraw.Add(p[4] == "0" && p[6] == "1");
+                moveIds.Add(p[3]);
+            }
+            // Three anchor classes keep the cursor from drifting across the big unlogged
+            // shuffle/mulligan blobs:
+            //  1. "End Turn" lines snap to the next leader untap — the game prints the line,
+            //     then the next player's refresh emits (exact, unbounded).
+            //  2. Draw narrations snap to the named card's next deck-to-hand move (exact,
+            //     unbounded; carries the cursor across game-boundary setup).
+            //  3. Any other card mention advances past its own emitted moves within a SHORT
+            //     window only — lines whose action emits no matchable move (don attaches
+            //     naming the leader, etc.) must NOT grab that card's next-turn event, which
+            //     is how an earlier resync-window version compounded a whole game of drift.
+            const int Window = 8;
+            int cursor = 0;
+            foreach (string raw in File.ReadAllLines(cleanPath))
+            {
+                string line = raw.Trim();
+                if (line.Length == 0)
+                    continue;
+
+                if (EndTurnRef.IsMatch(line))
+                {
+                    // Backward tolerance matters: short-window creep from narration-only
+                    // lines can push the cursor a dozen moves past the refresh untap, and
+                    // snapping to the untap AFTER that would skip a whole turn. A real
+                    // turn is far longer than the tolerance, so this can't re-grab the
+                    // current turn's own untap.
+                    int u = -1;
+                    foreach (int pos in untaps)
+                        if (pos >= cursor - 24)
+                        {
+                            u = pos;
+                            break;
+                        }
+                    if (u >= 0)
+                    {
+                        // Reset the cursor to the untap even when that moves it backward:
+                        // every following line describes something after this turn start.
+                        result.Add(new KeyValuePair<int, string>(u, line));
+                        cursor = u + 1;
+                        continue;
+                    }
+                }
+
+                var ids = CardIdRef.Matches(line);
+                bool drawLine = ids.Count > 0
+                    && (line.Contains("Drew card from deck") || line.Contains("Reveal and Draw"));
+                if (drawLine)
+                {
+                    // Bounded on both sides: a few moves back because class-3 matches can
+                    // nudge the cursor slightly past the true draw (an unbounded forward
+                    // search would then leap to the same card's NEXT draw, games later),
+                    // and far enough forward to carry across a game-boundary setup blob.
+                    string id = ids[ids.Count - 1].Groups[1].Value;
+                    int hit = -1;
+                    int from = Math.Max(0, cursor - 24);
+                    int to = Math.Min(moveIds.Count, cursor + 250);
+                    for (int i = from; i < to; i++)
+                        if (isDraw[i] && moveIds[i] == id)
+                        {
+                            hit = i;
+                            break;
+                        }
+                    if (hit >= 0)
+                    {
+                        result.Add(new KeyValuePair<int, string>(hit + 1, line));
+                        cursor = Math.Max(cursor, hit + 1);
+                        continue;
+                    }
+                }
+
+                int best = -1;
+                foreach (System.Text.RegularExpressions.Match m in ids)
+                {
+                    string id = m.Groups[1].Value;
+                    int limit = Math.Min(moveIds.Count, cursor + Window);
+                    for (int i = cursor; i < limit; i++)
+                        if (moveIds[i] == id)
+                        {
+                            if (i > best)
+                                best = i;
+                            break;
+                        }
+                }
+                if (best >= 0)
+                    cursor = best + 1;
+                result.Add(new KeyValuePair<int, string>(cursor, line));
+            }
         }
 
         // Segment boundaries (HDR lines) are unreliable in both directions: mid-game stream

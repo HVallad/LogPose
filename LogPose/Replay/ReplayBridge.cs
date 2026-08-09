@@ -14,11 +14,14 @@ namespace LogPose.Replay
     // rebuild-and-snap.
     internal static class ReplayBridge
     {
+        // RefreshLeaderPositions must run BEFORE RefreshDeployPositions: the former places the
+        // leader but always resets its rotation to upright, while the latter is what applies
+        // the leader's bTapped rest rotation (the game splits leader handling across both).
         private static readonly string[] RefreshMethods =
         {
-            "RefreshLifePositions", "RefreshTrashPositions", "RefreshDeployPositions",
-            "RefreshDeckPositions", "RefreshHandPositions", "RefreshDonPositions",
-            "RefreshStagePositions", "RefreshLeaderPositions",
+            "RefreshLifePositions", "RefreshTrashPositions", "RefreshLeaderPositions",
+            "RefreshDeployPositions", "RefreshDeckPositions", "RefreshHandPositions",
+            "RefreshDonPositions", "RefreshStagePositions",
         };
 
         public static bool InReplay;
