@@ -24,10 +24,7 @@ namespace LogPose
         internal static ConfigEntry<KeyCode> CfgReplayKey;
         internal static ConfigEntry<KeyCode> CfgReplayQuickKey;
         internal static ConfigEntry<bool> CfgCheckForUpdates;
-        internal static ConfigEntry<bool> CfgTimerEnabled;
         internal static ConfigEntry<float> CfgTimerMinutes;
-        internal static ConfigEntry<float> CfgTimerIncrementSeconds;
-        internal static ConfigEntry<bool> CfgTimerAutoConcede;
 
         private void Awake()
         {
@@ -52,20 +49,16 @@ namespace LogPose
 
             CfgCheckForUpdates = Config.Bind("General", "CheckForUpdates", true,
                 "Check GitHub for a newer LogPose release on startup and show an update button on the main menu when one exists.");
-            CfgTimerEnabled = Config.Bind("Timer", "Enabled", false,
-                "Chess-clock match timer: each player has a time bank that ticks down during their turn. Both players should run LogPose with the same timer settings.");
-            CfgTimerMinutes = Config.Bind("Timer", "MinutesPerPlayer", 5f,
-                "Time bank per player, in minutes.");
-            CfgTimerIncrementSeconds = Config.Bind("Timer", "IncrementSeconds", 0f,
-                "Fischer increment: seconds added to your bank each time you complete a turn. 0 = none.");
-            CfgTimerAutoConcede = Config.Bind("Timer", "AutoConcede", true,
-                "Concede automatically when your own bank reaches zero (multiplayer only). Disable for a purely visual clock.");
+            CfgTimerMinutes = Config.Bind("Timer", "MinutesPerPlayer", 17.5f,
+                "Time bank per player for PRIVATE timed lobbies you host (the game's built-in chess clock, normally fixed at 17.5). " +
+                "The host's clock is authoritative, so the opponent does not need LogPose. Also settable in-game next to the Timer Lobby checkbox.");
 
             var harmony = new Harmony(GUID);
             harmony.PatchAll(typeof(ReplaySyncPatches));
             harmony.PatchAll(typeof(CombatLogPatches));
             harmony.PatchAll(typeof(AltArtPatches));
             harmony.PatchAll(typeof(Replay.RecorderPatches));
+            harmony.PatchAll(typeof(TimerPatches));
 
             UpdateCheck.Init();
             Log.LogInfo(NAME + " " + VERSION + " loaded.");
@@ -77,7 +70,7 @@ namespace LogPose
             Replay.ReplayUI.Update();
             Replay.MatchHistoryUI.Update();
             UpdateCheck.Update();
-            GameTimer.Update();
+            TimerLobbyUI.Update();
         }
 
         private void OnGUI()
