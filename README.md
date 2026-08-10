@@ -67,6 +67,8 @@ under that checkbox: hosts of private timed lobbies can pick 5-30 minutes per pl
 host's clock is server-authoritative — it ticks both banks and syncs them every second — so
 the custom time applies to the whole match and **the opponent doesn't need LogPose**.
 Timeouts, the low-time warning glow, and win/loss all use the game's own timer logic.
+A second stepper adds **recovery time** (Fischer increment): each completed turn credits
+that player's bank with the chosen seconds, so long games can't flag out on clock alone.
 
 **Alt art selector** (`AltArt*.cs`) — click **Alt Arts** in the deck editor (or press **F6**).
 A native-styled page lists every deck card that has variant art with all of its arts as

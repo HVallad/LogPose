@@ -25,6 +25,7 @@ namespace LogPose
         internal static ConfigEntry<KeyCode> CfgReplayQuickKey;
         internal static ConfigEntry<bool> CfgCheckForUpdates;
         internal static ConfigEntry<float> CfgTimerMinutes;
+        internal static ConfigEntry<float> CfgTimerRecoverySeconds;
 
         private void Awake()
         {
@@ -52,6 +53,8 @@ namespace LogPose
             CfgTimerMinutes = Config.Bind("Timer", "MinutesPerPlayer", 17.5f,
                 "Time bank per player for PRIVATE timed lobbies you host (the game's built-in chess clock, normally fixed at 17.5). " +
                 "The host's clock is authoritative, so the opponent does not need LogPose. Also settable in-game next to the Timer Lobby checkbox.");
+            CfgTimerRecoverySeconds = Config.Bind("Timer", "RecoverySeconds", 0f,
+                "Seconds returned to a player's bank each time they complete a turn (Fischer-style increment) in private timed lobbies you host. 0 = off.");
 
             var harmony = new Harmony(GUID);
             harmony.PatchAll(typeof(ReplaySyncPatches));
@@ -71,6 +74,7 @@ namespace LogPose
             Replay.MatchHistoryUI.Update();
             UpdateCheck.Update();
             TimerLobbyUI.Update();
+            TimerPatches.PollRecovery();
         }
 
         private void OnGUI()

@@ -14,9 +14,51 @@ namespace LogPose
     // display and the timeout both follow it — they don't even need the mod.
     internal static class TimerPatches
     {
+        private static int _lastTurn = -1;
+
+        // Fischer-style recovery: when a turn completes, the HOST credits the bank of the
+        // player who just finished. Turn completion is detected from iTurnNumber (one tick
+        // per turn) rather than iPlayerAction, which also flips during counter/block windows
+        // inside battles. The regular once-a-second sync carries the credit to the opponent.
+        internal static void PollRecovery()
+        {
+            float inc = Plugin.CfgTimerRecoverySeconds.Value;
+            if (inc <= 0f)
+                return;
+            GameplayLogicScript gls = Replay.ReplayBridge.FindBoard();
+            if (gls == null || gls.gsv_CurrentGame == null)
+            {
+                _lastTurn = -1;
+                return;
+            }
+            if (!gls.isTimerLobby || !gls.isLobbyServer || !gls.isPrivate)
+                return;
+            int turn = gls.gsv_CurrentGame.iTurnNumber;
+            if (turn < 1)
+            {
+                _lastTurn = -1;
+                return;
+            }
+            if (_lastTurn < 1)
+            {
+                _lastTurn = turn;
+                return;
+            }
+            if (turn != _lastTurn)
+            {
+                _lastTurn = turn;
+                // The new turn's owner is iPlayerAction; the finisher is the other player.
+                if (gls.gsv_CurrentGame.iPlayerAction == 0)
+                    gls.opTurnTime += inc;
+                else
+                    gls.myTurnTime += inc;
+            }
+        }
+
         [HarmonyPostfix, HarmonyPatch(typeof(GameplayLogicScript), nameof(GameplayLogicScript.GameStartMultiplayer))]
         private static void GameStartMultiplayer_Postfix(GameplayLogicScript __instance)
         {
+            _lastTurn = -1;
             try
             {
                 if (!__instance.isTimerLobby || !__instance.isLobbyServer || !__instance.isPrivate)
@@ -47,8 +89,10 @@ namespace LogPose
     internal static class TimerLobbyUI
     {
         private static readonly float[] Presets = { 5f, 10f, 15f, 17.5f, 20f, 25f, 30f };
+        private static readonly float[] RecoveryPresets = { 0f, 5f, 10f, 15f, 20f, 30f, 45f, 60f };
         private static GameObject _root;
         private static TMP_Text _label;
+        private static TMP_Text _recLabel;
 
         internal static void Update()
         {
@@ -79,34 +123,51 @@ namespace LogPose
             }
         }
 
-        private static void Step(int dir)
+        private static int Nearest(float[] presets, float current)
         {
-            float current = Plugin.CfgTimerMinutes.Value;
             int idx = 0;
             float best = float.MaxValue;
-            for (int i = 0; i < Presets.Length; i++)
+            for (int i = 0; i < presets.Length; i++)
             {
-                float d = Mathf.Abs(Presets[i] - current);
+                float d = Mathf.Abs(presets[i] - current);
                 if (d < best)
                 {
                     best = d;
                     idx = i;
                 }
             }
-            idx = Mathf.Clamp(idx + dir, 0, Presets.Length - 1);
+            return idx;
+        }
+
+        private static void Step(int dir)
+        {
+            int idx = Mathf.Clamp(Nearest(Presets, Plugin.CfgTimerMinutes.Value) + dir, 0, Presets.Length - 1);
             Plugin.CfgTimerMinutes.Value = Presets[idx];
+            RefreshLabel();
+        }
+
+        private static void StepRecovery(int dir)
+        {
+            int idx = Mathf.Clamp(Nearest(RecoveryPresets, Plugin.CfgTimerRecoverySeconds.Value) + dir, 0, RecoveryPresets.Length - 1);
+            Plugin.CfgTimerRecoverySeconds.Value = RecoveryPresets[idx];
             RefreshLabel();
         }
 
         private static void RefreshLabel()
         {
-            if (_label == null)
-                return;
-            float m = Plugin.CfgTimerMinutes.Value;
-            string text = (m == Mathf.Floor(m) ? ((int)m).ToString() : m.ToString("0.#")) + " min";
-            if (Mathf.Approximately(m, 17.5f))
-                text += "  <size=60%>(default)</size>";
-            _label.text = text;
+            if (_label != null)
+            {
+                float m = Plugin.CfgTimerMinutes.Value;
+                string text = (m == Mathf.Floor(m) ? ((int)m).ToString() : m.ToString("0.#")) + " min";
+                if (Mathf.Approximately(m, 17.5f))
+                    text += "  <size=60%>(default)</size>";
+                _label.text = text;
+            }
+            if (_recLabel != null)
+            {
+                int r = Mathf.RoundToInt(Plugin.CfgTimerRecoverySeconds.Value);
+                _recLabel.text = r > 0 ? "+" + r + "s / turn" : "no recovery";
+            }
         }
 
         private static void Build(HostJoinScript hjs, GameObject anchor)
@@ -119,30 +180,40 @@ namespace LogPose
             rt.anchorMin = art.anchorMin;
             rt.anchorMax = art.anchorMax;
             rt.pivot = art.pivot;
-            rt.anchoredPosition = art.anchoredPosition + new Vector2(0f, -58f);
-            rt.sizeDelta = new Vector2(320f, 50f);
+            rt.anchoredPosition = art.anchoredPosition + new Vector2(0f, -86f);
+            rt.sizeDelta = new Vector2(320f, 106f);
 
-            MakeButton(hjs, "<", new Vector2(-120f, 0f), () => Step(-1));
-            MakeButton(hjs, ">", new Vector2(120f, 0f), () => Step(1));
+            MakeButton(hjs, "<", new Vector2(-120f, 28f), () => Step(-1));
+            MakeButton(hjs, ">", new Vector2(120f, 28f), () => Step(1));
+            _label = MakeRowLabel(hjs, anchor, new Vector2(0f, 28f), 26f);
 
+            MakeButton(hjs, "<", new Vector2(-120f, -28f), () => StepRecovery(-1));
+            MakeButton(hjs, ">", new Vector2(120f, -28f), () => StepRecovery(1));
+            _recLabel = MakeRowLabel(hjs, anchor, new Vector2(0f, -28f), 22f);
+
+            RefreshLabel();
+        }
+
+        private static TMP_Text MakeRowLabel(HostJoinScript hjs, GameObject anchor, Vector2 pos, float fontSize)
+        {
             GameObject lbl = new GameObject("Label", typeof(RectTransform));
             lbl.transform.SetParent(_root.transform, false);
-            _label = lbl.AddComponent<TextMeshProUGUI>();
+            TextMeshProUGUI tmp = lbl.AddComponent<TextMeshProUGUI>();
             TMP_Text donorText = anchor.GetComponentInChildren<TMP_Text>(true);
             if (donorText == null && hjs.go_SoloVSelf != null)
                 donorText = hjs.go_SoloVSelf.GetComponentInChildren<TMP_Text>(true);
             if (donorText != null)
             {
-                _label.font = donorText.font;
-                _label.color = donorText.color;
+                tmp.font = donorText.font;
+                tmp.color = donorText.color;
             }
-            _label.fontSize = 26f;
-            _label.alignment = TextAlignmentOptions.Center;
+            tmp.fontSize = fontSize;
+            tmp.alignment = TextAlignmentOptions.Center;
             RectTransform lrt = lbl.GetComponent<RectTransform>();
             lrt.anchorMin = lrt.anchorMax = new Vector2(0.5f, 0.5f);
-            lrt.anchoredPosition = Vector2.zero;
+            lrt.anchoredPosition = pos;
             lrt.sizeDelta = new Vector2(180f, 44f);
-            RefreshLabel();
+            return tmp;
         }
 
         private static void MakeButton(HostJoinScript hjs, string label, Vector2 pos, Action onClick)
