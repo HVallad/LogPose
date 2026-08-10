@@ -27,6 +27,7 @@ namespace LogPose.Replay
         {
             Reset(__instance);
             ReplayBridge.InReplay = false;
+            GameTimer.ResetForNewGame();
         }
 
         // While a replay is loaded, the board holds replayed history — autosaving it would
@@ -43,6 +44,7 @@ namespace LogPose.Replay
             Reset(__instance);
             // A real match is starting — replay mode is over, logs must record again.
             ReplayBridge.InReplay = false;
+            GameTimer.ResetForNewGame();
         }
     }
 }

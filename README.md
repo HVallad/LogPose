@@ -61,6 +61,14 @@ thing reads as a built-in feature.
   newest instantly) also work from a Solo v Self board. Exit with the panel's Exit button or
   just leave via Back to Main — the viewer tears itself down either way.
 
+**Chess-clock match timer** (`GameTimer.cs`) — enable `[Timer]` in the config and every game
+gets per-player time banks (default 5 minutes, optional Fischer increment per turn) shown in
+a native panel by the turn counter: your clock ticks on your turn, the active side is
+highlighted, low time turns red. When *your* bank empties in multiplayer, LogPose concedes
+for you through the game's normal concede — so with both players running the same settings
+it behaves like a real chess clock, each side enforcing its own flag. The panel displays the
+configured time so a settings mismatch is visible at a glance.
+
 **Alt art selector** (`AltArt*.cs`) — click **Alt Arts** in the deck editor (or press **F6**).
 A native-styled page lists every deck card that has variant art with all of its arts as
 thumbnails — base first, the active pick highlighted. Click an art to use it (saved to the
