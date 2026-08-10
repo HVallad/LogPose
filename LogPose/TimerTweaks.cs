@@ -180,15 +180,17 @@ namespace LogPose
             rt.anchorMin = art.anchorMin;
             rt.anchorMax = art.anchorMax;
             rt.pivot = art.pivot;
-            rt.anchoredPosition = art.anchoredPosition + new Vector2(0f, -86f);
-            rt.sizeDelta = new Vector2(320f, 106f);
+            // Nudged right of the checkbox column so the < buttons clear the queue grid
+            // ("Extra Regulation") to the left.
+            rt.anchoredPosition = art.anchoredPosition + new Vector2(75f, -86f);
+            rt.sizeDelta = new Vector2(290f, 106f);
 
-            MakeButton(hjs, "<", new Vector2(-120f, 28f), () => Step(-1));
-            MakeButton(hjs, ">", new Vector2(120f, 28f), () => Step(1));
+            MakeButton(hjs, "<", new Vector2(-105f, 28f), () => Step(-1));
+            MakeButton(hjs, ">", new Vector2(105f, 28f), () => Step(1));
             _label = MakeRowLabel(hjs, anchor, new Vector2(0f, 28f), 26f);
 
-            MakeButton(hjs, "<", new Vector2(-120f, -28f), () => StepRecovery(-1));
-            MakeButton(hjs, ">", new Vector2(120f, -28f), () => StepRecovery(1));
+            MakeButton(hjs, "<", new Vector2(-105f, -28f), () => StepRecovery(-1));
+            MakeButton(hjs, ">", new Vector2(105f, -28f), () => StepRecovery(1));
             _recLabel = MakeRowLabel(hjs, anchor, new Vector2(0f, -28f), 22f);
 
             RefreshLabel();
