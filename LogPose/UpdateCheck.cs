@@ -35,9 +35,9 @@ namespace LogPose
         public static void Init()
         {
             CleanupOldDll();
-            if (!Plugin.CfgCheckForUpdates.Value)
-                return;
-            ThreadPool.QueueUserWorkItem(_ => Check());
+            // The check itself runs on main-menu entry (see Update) — the boot menu is
+            // the first entry, and returning from a game re-checks, so a release cut
+            // while the game is running still gets offered.
         }
 
         private static string DllPath()
@@ -125,18 +125,32 @@ namespace LogPose
             }
         }
 
+        private static bool _menuWasVisible;
+        private static float _lastCheck = -9999f;
+
         public static void Update()
         {
-            if (_state == State.Idle || Time.frameCount % 30 != 0)
+            if (Time.frameCount % 30 != 0)
                 return;
             HostJoinScript hjs = UnityEngine.Object.FindFirstObjectByType<HostJoinScript>();
-            if (hjs == null || hjs.go_SoloVSelf == null)
+            bool menuVisible = hjs != null && hjs.go_SoloVSelf != null && hjs.go_SoloVSelf.activeSelf;
+            // Check on each ENTRY to the main menu, with a cooldown so hopping between
+            // menu and deck editor doesn't hammer the API.
+            if (Plugin.CfgCheckForUpdates.Value && menuVisible && !_menuWasVisible
+                && _state == State.Idle && Time.realtimeSinceStartup - _lastCheck > 120f)
+            {
+                _lastCheck = Time.realtimeSinceStartup;
+                ThreadPool.QueueUserWorkItem(_ => Check());
+            }
+            _menuWasVisible = menuVisible;
+
+            if (_state == State.Idle || hjs == null || hjs.go_SoloVSelf == null)
                 return;
             if (_button == null)
                 CreateButton(hjs);
             if (_button == null)
                 return;
-            _button.SetActive(hjs.go_SoloVSelf.activeSelf);
+            _button.SetActive(menuVisible);
             if (_label != null)
                 _label.text = LabelText();
         }
@@ -188,10 +202,43 @@ namespace LogPose
 
         private static void OnClick()
         {
+            if (_state == State.Ready)
+            {
+                Restart();
+                return;
+            }
             if (_state != State.Available)
                 return;
             _state = State.Downloading;
             ThreadPool.QueueUserWorkItem(_ => DoUpdate());
+        }
+
+        // The new DLL is already in place on disk (the running one was renamed aside),
+        // so a fresh process loads the update immediately. The child must NOT inherit
+        // Doorstop's environment markers — with them present the injector thinks it
+        // already ran and the new instance boots without BepInEx.
+        private static void Restart()
+        {
+            try
+            {
+                var psi = new System.Diagnostics.ProcessStartInfo(Paths.ExecutablePath)
+                {
+                    UseShellExecute = false,
+                    WorkingDirectory = Path.GetDirectoryName(Paths.ExecutablePath)
+                };
+                var env = psi.EnvironmentVariables;
+                foreach (string key in new[] { "DOORSTOP_INITIALIZED", "DOORSTOP_DISABLE",
+                    "DOORSTOP_INVOKE_DLL_PATH", "DOORSTOP_MANAGED_FOLDER_DIR", "DOORSTOP_PROCESS_PATH" })
+                    if (env.ContainsKey(key))
+                        env.Remove(key);
+                System.Diagnostics.Process.Start(psi);
+            }
+            catch (Exception e)
+            {
+                Plugin.Log.LogWarning("Relaunch failed (" + e.Message + ") - restart manually.");
+                return;
+            }
+            Application.Quit();
         }
 
         // Background thread — file I/O only, no Unity APIs.
