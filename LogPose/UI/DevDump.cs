@@ -11,8 +11,39 @@ namespace LogPose.UI
     // real scene data instead of guesses. Costs nothing unless pressed.
     internal static class DevDump
     {
+        // F4: serialize a card's full definition (actionV3s and all) so rules bugs can
+        // be split into sim-data problems vs sim-engine problems without Unity tooling.
+        private static void DumpCardDef(string cardID)
+        {
+            try
+            {
+                CardDefinition def = CardDatabaseScript.Instance.FindDefinition(cardID);
+                if (def == null)
+                {
+                    Plugin.Log.LogInfo("CardDef " + cardID + ": NOT FOUND");
+                    return;
+                }
+                string json = Newtonsoft.Json.JsonConvert.SerializeObject(def,
+                    Newtonsoft.Json.Formatting.Indented,
+                    new Newtonsoft.Json.JsonSerializerSettings
+                    {
+                        ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore,
+                        Error = (s, e) => { e.ErrorContext.Handled = true; }
+                    });
+                string path = System.IO.Path.Combine(BepInEx.Paths.BepInExRootPath, "logpose-carddef.json");
+                File.WriteAllText(path, json);
+                Plugin.Log.LogInfo("CardDef " + cardID + " written: " + path);
+            }
+            catch (System.Exception e)
+            {
+                Plugin.Log.LogWarning("CardDef dump failed: " + e.Message);
+            }
+        }
+
         internal static void Update()
         {
+            if (Input.GetKeyDown(KeyCode.F4))
+                DumpCardDef("EB03-055");
             if (Input.GetKeyDown(KeyCode.F10))
                 DumpWorld();
             if (Input.GetKeyDown(KeyCode.F11))

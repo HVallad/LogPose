@@ -396,7 +396,14 @@ namespace LogPose.UI
                     grt.sizeDelta = new Vector2(470f, 48f);
                     TMP_Text gt = guide.GetComponent<TMP_Text>();
                     if (gt != null)
+                    {
                         gt.alignment = TextAlignmentOptions.Center;
+                        // A label must NEVER raycast: this rect sat over the choice grid
+                        // and ate clicks on the third choice button (EB03-055 Robin's
+                        // "Gain 2 Life" looked broken — the click never landed).
+                        if (gt.raycastTarget)
+                            gt.raycastTarget = false;
+                    }
                 }
 
                 EnsureFieldLabels(cn, F);
@@ -649,11 +656,13 @@ namespace LogPose.UI
                 CollectChoice(_gls.go_ChoiceButton2, ref end, ref rest);
                 CollectChoice(_gls.go_ChoiceButton3, ref end, ref rest);
                 CollectChoice(_gls.go_ChoiceButton4, ref end, ref rest);
+                // Rows grow DOWNWARD from just under the guide text — growing upward put
+                // the third choice under the guide label (see the raycast note there).
                 if (end != null)
-                    PlaceChoice(end, -284f, -280f, 520f, 104f, true);
+                    PlaceChoice(end, -284f, -292f, 520f, 96f, true);
                 if (rest != null)
                     for (int i = 0; i < rest.Count; i++)
-                        PlaceChoice(rest[i], (i % 2 == 0) ? -412f : -157f, -188f + (i / 2) * 78f, 245f, 56f, false);
+                        PlaceChoice(rest[i], (i % 2 == 0) ? -412f : -157f, -150f - (i / 2) * 64f, 245f, 56f, false);
             }
             catch { }
         }
