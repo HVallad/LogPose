@@ -468,6 +468,125 @@ namespace LogPose.UI
             }
         }
 
+        // ------------------------------------------------- editor startup profiling ---
+
+        // Wall-clock per init step, logged once per editor open — the ground truth for
+        // "why does the editor take so long".
+        private static long _t0;
+
+        [HarmonyLib.HarmonyPrefix]
+        [HarmonyLib.HarmonyPatch(typeof(DeckEditorScript), "Start")]
+        private static void Start_Timer_Prefix() => _t0 = System.Diagnostics.Stopwatch.GetTimestamp();
+
+        [HarmonyLib.HarmonyPostfix]
+        [HarmonyLib.HarmonyPatch(typeof(DeckEditorScript), "Start")]
+        private static void Start_Timer_Postfix()
+        {
+            double ms = (System.Diagnostics.Stopwatch.GetTimestamp() - _t0) * 1000.0
+                / System.Diagnostics.Stopwatch.Frequency;
+            Plugin.Log.LogInfo("Editor Start() total: " + ms.ToString("F0") + " ms");
+        }
+
+        [HarmonyLib.HarmonyPrefix]
+        [HarmonyLib.HarmonyPatch(typeof(DeckEditorScript), "PopulateCardList")]
+        private static void PCL_Prefix(out long __state) => __state = System.Diagnostics.Stopwatch.GetTimestamp();
+
+        [HarmonyLib.HarmonyPostfix]
+        [HarmonyLib.HarmonyPatch(typeof(DeckEditorScript), "PopulateCardList")]
+        private static void PCL_Postfix(long __state) => LogStep("PopulateCardList", __state);
+
+        [HarmonyLib.HarmonyPrefix]
+        [HarmonyLib.HarmonyPatch(typeof(DeckEditorScript), "PopulateImageSets")]
+        private static void PIS_Prefix(out long __state) => __state = System.Diagnostics.Stopwatch.GetTimestamp();
+
+        [HarmonyLib.HarmonyPostfix]
+        [HarmonyLib.HarmonyPatch(typeof(DeckEditorScript), "PopulateImageSets")]
+        private static void PIS_Postfix(long __state) => LogStep("PopulateImageSets", __state);
+
+        [HarmonyLib.HarmonyPrefix]
+        [HarmonyLib.HarmonyPatch(typeof(DeckEditorScript), "PopulateImageFiles")]
+        private static void PIF_Prefix(out long __state) => __state = System.Diagnostics.Stopwatch.GetTimestamp();
+
+        [HarmonyLib.HarmonyPostfix]
+        [HarmonyLib.HarmonyPatch(typeof(DeckEditorScript), "PopulateImageFiles")]
+        private static void PIF_Postfix(long __state) => LogStep("PopulateImageFiles", __state);
+
+        [HarmonyLib.HarmonyPrefix]
+        [HarmonyLib.HarmonyPatch(typeof(DeckEditorScript), "PopulateDeckNames")]
+        private static void PDN_Prefix(out long __state) => __state = System.Diagnostics.Stopwatch.GetTimestamp();
+
+        [HarmonyLib.HarmonyPostfix]
+        [HarmonyLib.HarmonyPatch(typeof(DeckEditorScript), "PopulateDeckNames")]
+        private static void PDN_Postfix(long __state) => LogStep("PopulateDeckNames", __state);
+
+        private static void LogStep(string name, long start)
+        {
+            double ms = (System.Diagnostics.Stopwatch.GetTimestamp() - start) * 1000.0
+                / System.Diagnostics.Stopwatch.Frequency;
+            Plugin.Log.LogInfo("Editor step " + name + ": " + ms.ToString("F0") + " ms");
+        }
+
+        // ------------------------------------------------- editor open performance ----
+
+        // PopulateCardList instantiates a prefab for EVERY card in the database (~2400)
+        // in one frame — measured at ~505 of the editor's ~520 ms startup. Streamed at
+        // ~6 ms per frame instead: the editor appears immediately and the browser pool
+        // fills in the background. Deck loading is independent of this pool (it builds
+        // its own objects), so interacting mid-stream is safe — filters just see the
+        // pool grow until the final refresh.
+        [HarmonyLib.HarmonyPrefix]
+        [HarmonyLib.HarmonyPatch(typeof(DeckEditorScript), "PopulateCardList")]
+        private static bool PopulateCardList_Prefix(DeckEditorScript __instance)
+        {
+            __instance.StartCoroutine(StreamedPopulate(__instance));
+            return false;
+        }
+
+        private static IEnumerator StreamedPopulate(DeckEditorScript ed)
+        {
+            long t0 = System.Diagnostics.Stopwatch.GetTimestamp();
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            foreach (var set in ed.card_Database.dict_Sets)
+            {
+                if (set.Value.setName == "Don")
+                    continue;
+                var cards = set.Value.cards;
+                for (int i = 0; i < cards.Count; i++)
+                {
+                    if (ed == null)
+                        yield break;   // scene died mid-stream
+                    GameObject go = UnityEngine.Object.Instantiate(ed.prefab_CardTemplate);
+                    go.transform.localScale = new Vector3(ed.cn_Canvas.scaleFactor, ed.cn_Canvas.scaleFactor);
+                    go.GetComponent<Image>().sprite = null;
+                    go.GetComponent<CardLogicScript>().LoadCardDefinition(ed.card_Database.FindDefinition(cards[i]));
+                    ed.lgo_AvailableCards.Add(go);
+                    if (sw.ElapsedMilliseconds > 6)
+                    {
+                        yield return null;
+                        if (ed == null)
+                            yield break;
+                        sw.Restart();
+                    }
+                }
+            }
+            try
+            {
+                if (_colorSort == null)
+                {
+                    var m = HarmonyLib.AccessTools.Method(typeof(DeckEditorScript), "SortByCardColor");
+                    _colorSort = (Comparison<GameObject>)Delegate.CreateDelegate(typeof(Comparison<GameObject>), m);
+                }
+                ed.lgo_AvailableCards.Sort(_colorSort);
+                HarmonyLib.AccessTools.Method(typeof(DeckEditorScript), "ClearSelector").Invoke(ed, null);
+                HarmonyLib.AccessTools.Method(typeof(DeckEditorScript), "AddCardsToSelector").Invoke(ed, null);
+                LogStep("StreamedPopulate (spread over frames)", t0);
+            }
+            catch (Exception e)
+            {
+                Plugin.Log.LogWarning("Streamed card populate tail failed: " + e.Message);
+            }
+        }
+
         // ------------------------------------------------- browser loading performance --
 
         // The vanilla loader has NO yield on the no-loading-screen path (filter changes),
