@@ -14,41 +14,64 @@ namespace LogPose
     // display and the timeout both follow it — they don't even need the mod.
     internal static class TimerPatches
     {
-        private static int _untapCount;
-
         // Fischer-style recovery: credit the bank of the player who just COMPLETED a turn.
-        // PlayerUntap is the refresh-phase routine that runs exactly once at every turn
-        // start, for both players, on each client — the same signal replay turn marks are
-        // built from. (iTurnNumber is NOT usable here: EndTurn_Internal only increments it
-        // once per round.) The player whose turn begins is ps_Player, so the credit goes to
-        // the other one; applied on the HOST, whose once-a-second sync carries it over.
-        [HarmonyPostfix, HarmonyPatch(typeof(GameplayLogicScript), "PlayerUntap")]
-        private static void PlayerUntap_Postfix(GameplayLogicScript __instance, PlayerState ps_Player)
+        // EndTurn_Internal runs on every client for every completed turn (locally for your
+        // own End Turn, via EndTurnClientRpc for the opponent's) and ONLY when a turn
+        // actually completed — unlike PlayerUntap it never fires at game start, so there is
+        // no first-turn case to special-case. By postfix time the turn flags have flipped:
+        // the completer is the player NOT about to act. Applied on the HOST, whose
+        // once-a-second sync carries the new bank to the opponent.
+        [HarmonyPostfix, HarmonyPatch(typeof(GameplayLogicScript), nameof(GameplayLogicScript.EndTurn_Internal))]
+        private static void EndTurn_Postfix(GameplayLogicScript __instance)
+        {
+            Credit(__instance, __instance.gsv_CurrentGame != null && __instance.gsv_CurrentGame.iPlayerAction != 0);
+        }
+
+        // "Take Another Turn" effects bypass EndTurn_Internal: the same player untaps and
+        // goes again. Their previous turn still completed, so they get the credit.
+        [HarmonyPostfix, HarmonyPatch(typeof(GameplayLogicScript), nameof(GameplayLogicScript.SecondTurn_Internal))]
+        private static void SecondTurn_Postfix(GameplayLogicScript __instance)
+        {
+            Credit(__instance, creditLocal: true);
+        }
+
+        [HarmonyPostfix, HarmonyPatch(typeof(GameplayLogicScript), nameof(GameplayLogicScript.OpponentSecondTurn_Internal))]
+        private static void OpponentSecondTurn_Postfix(GameplayLogicScript __instance)
+        {
+            Credit(__instance, creditLocal: false);
+        }
+
+        private static void Credit(GameplayLogicScript gls, bool creditLocal)
         {
             try
             {
-                _untapCount++;
-                if (_untapCount < 2)   // the game's first untap starts turn 1; no one has completed a turn yet
-                    return;
                 float inc = Plugin.CfgTimerRecoverySeconds.Value;
                 if (inc <= 0f)
                     return;
-                if (!__instance.isTimerLobby || !__instance.isLobbyServer || !__instance.isPrivate)
+                if (!gls.isTimerLobby || !gls.isLobbyServer || !gls.isPrivate)
                     return;
-                if (__instance.Lps_Players == null || __instance.Lps_Players.Count < 2)
+                if (gls.e_GameStyle == GameStyle.SoloVSelf)
                     return;
-                if (ps_Player == __instance.Lps_Players[0])
-                    __instance.opTurnTime += inc;
+                if (creditLocal)
+                {
+                    gls.myTurnTime += inc;
+                    Plugin.Log.LogInfo("Recovery: +" + inc + "s to local player, bank now " + Mathf.RoundToInt(gls.myTurnTime) + "s");
+                }
                 else
-                    __instance.myTurnTime += inc;
+                {
+                    gls.opTurnTime += inc;
+                    Plugin.Log.LogInfo("Recovery: +" + inc + "s to opponent, bank now " + Mathf.RoundToInt(gls.opTurnTime) + "s");
+                }
             }
-            catch { }
+            catch (Exception e)
+            {
+                Plugin.Log.LogWarning("Recovery credit failed: " + e);
+            }
         }
 
         [HarmonyPostfix, HarmonyPatch(typeof(GameplayLogicScript), nameof(GameplayLogicScript.GameStartMultiplayer))]
         private static void GameStartMultiplayer_Postfix(GameplayLogicScript __instance)
         {
-            _untapCount = 0;
             try
             {
                 if (!__instance.isTimerLobby || !__instance.isLobbyServer || !__instance.isPrivate)
@@ -220,7 +243,14 @@ namespace LogPose
             if (b == null)
                 b = btn.AddComponent<Button>();
             b.onClick = new Button.ButtonClickedEvent();
-            b.onClick.AddListener(() => onClick());
+            b.onClick.AddListener(() =>
+            {
+                onClick();
+                // Deselect so a later Enter/Space (e.g. sending a chat message) can't
+                // re-fire the last-clicked stepper button and silently change the config.
+                if (UnityEngine.EventSystems.EventSystem.current != null)
+                    UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(null);
+            });
             TMP_Text tmp = btn.GetComponentInChildren<TMP_Text>(true);
             if (tmp != null)
             {
