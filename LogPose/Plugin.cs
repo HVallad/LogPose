@@ -69,6 +69,7 @@ namespace LogPose
             harmony.PatchAll(typeof(AltArtPatches));
             harmony.PatchAll(typeof(Replay.RecorderPatches));
             harmony.PatchAll(typeof(TimerPatches));
+            harmony.PatchAll(typeof(UI.BoardLayoutPatches));
 
             UpdateCheck.Init();
             SafetyNet.Run();

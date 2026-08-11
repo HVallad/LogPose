@@ -16,6 +16,12 @@ namespace LogPose.UI
         private static readonly TextMeshProUGUI[] _pillLabels = new TextMeshProUGUI[5];
         private static GameplayLogicScript _gls;
 
+        // 2a HUD side groups: names + leader ids + live life pips at the bar's edges.
+        private static TextMeshProUGUI _oppName, _oppLeader, _plName, _plLeader;
+        private static Transform _oppPips, _plPips;
+        private static readonly int[] _maxLife = new int[2];
+        private static TMP_Text _vanOppName, _vanPlName, _vanTurnCounter;
+
         internal static void Update()
         {
             if (Time.frameCount % 30 != 0)
@@ -49,7 +55,10 @@ namespace LogPose.UI
             if (_root.activeSelf != inGame)
                 _root.SetActive(inGame);
             if (inGame)
+            {
                 Refresh();
+                RefreshSides();
+            }
         }
 
         // The game re-assigns the playmat sprites at every game start (leader-color
@@ -134,7 +143,133 @@ namespace LogPose.UI
                 W.Fill(_pillLabels[i].gameObject);
                 x += 86f;
             }
+
+            // Side groups (2a): opponent left, player right, names over leader ids, pips beside.
+            _oppName = W.Label(t, "Opponent", 24f, 10f, 300f, 24f, 16f, Theme.Text, 500);
+            _oppLeader = W.Label(t, "", 24f, 36f, 300f, 18f, 12f, Theme.TextMuted, 400,
+                TextAlignmentOptions.TopLeft, true);
+            GameObject op = W.Go("OppPips", t);
+            W.TL(op, 330f, 18f, 260f, 24f);
+            _oppPips = op.transform;
+
+            _plName = W.Label(t, "You", 1424f, 10f, 296f, 24f, 16f, Theme.Text, 500,
+                TextAlignmentOptions.TopRight);
+            _plLeader = W.Label(t, "", 1424f, 36f, 296f, 18f, 12f, Theme.TextMuted, 400,
+                TextAlignmentOptions.TopRight, true);
+            GameObject pp = W.Go("PlPips", t);
+            W.TL(pp, 1156f, 18f, 260f, 24f);
+            _plPips = pp.transform;
+
+            _maxLife[0] = _maxLife[1] = 0;
+            AdoptVanillaLabels();
             Plugin.Log.LogInfo("Board HUD built.");
+        }
+
+        // The vanilla name labels keep receiving text from the game; mirror them into the
+        // bar and hide the originals (plus the redundant floating turn counter). Timers are
+        // reparented into the bar so the timed-lobby clock writes keep landing.
+        private static void AdoptVanillaLabels()
+        {
+            try
+            {
+                Transform side = _gls.cn_Canvas != null ? _gls.cn_Canvas.transform.Find("SideField") : null;
+                if (side != null)
+                {
+                    Transform on = side.Find("Opponent/OpponentSideName");
+                    Transform pn = side.Find("Player/PlayerSideName");
+                    _vanOppName = on != null ? on.GetComponent<TMP_Text>() : null;
+                    _vanPlName = pn != null ? pn.GetComponent<TMP_Text>() : null;
+                    if (_vanOppName != null) _vanOppName.alpha = 0f;
+                    if (_vanPlName != null) _vanPlName.alpha = 0f;
+
+                    Transform ot = side.Find("Opponent/OpponentTimer");
+                    Transform pt2 = side.Find("Player/PlayerTimer");
+                    if (ot != null) PinTimer(ot, new Vector2(600f, -14f));
+                    if (pt2 != null) PinTimer(pt2, new Vector2(1236f, -14f));
+                }
+                Transform tc = _gls.cn_Canvas != null ? _gls.cn_Canvas.transform.Find("Turn Counter") : null;
+                _vanTurnCounter = tc != null ? tc.GetComponent<TMP_Text>() : null;
+                if (_vanTurnCounter != null)
+                    _vanTurnCounter.alpha = 0f;
+            }
+            catch { }
+        }
+
+        private static void PinTimer(Transform timer, Vector2 pos)
+        {
+            timer.SetParent(_root.transform, false);
+            RectTransform rt = timer.GetComponent<RectTransform>();
+            rt.anchorMin = rt.anchorMax = new Vector2(0f, 1f);
+            rt.pivot = new Vector2(0f, 1f);
+            rt.anchoredPosition = pos;
+            rt.sizeDelta = new Vector2(100f, 30f);
+            TMP_Text txt = timer.GetComponent<TMP_Text>();
+            if (txt != null)
+            {
+                txt.fontSize = 17f;
+                txt.color = Theme.Accent300;
+                txt.alignment = TextAlignmentOptions.MidlineLeft;
+            }
+        }
+
+        private static void RefreshSides()
+        {
+            try
+            {
+                if (_vanOppName != null && !string.IsNullOrEmpty(_vanOppName.text))
+                    _oppName.text = _vanOppName.text;
+                if (_vanPlName != null && !string.IsNullOrEmpty(_vanPlName.text))
+                    _plName.text = _vanPlName.text;
+                if (_gls.Lps_Players != null && _gls.Lps_Players.Count >= 2)
+                {
+                    _plLeader.text = LeaderId(0);
+                    _oppLeader.text = LeaderId(1);
+                    RefreshPips(_plPips, 0);
+                    RefreshPips(_oppPips, 1);
+                }
+            }
+            catch { }
+        }
+
+        private static string LeaderId(int seat)
+        {
+            var lgo = _gls.Lps_Players[seat].Lgo_MyLeader;
+            if (lgo == null || lgo.Count == 0 || lgo[0] == null)
+                return "";
+            CardLogicScript cls = lgo[0].GetComponent<CardLogicScript>();
+            if (cls == null || cls.myCard.cardDef == null)
+                return "";
+            string name = cls.myCard.cardDef.characterName;
+            string id = cls.myCard.cardDef.cardID;
+            return string.IsNullOrEmpty(name) ? id : name + " · " + id;
+        }
+
+        private static void RefreshPips(Transform holder, int seat)
+        {
+            int life = _gls.Lps_Players[seat].Lgo_MyLifeDeck != null ? _gls.Lps_Players[seat].Lgo_MyLifeDeck.Count : 0;
+            if (life > _maxLife[seat])
+                _maxLife[seat] = life;
+            int max = Mathf.Clamp(_maxLife[seat], life, 10);
+            if (holder.childCount != max)
+            {
+                for (int i = holder.childCount - 1; i >= 0; i--)
+                    Object.Destroy(holder.GetChild(i).gameObject);
+                for (int i = 0; i < max; i++)
+                {
+                    GameObject pip = W.Go("Pip" + i, holder);
+                    W.TL(pip, i * 16f, 0f, 12f, 20f);
+                    Image im = pip.AddComponent<Image>();
+                    im.sprite = UISprites.RoundedRect(12, 20, 3f, Color.white, Color.clear, 0f, 0f);
+                    im.raycastTarget = false;
+                }
+            }
+            bool mirror = holder == _oppPips;
+            for (int i = 0; i < holder.childCount; i++)
+            {
+                Image im = holder.GetChild(i).GetComponent<Image>();
+                int idx = mirror ? i : holder.childCount - 1 - i;
+                im.color = idx < life ? Theme.Accent400 : Theme.Edge;
+            }
         }
 
         private static void Refresh()
