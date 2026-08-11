@@ -146,25 +146,57 @@ namespace LogPose.UI
 
         // The fan raises while the pointer is near it (with hysteresis so it doesn't
         // flicker at the boundary) and always during mulligan; otherwise it tucks so
-        // the DON!! band and piles stay readable. Also re-runs the hand layout when the
-        // acting seat flips, so the solo dock follows whose turn it is.
+        // the DON!! band and piles stay readable. Also drives the solo turn-flip: when
+        // the acting seat changes, the board halves swap and everything re-places.
         private static void UpdateHandTuck()
         {
             try
             {
-                // Raise only from the very bottom edge so the DON!! strip above the hand
-                // stays clickable while tucked; once raised, stay up until the pointer
-                // leaves the hand region entirely.
                 bool preGame = _gls.gsv_CurrentGame == null || _gls.gsv_CurrentGame.iTurnNumber < 1;
                 float frac = Input.mousePosition.y / Mathf.Max(Screen.height, 1);
                 bool raised = preGame
                     || (BoardLayoutPatches.HandRaised ? frac < 0.28f : frac < 0.08f);
                 int action = _gls.gsv_CurrentGame != null ? _gls.gsv_CurrentGame.iPlayerAction : -1;
-                if (raised == BoardLayoutPatches.HandRaised && action == _lastAction)
+                bool flip = !preGame && action == 1
+                    && _gls.e_GameStyle == GameStyle.SoloVSelf && !Replay.ReplayBridge.InReplay;
+                if (raised == BoardLayoutPatches.HandRaised && action == _lastAction
+                    && flip == BoardLayoutPatches.Flipped)
                     return;
                 BoardLayoutPatches.HandRaised = raised;
                 _lastAction = action;
-                _gls.RefreshHandPositions();
+                if (flip != BoardLayoutPatches.Flipped)
+                {
+                    // Pass the table across: swap which seat owns the bottom half and
+                    // let every zone tween to its new home.
+                    BoardLayoutPatches.Flipped = flip;
+                    BoardLayoutPatches.Rezone(_gls);
+                    RefreshAllPositions();
+                }
+                else
+                    _gls.RefreshHandPositions();
+            }
+            catch { }
+        }
+
+        private static void RefreshAllPositions()
+        {
+            _gls.RefreshHandPositions();
+            _gls.RefreshDeckPositions();
+            _gls.RefreshLeaderPositions();
+            _gls.RefreshLifePositions();
+            InvokePrivate("RefreshDeployPositions");
+            InvokePrivate("RefreshTrashPositions");
+            InvokePrivate("RefreshStagePositions");
+            InvokePrivate("RefreshDonPositions");
+        }
+
+        private static void InvokePrivate(string name)
+        {
+            try
+            {
+                var m = HarmonyLib.AccessTools.Method(typeof(GameplayLogicScript), name);
+                if (m != null)
+                    m.Invoke(_gls, null);
             }
             catch { }
         }
@@ -194,17 +226,16 @@ namespace LogPose.UI
                     _glowO = go != null ? go.GetComponent<Image>() : null;
                 }
                 Sprite matP = FieldMat.Get(false);
-                Sprite matO = FieldMat.Get(true);
                 if (_matP != null && matP != null && _matP.sprite != matP)
                     _matP.sprite = matP;
-                if (_matO != null && matO != null)
+                if (_matO != null && matP != null)
                 {
-                    if (_matO.sprite != matO)
-                        _matO.sprite = matO;
-                    // The design mirrors the opponent half vertically; the texture is
-                    // authored for that, so the vanilla 180-degree turn comes off.
-                    if (_matO.transform.localEulerAngles.z != 0f)
-                        _matO.transform.localRotation = Quaternion.identity;
+                    // The top half is the player texture rotated 180 — the traditional
+                    // across-the-table point mirror, matching the re-zoned top seats.
+                    if (_matO.sprite != matP)
+                        _matO.sprite = matP;
+                    if (Mathf.Abs(_matO.transform.localEulerAngles.z - 180f) > 0.5f)
+                        _matO.transform.localRotation = Quaternion.Euler(0f, 0f, 180f);
                 }
                 Color glow = Theme.WithA(Theme.Accent, 0.78f);
                 if (_glowP != null && _glowP.color != glow)
@@ -318,7 +349,7 @@ namespace LogPose.UI
                 if (ssb != null && ssb.localScale.x != 0.7f)
                     ssb.localScale = new Vector3(0.7f, 0.7f, 1f);
                 MoveEdge(cn, "P0HandCount", 115f, -500f, 0f, 0f, 0f);
-                Move(cn, "P1HandCount", F + 103f, 165f, 0f, 0f);      // beside the dock
+                Move(cn, "P1HandCount", F + 25f, 165f, 0f, 0f);       // beside the dock
                 Move(cn, "ActionActor", F + 298f, 0f, 0f, 0f);        // resolving card, over the mat
 
                 Transform guide = cn.Find("GuideText");
@@ -374,15 +405,16 @@ namespace LogPose.UI
                     Theme.Accent300, 600, TextAlignmentOptions.Center, false, 0.16f);
                 W.Fill(_centerLabel.gameObject);
 
-                // Player counters stack in a column just right of the mat — the deck
+                // Bottom counters stack in a column just right of the mat — the deck
                 // pile's card stack grows toward the band's inner edge and would cover
-                // an in-band row. The opponent's pile grows away, so their row fits.
+                // an in-band row. The top half's row sits under its (mirrored, left-side)
+                // piles, which its stacks grow away from.
                 _donP = Counter(t, 368f, 300f, 150f, TextAlignmentOptions.MidlineLeft);
                 _deckP = Counter(t, 368f, 338f, 150f, TextAlignmentOptions.MidlineLeft);
                 _trashP = Counter(t, 368f, 376f, 150f, TextAlignmentOptions.MidlineLeft);
-                _donO = Counter(t, 5f, -338f, 130f, TextAlignmentOptions.MidlineRight);
-                _deckO = Counter(t, 145f, -338f, 100f, TextAlignmentOptions.Center);
-                _trashO = Counter(t, 255f, -338f, 100f, TextAlignmentOptions.Center);
+                _trashO = Counter(t, -355f, -338f, 100f, TextAlignmentOptions.Center);
+                _deckO = Counter(t, -245f, -338f, 100f, TextAlignmentOptions.Center);
+                _donO = Counter(t, -135f, -338f, 140f, TextAlignmentOptions.MidlineLeft);
             }
             if (_fieldLabels.anchoredPosition.x != F)
                 _fieldLabels.anchoredPosition = new Vector2(F, 0f);
@@ -652,8 +684,9 @@ namespace LogPose.UI
             {
                 if (_donP == null || _gls.Lps_Players == null || _gls.Lps_Players.Count < 2)
                     return;
-                CounterTexts(0, _donP, _deckP, _trashP);
-                CounterTexts(1, _donO, _deckO, _trashO);
+                int bottom = BoardLayoutPatches.Flipped ? 1 : 0;
+                CounterTexts(bottom, _donP, _deckP, _trashP);
+                CounterTexts(1 - bottom, _donO, _deckO, _trashO);
             }
             catch { }
         }
@@ -727,16 +760,21 @@ namespace LogPose.UI
         {
             try
             {
-                if (_vanOppName != null && !string.IsNullOrEmpty(_vanOppName.text))
-                    _oppName.text = _vanOppName.text;
-                if (_vanPlName != null && !string.IsNullOrEmpty(_vanPlName.text))
-                    _plName.text = _vanPlName.text;
+                // With the solo turn-flip, the HUD's bottom-right group always shows the
+                // seat currently playing from the bottom half.
+                int bottom = BoardLayoutPatches.Flipped ? 1 : 0;
+                TMP_Text vanBottom = bottom == 0 ? _vanPlName : _vanOppName;
+                TMP_Text vanTop = bottom == 0 ? _vanOppName : _vanPlName;
+                if (vanTop != null && !string.IsNullOrEmpty(vanTop.text))
+                    _oppName.text = vanTop.text;
+                if (vanBottom != null && !string.IsNullOrEmpty(vanBottom.text))
+                    _plName.text = vanBottom.text;
                 if (_gls.Lps_Players != null && _gls.Lps_Players.Count >= 2)
                 {
-                    _plLeader.text = LeaderId(0);
-                    _oppLeader.text = LeaderId(1);
-                    RefreshPips(_plPips, 0);
-                    RefreshPips(_oppPips, 1);
+                    _plLeader.text = LeaderId(bottom);
+                    _oppLeader.text = LeaderId(1 - bottom);
+                    RefreshPips(_plPips, bottom);
+                    RefreshPips(_oppPips, 1 - bottom);
                 }
             }
             catch { }
@@ -806,7 +844,8 @@ namespace LogPose.UI
 
                 if (_centerLabel != null && _gls.gsv_CurrentGame != null)
                 {
-                    bool mine = _gls.gsv_CurrentGame.iPlayerAction == 0;
+                    // With the solo turn-flip the acting seat is always the bottom one.
+                    bool mine = (_gls.gsv_CurrentGame.iPlayerAction == 0) != BoardLayoutPatches.Flipped;
                     _centerLabel.text = mine ? "YOUR TURN" : "OPPONENT'S TURN";
                     _centerLabel.color = mine ? Theme.Accent300 : Theme.TextMuted;
                 }

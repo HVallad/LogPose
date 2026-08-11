@@ -34,24 +34,46 @@ namespace LogPose.UI
                 LocationPlayer p = seats[s];
                 if (p == null)
                     continue;
-                bool opp = (s % 2) == 1;
-                float ys = opp ? 1f : -1f;
-                Z(p.deck, 195f, 408f * ys, 0.75f);
-                Z(p.donDeck, -300f, 408f * ys, 2f);
-                Z(p.leader, opp ? -48f : 48f, 250f * ys);
-                Z(p.life, -300f, 238f * ys, opp ? -25f : 25f);
-                Z(p.donCost, -190f, 408f * ys, 30f);
-                Z(p.deploy, -200f, 90f * ys, 120f);
-                Z(p.discard, 305f, 408f * ys, 0.5f);
-                Z(p.stage, opp ? -167f : 167f, 250f * ys);
-                // The reveal row tracks the field so it can't slide off narrow screens
-                // (donEquipped stays vanilla — it's a relative offset).
+                // Which HALF of the board this seat occupies: seat parity, inverted while
+                // the solo turn-flip has the second seat playing from the bottom.
+                bool bottomStyle = ((s % 2) == 0) != Flipped;
+                if (bottomStyle)
+                {
+                    Z(p.deck, 195f, -408f, 0.75f);
+                    Z(p.donDeck, -300f, -408f, 2f);
+                    Z(p.leader, 48f, -250f);
+                    Z(p.life, -300f, -238f, 25f);
+                    Z(p.donCost, -190f, -408f, 30f);
+                    Z(p.deploy, -200f, -90f, 120f);
+                    Z(p.discard, 305f, -408f, 0.5f);
+                    Z(p.stage, 167f, -250f);
+                    Equip(p, -20f, -30f, 5f, -10f);
+                    if (p.hand != null)
+                    { p.hand.x = FieldShift - 487f; p.hand.y = -430f; p.hand.step = 100f; p.hand.width = 400f; }
+                }
+                else
+                {
+                    // Point mirror of the bottom half — the traditional across-the-table
+                    // arrangement (their life opposite yours, deck/trash on the far side).
+                    // The top mat is the player texture rotated 180, which lands every
+                    // placard on these exact spots.
+                    Z(p.deck, -195f, 408f, 0.75f);
+                    Z(p.donDeck, 300f, 408f, 2f);
+                    Z(p.leader, -48f, 250f);
+                    Z(p.life, 300f, 238f, -25f);
+                    Z(p.donCost, 190f, 408f, -30f);
+                    Z(p.deploy, 200f, 90f, -120f);
+                    Z(p.discard, -305f, 408f, 0.5f);
+                    Z(p.stage, -167f, 250f);
+                    Equip(p, 20f, 30f, -5f, 10f);
+                    if (p.hand != null)
+                    { p.hand.x = FieldShift - 487f; p.hand.y = 430f; p.hand.step = 100f; p.hand.width = 400f; }
+                }
+                // The reveal row tracks the field so it can't slide off narrow screens.
                 if (p.topDeck != null)
                 { p.topDeck.x = FieldShift - 487f; p.topDeck.y = -275f; p.topDeck.step = 100f; p.topDeck.step2 = 50f; p.topDeck.width = 400f; }
                 if (p.topDeckSquish != null)
                 { p.topDeckSquish.x = FieldShift - 452f; p.topDeckSquish.y = -275f; p.topDeckSquish.step = 100f; p.topDeckSquish.step2 = 50f; p.topDeckSquish.width = 350f; }
-                if (p.hand != null)
-                { p.hand.x = FieldShift - 487f; p.hand.y = 430f * ys; p.hand.step = 100f; p.hand.width = 400f; }
             }
         }
 
@@ -63,6 +85,17 @@ namespace LogPose.UI
             l.y = y;
             if (!float.IsNaN(step))
                 l.step = step;
+        }
+
+        // The attached-DON offset is relative to its card, so it flips with the half.
+        private static void Equip(LocationPlayer p, float x, float y, float step, float step2)
+        {
+            if (p.donEquipped == null)
+                return;
+            p.donEquipped.x = x;
+            p.donEquipped.y = y;
+            p.donEquipped.step = step;
+            p.donEquipped.step2 = step2;
         }
 
         [HarmonyPostfix, HarmonyPatch(typeof(GameplayLogicScript), "SetupBoardObjects")]
@@ -77,11 +110,16 @@ namespace LogPose.UI
         // raises it (BoardHUD drives this and re-runs the layout on change).
         internal static bool HandRaised = true;
 
+        // Solo v Self flips the board between turns: the acting seat always plays from
+        // the bottom half with the full hand experience, like passing the table across.
+        // BoardHUD toggles this on iPlayerAction changes and forces a full re-place.
+        internal static bool Flipped;
+
         // Frame 2a's hand presentation, written through MoveTo after each vanilla layout
         // pass (raw transform writes get pulled back by the tween; rotations persist).
-        // Player 0: centered fan under the mat. Player 1: a compact face-down cluster
-        // docked beside their leader — in Solo v Self only while that side is not the
-        // one acting (their hand is actively played there); replays always dock it.
+        // The seat on the bottom half gets the centered fan; the seat on the top half
+        // gets a compact cluster docked beside its leader. With the solo turn-flip,
+        // "bottom" is whoever is acting.
         [HarmonyPostfix, HarmonyPatch(typeof(GameplayLogicScript), "RefreshHandPositions")]
         private static void RefreshHandPositions_Postfix(GameplayLogicScript __instance)
         {
@@ -91,36 +129,21 @@ namespace LogPose.UI
             {
                 if (__instance.Lps_Players == null || __instance.Lps_Players.Count == 0)
                     return;
-                FanPlayerHand(__instance);
-                if (__instance.Lps_Players.Count > 1 && DockWanted(__instance))
-                    DockOpponentHand(__instance);
+                int bottom = Flipped ? 1 : 0;
+                FanHand(__instance, bottom);
+                if (__instance.Lps_Players.Count > 1)
+                    DockHand(__instance, 1 - bottom);
             }
             catch { }
         }
 
-        internal static bool DockWanted(GameplayLogicScript gls)
+        private static void FanHand(GameplayLogicScript gls, int seat)
         {
-            if (Replay.ReplayBridge.InReplay)
-                return true;
-            if (gls.e_GameStyle != GameStyle.SoloVSelf)
-                return true;
-            // Solo: dock the second hand except while that seat is the one acting
-            // mid-game. Mulligan docks too — the cluster is face-up and hoverable,
-            // which is enough to make the keep/mulligan call.
-            return gls.gsv_CurrentGame == null || gls.gsv_CurrentGame.iTurnNumber < 1
-                || gls.gsv_CurrentGame.iPlayerAction == 0;
-        }
-
-        private static void FanPlayerHand(GameplayLogicScript gls)
-        {
-            List<GameObject> hand = gls.Lps_Players[0].Lgo_MyHand;
+            List<GameObject> hand = gls.Lps_Players[seat].Lgo_MyHand;
             if (hand == null || hand.Count == 0)
                 return;
             int n = hand.Count;
-            LocationSet loc = gls.sc_Locations.playerLocations[gls.bFlipField ? 2 : 0].hand;
             float baseY = -430f;
-            if (loc != null && loc.y < 0f)
-                baseY = loc.y;
             if (!HandRaised)
                 baseY -= 95f;   // tuck: a slim peek stays above the screen edge
             float m = (n - 1) * 0.5f;
@@ -138,9 +161,9 @@ namespace LogPose.UI
             }
         }
 
-        private static void DockOpponentHand(GameplayLogicScript gls)
+        private static void DockHand(GameplayLogicScript gls, int seat)
         {
-            List<GameObject> hand = gls.Lps_Players[1].Lgo_MyHand;
+            List<GameObject> hand = gls.Lps_Players[seat].Lgo_MyHand;
             if (hand == null || hand.Count == 0)
                 return;
             int n = hand.Count;
@@ -154,8 +177,9 @@ namespace LogPose.UI
                 if (cls == null)
                     return;
                 float k = i - m;
-                cls.MoveTo(new Vector3(FieldShift + 185f + k * dx, 252f - Mathf.Abs(k) * 3f));
-                hand[i].transform.localRotation = Quaternion.Euler(0f, 0f, -k * 3f);
+                // Docked in the free middle-row slot between the top leader and life.
+                cls.MoveTo(new Vector3(FieldShift + 140f + k * dx, 252f - Mathf.Abs(k) * 3f));
+                hand[i].transform.localRotation = Quaternion.Euler(0f, 0f, k * 3f);
             }
         }
     }
