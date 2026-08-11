@@ -157,6 +157,7 @@ namespace LogPose.UI
             QuietLink(t, 192f, "Help", () => Invoke("Help"));
             QuietLink(t, 262f, "Credits", () => Invoke("Credits"));
             QuietLink(t, 352f, "Sign out", () => Invoke("Sign Out"));
+            QuietLink(t, 452f, "Colorway · " + ColorwayName(), ToggleColorway);
 
             Plugin.Log.LogInfo("Menu reskin built (" + Vanilla.Count + " vanilla buttons wired).");
         }
@@ -334,6 +335,26 @@ namespace LogPose.UI
         private static void OpenMatchHistory()
         {
             Replay.MatchHistoryUI.Open(_hjs);
+        }
+
+        private static string ColorwayName()
+        {
+            string v = Plugin.CfgUiColorway.Value;
+            return v != null && v.Trim().ToLowerInvariant() == "batsu" ? "Batsu" : "Nocturne";
+        }
+
+        // Live-switches the LogPose-built surfaces (menu, mats, board chrome). Screens the
+        // in-place restyler already converted keep the old accent until the next launch —
+        // the one-way sprite swap can't be re-keyed.
+        private static void ToggleColorway()
+        {
+            Plugin.CfgUiColorway.Value = ColorwayName() == "Batsu" ? "Nocturne" : "Batsu";
+            BoardHUD.InvalidateTheme();
+            if (_root != null)
+            {
+                UnityEngine.Object.Destroy(_root);
+                _root = null;
+            }
         }
 
         private static void RefreshUpdatePill()

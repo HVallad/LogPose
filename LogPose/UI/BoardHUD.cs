@@ -92,6 +92,27 @@ namespace LogPose.UI
             }
         }
 
+        // Colorway switched at runtime: drop every cached sprite and the scene chrome so
+        // they rebuild with the new tokens. The overlay root is kept — it holds the
+        // adopted vanilla timer labels, which the game still writes to.
+        internal static void InvalidateTheme()
+        {
+            _sprEnd = _sprEndHover = _sprEndPress = null;
+            _sprSec = _sprSecHover = _sprSecPress = null;
+            _sprDanger = _sprDangerHover = null;
+            if (_railPanel != null)
+            {
+                Object.Destroy(_railPanel.gameObject);
+                _railPanel = null;
+            }
+            if (_matChrome != null)
+            {
+                Object.Destroy(_matChrome.gameObject);
+                _matChrome = null;
+            }
+            _matP = _matO = _glowP = _glowO = null;
+        }
+
         // ------------------------------------------------------------------ field ------
 
         private static Image _matP, _matO, _glowP, _glowO;
