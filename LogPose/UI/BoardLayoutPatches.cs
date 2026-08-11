@@ -104,9 +104,11 @@ namespace LogPose.UI
                 return true;
             if (gls.e_GameStyle != GameStyle.SoloVSelf)
                 return true;
-            // Solo: dock the second hand while the first seat is acting.
-            return gls.gsv_CurrentGame != null && gls.gsv_CurrentGame.iTurnNumber >= 1
-                && gls.gsv_CurrentGame.iPlayerAction == 0;
+            // Solo: dock the second hand except while that seat is the one acting
+            // mid-game. Mulligan docks too — the cluster is face-up and hoverable,
+            // which is enough to make the keep/mulligan call.
+            return gls.gsv_CurrentGame == null || gls.gsv_CurrentGame.iTurnNumber < 1
+                || gls.gsv_CurrentGame.iPlayerAction == 0;
         }
 
         private static void FanPlayerHand(GameplayLogicScript gls)

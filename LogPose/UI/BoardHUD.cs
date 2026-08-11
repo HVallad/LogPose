@@ -293,12 +293,13 @@ namespace LogPose.UI
                 MoveEdge(cn, "CancelMatch", -444f, -460f, 200f, 56f, 1f);
                 MoveEdge(cn, "Volume", -184f, -470f, 0f, 0f, 1f);
                 MoveEdge(cn, "Music", -116f, -470f, 0f, 0f, 1f);
-                RectTransform ss = MoveEdge(cn, "SaveState", 96f, 60f, 0f, 0f, 0f);
-                if (ss != null && ss.localScale.x != 0.8f)
-                    ss.localScale = new Vector3(0.8f, 0.8f, 1f);
-                RectTransform ssb = MoveEdge(cn, "SaveStateButtons", 110f, -30f, 0f, 0f, 0f);
-                if (ssb != null && ssb.localScale.x != 0.8f)
-                    ssb.localScale = new Vector3(0.8f, 0.8f, 1f);
+                // Solo save-state tools live in the rail's bottom corner, off the field.
+                RectTransform ss = MoveEdge(cn, "SaveState", -775f, -465f, 0f, 0f, 1f);
+                if (ss != null && ss.localScale.x != 0.7f)
+                    ss.localScale = new Vector3(0.7f, 0.7f, 1f);
+                RectTransform ssb = MoveEdge(cn, "SaveStateButtons", -640f, -465f, 0f, 0f, 1f);
+                if (ssb != null && ssb.localScale.x != 0.7f)
+                    ssb.localScale = new Vector3(0.7f, 0.7f, 1f);
                 MoveEdge(cn, "P0HandCount", 115f, -500f, 0f, 0f, 0f);
                 Move(cn, "P1HandCount", F + 103f, 165f, 0f, 0f);      // beside the dock
                 Move(cn, "ActionActor", F + 298f, 0f, 0f, 0f);        // resolving card, over the mat
