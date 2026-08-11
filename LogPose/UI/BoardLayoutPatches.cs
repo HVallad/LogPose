@@ -39,13 +39,16 @@ namespace LogPose.UI
                 bool bottomStyle = ((s % 2) == 0) != Flipped;
                 if (bottomStyle)
                 {
-                    Z(p.deck, 195f, -408f, 0.75f);
-                    Z(p.donDeck, -300f, -408f, 2f);
+                    // Official mat structure: the deck shares the leader row (far right),
+                    // the trash sits directly below it, and the DON!! strip runs the whole
+                    // outer band from the DON!! deck to the trash.
+                    Z(p.deck, 380f, -250f, 0.75f);
+                    Z(p.donDeck, -375f, -408f, 2f);
                     Z(p.leader, 48f, -250f);
-                    Z(p.life, -300f, -238f, 25f);
-                    Z(p.donCost, -190f, -408f, 30f);
-                    Z(p.deploy, -200f, -90f, 120f);
-                    Z(p.discard, 305f, -408f, 0.5f);
+                    Z(p.life, -375f, -238f, 25f);
+                    Z(p.donCost, -280f, -408f, 58f);
+                    Z(p.deploy, -240f, -90f, 140f);
+                    Z(p.discard, 380f, -408f, 0.5f);
                     Z(p.stage, 167f, -250f);
                     Equip(p, -20f, -30f, 5f, -10f);
                     if (p.hand != null)
@@ -57,13 +60,13 @@ namespace LogPose.UI
                     // arrangement (their life opposite yours, deck/trash on the far side).
                     // The top mat is the player texture rotated 180, which lands every
                     // placard on these exact spots.
-                    Z(p.deck, -195f, 408f, 0.75f);
-                    Z(p.donDeck, 300f, 408f, 2f);
+                    Z(p.deck, -380f, 250f, 0.75f);
+                    Z(p.donDeck, 375f, 408f, 2f);
                     Z(p.leader, -48f, 250f);
-                    Z(p.life, 300f, 238f, -25f);
-                    Z(p.donCost, 190f, 408f, -30f);
-                    Z(p.deploy, 200f, 90f, -120f);
-                    Z(p.discard, -305f, 408f, 0.5f);
+                    Z(p.life, 375f, 238f, -25f);
+                    Z(p.donCost, 280f, 408f, -58f);
+                    Z(p.deploy, 240f, 90f, -140f);
+                    Z(p.discard, -380f, 408f, 0.5f);
                     Z(p.stage, -167f, 250f);
                     Equip(p, 20f, 30f, -5f, 10f);
                     if (p.hand != null)
@@ -147,7 +150,7 @@ namespace LogPose.UI
             if (!HandRaised)
                 baseY -= 95f;   // tuck: a slim peek stays above the screen edge
             float m = (n - 1) * 0.5f;
-            float dx = Mathf.Min(110f, 760f / Mathf.Max(n, 1));
+            float dx = Mathf.Min(112f, 820f / Mathf.Max(n, 1));
             for (int i = 0; i < n; i++)
             {
                 if (hand[i] == null)

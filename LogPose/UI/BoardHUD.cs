@@ -35,7 +35,14 @@ namespace LogPose.UI
         private static RectTransform _fieldLabels;
         private static Image _centerChip;
         private static TextMeshProUGUI _centerLabel;
-        private static TextMeshProUGUI _donP, _deckP, _trashP, _donO, _deckO, _trashO;
+
+        // Vanilla-style pile counts: one chip that appears beside whichever zone the
+        // pointer is over (deck, trash, DON!!, life, hand) instead of always-on labels.
+        // Lives on its own field-anchored container kept at the top of the canvas so
+        // the tooltip draws over cards (inside _fieldLabels it hid behind the piles).
+        private static RectTransform _hoverRoot;
+        private static RectTransform _hoverChip;
+        private static TextMeshProUGUI _hoverLabel;
 
         // Game-canvas chrome (scene objects die on reload; recreated when null).
         private static RectTransform _railPanel, _matChrome;
@@ -50,8 +57,9 @@ namespace LogPose.UI
             if (_gls != null && Plugin.CfgUiReskin.Value
                 && _gls.e_CurrentState != GameplayState.MainMenu)
             {
-                StackChoices();   // every frame: choice buttons restyle the moment they appear
-                UpdateHandTuck(); // every frame: the fan follows the pointer's intent
+                StackChoices();     // every frame: choice buttons restyle the moment they appear
+                UpdateHandTuck();   // every frame: the fan follows the pointer's intent
+                UpdateHoverCount(); // every frame: pile counts follow the pointer
             }
             if (!poll)
                 return;
@@ -81,8 +89,8 @@ namespace LogPose.UI
                 float w = ((RectTransform)_gls.cn_Canvas.transform).rect.width;
                 if (w > 100f)
                 {
-                    // The field centers itself in everything left of the rail (620 + gaps).
-                    _fieldFromLeft = Mathf.Clamp((w - 668f) * 0.5f, 380f, 700f);
+                    // The field centers itself in everything left of the rail (520 + gaps).
+                    _fieldFromLeft = Mathf.Clamp((w - 568f) * 0.5f, 400f, 760f);
                     BoardLayoutPatches.FieldShift = _fieldFromLeft - w * 0.5f;
                     _canvasW = w;
                 }
@@ -100,6 +108,8 @@ namespace LogPose.UI
                 _matChrome.gameObject.SetActive(inGameAtAll);
             if (_fieldLabels != null && _fieldLabels.gameObject.activeSelf != inGameAtAll)
                 _fieldLabels.gameObject.SetActive(inGameAtAll);
+            if (_hoverRoot != null && _hoverRoot.gameObject.activeSelf != inGameAtAll)
+                _hoverRoot.gameObject.SetActive(inGameAtAll);
 
             bool inGame = inGameAtAll
                 && _gls.gsv_CurrentGame != null
@@ -114,7 +124,6 @@ namespace LogPose.UI
             {
                 Refresh();
                 RefreshSides();
-                RefreshCounters();
             }
         }
 
@@ -140,6 +149,13 @@ namespace LogPose.UI
             {
                 Object.Destroy(_fieldLabels.gameObject);
                 _fieldLabels = null;
+            }
+            if (_hoverRoot != null)
+            {
+                Object.Destroy(_hoverRoot.gameObject);
+                _hoverRoot = null;
+                _hoverChip = null;
+                _hoverLabel = null;
             }
             _matP = _matO = _glowP = _glowO = null;
         }
@@ -231,6 +247,12 @@ namespace LogPose.UI
                 Sprite matP = FieldMat.Get(false);
                 if (_matP != null && matP != null && _matP.sprite != matP)
                     _matP.sprite = matP;
+                // The mat art is authored 860x500 per half; the vanilla playmat rects are
+                // narrower, so size them explicitly or the texture squeezes.
+                if (_matP != null && _matP.rectTransform.sizeDelta.x != 860f)
+                    _matP.rectTransform.sizeDelta = new Vector2(860f, 500f);
+                if (_matO != null && _matO.rectTransform.sizeDelta.x != 860f)
+                    _matO.rectTransform.sizeDelta = new Vector2(860f, 500f);
                 if (_matO != null && matP != null)
                 {
                     // The top half is the player texture rotated 180 — the traditional
@@ -281,13 +303,13 @@ namespace LogPose.UI
                     int target = side.GetSiblingIndex();
                     if (_matChrome.GetSiblingIndex() > target)
                         _matChrome.SetSiblingIndex(target);
-                    C(_matChrome, F, 0f, 790f, 1044f);
+                    C(_matChrome, F, 0f, 940f, 1044f);
                 }
 
                 Transform log = cn.Find("LogScrollView");
                 if (log != null)
                 {
-                    if (_railPanel != null && _railPanel.sizeDelta.x != 620f)
+                    if (_railPanel != null && _railPanel.sizeDelta.x != 520f)
                     {
                         Object.Destroy(_railPanel.gameObject);   // rebuilt at the new width
                         _railPanel = null;
@@ -303,17 +325,17 @@ namespace LogPose.UI
                         _railPanel = rp.GetComponent<RectTransform>();
                         W.Label(rp.transform, "COMBAT LOG", 24f, 20f, 300f, 20f, 12f,
                             Theme.WithA(Theme.Text, 0.55f), 600, TextAlignmentOptions.TopLeft, false, 0.12f);
-                        W.Rule(rp.transform, 16f, 56f, 588f);
+                        W.Rule(rp.transform, 16f, 56f, 488f);
                     }
                     int target = log.GetSiblingIndex();
                     if (_railPanel.GetSiblingIndex() > target)
                         _railPanel.SetSiblingIndex(target);
-                    // The rail hugs the RIGHT edge, slimmed to 620 so the field zone gets
+                    // The rail hugs the RIGHT edge, slimmed to 520 so the field zone gets
                     // the lion's share of the width.
-                    R(_railPanel, -334f, 153f, 620f, 566f);
+                    R(_railPanel, -284f, 153f, 520f, 566f);
 
                     RectTransform lrt = (RectTransform)log;
-                    R(lrt, -334f, 122f, 592f, 496f);
+                    R(lrt, -284f, 122f, 492f, 496f);
                     Image li = log.GetComponent<Image>();
                     if (li != null && li.enabled)
                         li.enabled = false;
@@ -322,13 +344,13 @@ namespace LogPose.UI
                         RectTransform content = log.GetChild(0).GetChild(0) as RectTransform;
                         if (content != null)
                         {
-                            if (content.sizeDelta.x != 572f)
-                                content.sizeDelta = new Vector2(572f, content.sizeDelta.y);
+                            if (content.sizeDelta.x != 472f)
+                                content.sizeDelta = new Vector2(472f, content.sizeDelta.y);
                             for (int i = 0; i < content.childCount; i++)
                             {
                                 RectTransform line = content.GetChild(i) as RectTransform;
-                                if (line != null && line.sizeDelta.x != 552f)
-                                    line.sizeDelta = new Vector2(552f, line.sizeDelta.y);
+                                if (line != null && line.sizeDelta.x != 452f)
+                                    line.sizeDelta = new Vector2(452f, line.sizeDelta.y);
                             }
                         }
                     }
@@ -338,8 +360,8 @@ namespace LogPose.UI
                 // re-writes their spots each game start, so this re-imposes every poll).
                 // Rail-side objects anchor to the RIGHT edge (design-x minus 960) so a
                 // narrower-than-16:9 canvas can't clip them; solo tools hug the LEFT.
-                MoveBtn(cn, "BackToMain", -179f, -372f, 300f, 56f, 15f, BtnKind.Danger);
-                MoveBtn(cn, "ReportBug", -489f, -372f, 300f, 56f, 13f, BtnKind.Secondary);
+                MoveBtn(cn, "BackToMain", -157f, -372f, 245f, 56f, 15f, BtnKind.Danger);
+                MoveBtn(cn, "ReportBug", -412f, -372f, 245f, 56f, 13f, BtnKind.Secondary);
                 MoveBtn(cn, "DownloadLog", -120f, 408f, 130f, 40f, 12f, BtnKind.Secondary);
                 // Bottom utility row, left to right: save-state tools, cancel, sound.
                 MoveEdge(cn, "CancelMatch", -270f, -462f, 170f, 48f, 1f);
@@ -351,23 +373,37 @@ namespace LogPose.UI
                 RectTransform ssb = MoveEdge(cn, "SaveStateButtons", -450f, -465f, 0f, 0f, 1f);
                 if (ssb != null && ssb.localScale.x != 0.7f)
                     ssb.localScale = new Vector3(0.7f, 0.7f, 1f);
-                MoveEdge(cn, "P0HandCount", 115f, -500f, 0f, 0f, 0f);
-                Move(cn, "P1HandCount", F + 25f, 165f, 0f, 0f);       // beside the dock
-                Move(cn, "ActionActor", F + 298f, 0f, 0f, 0f);        // resolving card, over the mat
+                // The vanilla per-pile hover numbers (ShowFocusedCard toggles them) float
+                // at old-layout spots — the LogPose hover chip replaces the whole set.
+                MoveEdge(cn, "P0HandCount", 115f, -700f, 0f, 0f, 0f);
+                MoveEdge(cn, "P1HandCount", 115f, -700f, 0f, 0f, 0f);
+                MoveEdge(cn, "P0DeckCount", 115f, -700f, 0f, 0f, 0f);
+                MoveEdge(cn, "P1DeckCount", 115f, -700f, 0f, 0f, 0f);
+                MoveEdge(cn, "P0DonCount", 115f, -700f, 0f, 0f, 0f);
+                MoveEdge(cn, "P1DonCount", 115f, -700f, 0f, 0f, 0f);
+                MoveEdge(cn, "P0TrashCount", 115f, -700f, 0f, 0f, 0f);
+                MoveEdge(cn, "P1TrashCount", 115f, -700f, 0f, 0f, 0f);
+                MoveEdge(cn, "P0LifeCount", 115f, -700f, 0f, 0f, 0f);
+                MoveEdge(cn, "P1LifeCount", 115f, -700f, 0f, 0f, 0f);
+                Move(cn, "ActionActor", F + 320f, 0f, 0f, 0f);        // resolving card, over the mat
 
                 Transform guide = cn.Find("GuideText");
                 if (guide != null)
                 {
                     RectTransform grt = guide as RectTransform;
                     A(grt, 1f);
-                    grt.anchoredPosition = new Vector2(-334f, -95f);
-                    grt.sizeDelta = new Vector2(560f, 48f);
+                    grt.anchoredPosition = new Vector2(-284f, -95f);
+                    grt.sizeDelta = new Vector2(470f, 48f);
                     TMP_Text gt = guide.GetComponent<TMP_Text>();
                     if (gt != null)
                         gt.alignment = TextAlignmentOptions.Center;
                 }
 
                 EnsureFieldLabels(cn, F);
+                // Keep the hover tip above the card layers; the preview (below) re-raises
+                // itself after, so an enlarged card still covers the tip.
+                if (_hoverRoot != null && _hoverRoot.GetSiblingIndex() != cn.childCount - 1)
+                    _hoverRoot.SetAsLastSibling();
 
                 Transform prev = cn.Find("CardPreview");
                 if (prev != null)
@@ -375,7 +411,7 @@ namespace LogPose.UI
                     // Shrunk just enough that the action rows stay visible while hovering.
                     RectTransform prt = prev as RectTransform;
                     A(prt, 1f);
-                    prt.anchoredPosition = new Vector2(-334f, 140f);
+                    prt.anchoredPosition = new Vector2(-284f, 140f);
                     prt.sizeDelta = new Vector2(400f, 562f);
                     if (prev.GetSiblingIndex() != cn.childCount - 1)
                         prev.SetAsLastSibling();
@@ -396,7 +432,7 @@ namespace LogPose.UI
                 _fieldLabels.sizeDelta = Vector2.zero;
                 Transform t = fl.transform;
 
-                _ = W.Rule(t, -355f, -0.5f, 710f);
+                _ = W.Rule(t, -430f, -0.5f, 860f);
                 GameObject cc = W.Go("CenterChip", t);
                 W.TL(cc, -90f, -12f, 180f, 25f);
                 _centerChip = cc.AddComponent<Image>();
@@ -408,20 +444,126 @@ namespace LogPose.UI
                     Theme.Accent300, 600, TextAlignmentOptions.Center, false, 0.16f);
                 W.Fill(_centerLabel.gameObject);
 
-                // Bottom counters stack in a column just right of the mat — the deck
-                // pile's card stack grows toward the band's inner edge and would cover
-                // an in-band row. The top half's row sits under its (mirrored, left-side)
-                // piles, which its stacks grow away from.
-                _donP = Counter(t, 368f, 300f, 150f, TextAlignmentOptions.MidlineLeft);
-                _deckP = Counter(t, 368f, 338f, 150f, TextAlignmentOptions.MidlineLeft);
-                _trashP = Counter(t, 368f, 376f, 150f, TextAlignmentOptions.MidlineLeft);
-                _trashO = Counter(t, -355f, -338f, 100f, TextAlignmentOptions.Center);
-                _deckO = Counter(t, -245f, -338f, 100f, TextAlignmentOptions.Center);
-                _donO = Counter(t, -135f, -338f, 140f, TextAlignmentOptions.MidlineLeft);
             }
             if (_fieldLabels.anchoredPosition.x != F)
                 _fieldLabels.anchoredPosition = new Vector2(F, 0f);
+
+            if (_hoverRoot == null)
+            {
+                GameObject hr = W.Go("LogPoseHoverTip", cn);
+                _hoverRoot = hr.GetComponent<RectTransform>();
+                _hoverRoot.sizeDelta = Vector2.zero;
+                GameObject hc = W.Go("HoverCount", hr.transform);
+                _hoverChip = hc.GetComponent<RectTransform>();
+                _hoverChip.sizeDelta = new Vector2(170f, 30f);
+                // Cards carry nested Canvases with sorting overrides (vanilla's counts
+                // used order 175 to beat them) — sibling order alone can't put the tip
+                // above the piles.
+                Canvas hcv = hc.AddComponent<Canvas>();
+                hcv.overrideSorting = true;
+                hcv.sortingOrder = 300;   // hovered/raised cards boost above 175
+                Image hbg = hc.AddComponent<Image>();
+                hbg.sprite = UISprites.RoundedRect(24, 24, 6f, Theme.WithA(Theme.Ground, 0.92f),
+                    Theme.WithA(Theme.Accent, 0.5f), 1f, 7f);
+                hbg.type = Image.Type.Sliced;
+                hbg.raycastTarget = false;
+                _hoverLabel = W.Label(hc.transform, "", 0f, 0f, 170f, 30f, 13f,
+                    Theme.Accent300, 600, TextAlignmentOptions.Center, false, 0.1f);
+                W.Fill(_hoverLabel.gameObject);
+                hc.SetActive(false);
+            }
+            if (_hoverRoot.anchoredPosition.x != F)
+                _hoverRoot.anchoredPosition = new Vector2(F, 0f);
         }
+
+        // -------------------------------------------------------- hover pile counts ---
+
+        // Bottom-half zone rects (relative to the field center) with a chip spot shifted
+        // toward the board middle. The top seat uses the point-mirrored rects, except the
+        // hand: the top hand is a compact dock beside its leader, not a mirrored fan.
+        // kinds: 0 deck, 1 trash, 2 don deck, 3 don cost, 4 life, 5 hand
+        private static readonly float[][] HoverZones =
+        {
+            //           x       y      w      h     chipX   chipY  kind
+            new[] {  380f, -250f, 130f, 170f,  380f, -140f, 0f },
+            new[] {  380f, -408f, 130f, 170f,  380f, -298f, 1f },
+            new[] { -375f, -408f, 130f, 170f, -375f, -298f, 2f },
+            new[] {  -19f, -408f, 610f, 170f,    0f, -298f, 3f },
+            new[] { -375f, -170f, 130f, 320f, -240f, -170f, 4f },
+            new[] {    0f, -500f, 880f, 280f,    0f, -340f, 5f },
+        };
+
+        private static void UpdateHoverCount()
+        {
+            if (_hoverChip == null || _fieldLabels == null || _gls.cn_Canvas == null
+                || _gls.Lps_Players == null || _gls.Lps_Players.Count < 2)
+                return;
+            Canvas cv = _gls.cn_Canvas.GetComponent<Canvas>();
+            Vector2 p;
+            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                (RectTransform)_gls.cn_Canvas.transform, Input.mousePosition,
+                cv != null && cv.renderMode != RenderMode.ScreenSpaceOverlay ? cv.worldCamera : null,
+                out p))
+            { _hoverChip.gameObject.SetActive(false); return; }
+            p.x -= BoardLayoutPatches.FieldShift;
+
+            int bottom = BoardLayoutPatches.Flipped ? 1 : 0;
+            string text = null;
+            Vector2 chip = Vector2.zero;
+            foreach (float[] z in HoverZones)
+            {
+                // bottom seat: rect as authored; top seat: point mirror (skip the hand).
+                if (Mathf.Abs(p.x - z[0]) * 2f <= z[2] && Mathf.Abs(p.y - z[1]) * 2f <= z[3])
+                { text = CountText(bottom, (int)z[6]); chip = new Vector2(z[4], z[5]); break; }
+                if ((int)z[6] != 5
+                    && Mathf.Abs(p.x + z[0]) * 2f <= z[2] && Mathf.Abs(p.y + z[1]) * 2f <= z[3])
+                { text = CountText(1 - bottom, (int)z[6]); chip = new Vector2(-z[4], -z[5]); break; }
+            }
+            // Top seat's docked hand cluster, beside its leader.
+            if (text == null && Mathf.Abs(p.x - 140f) * 2f <= 300f && Mathf.Abs(p.y - 252f) * 2f <= 150f)
+            { text = CountText(1 - bottom, 5); chip = new Vector2(140f, 150f); }
+
+            if (Input.GetKeyDown(KeyCode.F10))
+                Plugin.Log.LogInfo("Hover p=" + p + " bottom=" + bottom
+                    + " flipped=" + BoardLayoutPatches.Flipped + " text=" + (text ?? "null"));
+
+            bool show = !string.IsNullOrEmpty(text);
+            if (_hoverChip.gameObject.activeSelf != show)
+                _hoverChip.gameObject.SetActive(show);
+            if (show)
+            {
+                if (_hoverLabel.text != text)
+                    _hoverLabel.text = text;
+                if (_hoverChip.anchoredPosition != chip)
+                    _hoverChip.anchoredPosition = chip;
+            }
+        }
+
+        private static string CountText(int seat, int kind)
+        {
+            PlayerState ps = _gls.Lps_Players[seat];
+            switch (kind)
+            {
+                case 0: return "DECK " + N(ps.Lgo_MyDeck);
+                case 1: return "TRASH " + N(ps.Lgo_MyTrash);
+                case 2: return "DON!! DECK " + N(ps.Lgo_MyDonDeck);
+                case 3:
+                    int total = N(ps.Lgo_MyDonCostArea), active = 0;
+                    if (ps.Lgo_MyDonCostArea != null)
+                        foreach (GameObject g in ps.Lgo_MyDonCostArea)
+                        {
+                            if (g == null) continue;
+                            CardLogicScript cls = g.GetComponent<CardLogicScript>();
+                            if (cls != null && !cls.myCard.bTapped) active++;
+                        }
+                    return total > 0 ? "DON!! " + active + " / " + total : null;
+                case 4: return "LIFE " + N(ps.Lgo_MyLifeDeck);
+                case 5: return "HAND " + N(ps.Lgo_MyHand);
+                default: return null;
+            }
+        }
+
+        private static int N(List<GameObject> l) => l != null ? l.Count : 0;
 
         private static void Move(Transform cn, string name, float x, float y, float w, float h)
         {
@@ -508,10 +650,10 @@ namespace LogPose.UI
                 CollectChoice(_gls.go_ChoiceButton3, ref end, ref rest);
                 CollectChoice(_gls.go_ChoiceButton4, ref end, ref rest);
                 if (end != null)
-                    PlaceChoice(end, -334f, -280f, 620f, 104f, true);
+                    PlaceChoice(end, -284f, -280f, 520f, 104f, true);
                 if (rest != null)
                     for (int i = 0; i < rest.Count; i++)
-                        PlaceChoice(rest[i], (i % 2 == 0) ? -489f : -179f, -188f + (i / 2) * 78f, 300f, 56f, false);
+                        PlaceChoice(rest[i], (i % 2 == 0) ? -412f : -157f, -188f + (i / 2) * 78f, 245f, 56f, false);
             }
             catch { }
         }
@@ -670,47 +812,6 @@ namespace LogPose.UI
             _maxLife[0] = _maxLife[1] = 0;
             AdoptVanillaLabels();
             Plugin.Log.LogInfo("Board HUD built.");
-        }
-
-        private static TextMeshProUGUI Counter(Transform t, float x, float y, float w,
-            TextAlignmentOptions align)
-        {
-            TextMeshProUGUI c = W.Label(t, "", x, y, w, 22f, 12f,
-                Theme.WithA(Theme.Text, 0.6f), 600, align, true, 0.08f);
-            c.enableWordWrapping = false;
-            return c;
-        }
-
-        private static void RefreshCounters()
-        {
-            try
-            {
-                if (_donP == null || _gls.Lps_Players == null || _gls.Lps_Players.Count < 2)
-                    return;
-                int bottom = BoardLayoutPatches.Flipped ? 1 : 0;
-                CounterTexts(bottom, _donP, _deckP, _trashP);
-                CounterTexts(1 - bottom, _donO, _deckO, _trashO);
-            }
-            catch { }
-        }
-
-        private static void CounterTexts(int seat, TMP_Text don, TMP_Text deck, TMP_Text trash)
-        {
-            PlayerState ps = _gls.Lps_Players[seat];
-            int total = ps.Lgo_MyDonCostArea != null ? ps.Lgo_MyDonCostArea.Count : 0;
-            int active = 0;
-            if (ps.Lgo_MyDonCostArea != null)
-                foreach (GameObject g in ps.Lgo_MyDonCostArea)
-                {
-                    if (g == null)
-                        continue;
-                    CardLogicScript cls = g.GetComponent<CardLogicScript>();
-                    if (cls != null && !cls.myCard.bTapped)
-                        active++;
-                }
-            don.text = total > 0 ? active + " / " + total + " ACTIVE" : "";
-            deck.text = "DECK " + (ps.Lgo_MyDeck != null ? ps.Lgo_MyDeck.Count : 0);
-            trash.text = "TRASH " + (ps.Lgo_MyTrash != null ? ps.Lgo_MyTrash.Count : 0);
         }
 
         // -------------------------------------------------------- vanilla label adopt --

@@ -290,8 +290,8 @@ namespace LogPose.Replay
             rt.anchorMin = new Vector2(1f, 0.5f);
             rt.anchorMax = new Vector2(1f, 0.5f);
             rt.pivot = new Vector2(0.5f, 0.5f);
-            rt.anchoredPosition = new Vector2(-334f, -200f);
-            rt.sizeDelta = new Vector2(620f, 240f);
+            rt.anchoredPosition = new Vector2(-284f, -200f);
+            rt.sizeDelta = new Vector2(520f, 240f);
 
             Image bg = _root.AddComponent<Image>();
             bg.sprite = UI.UISprites.RoundedRect(64, 64, 14f, UI.Theme.Surface, UI.Theme.Edge, 1f, 18f);
@@ -299,12 +299,12 @@ namespace LogPose.Replay
 
             // Header: outline tag + matchup / counters.
             UI.W.Tag(_root.transform, "REPLAY", 16f, 14f, false, outline: true);
-            _info = UI.W.Label(_root.transform, "", 116f, 12f, 480f, 40f, 13f, UI.Theme.Text, 500,
+            _info = UI.W.Label(_root.transform, "", 116f, 12f, 380f, 40f, 13f, UI.Theme.Text, 500,
                 TextAlignmentOptions.TopLeft, true);
 
             // Turn ruler: track + fill + playhead (draggable) + turn ticks added on first Refresh.
             GameObject rail = UI.W.Go("Rail", _root.transform);
-            _rail = UI.W.TL(rail, 20f, 60f, 580f, 12f);
+            _rail = UI.W.TL(rail, 20f, 60f, 480f, 12f);
             Image track = rail.AddComponent<Image>();
             track.sprite = UI.UISprites.RoundedRect(24, 24, 6f, UI.Theme.SurfaceRaised, Color.clear, 0f, 7f);
             track.type = Image.Type.Sliced;
@@ -335,23 +335,23 @@ namespace LogPose.Replay
             AddDrag(trigger, UnityEngine.EventSystems.EventTriggerType.Drag);
 
             // Transport cluster (row 1) with the speed keys on its right.
-            float y1 = 88f, w = 50f, h = 46f, x = 20f;
+            float y1 = 88f, w = 46f, h = 46f, x = 20f;
             TransportBtn(gls, "|<", ref x, y1, w, h, () => ReplayUI.SeekTo(0));
             TransportBtn(gls, "<T", ref x, y1, w, h, () => ReplayUI.JumpTurn(-1));
             TransportBtn(gls, "<A", ref x, y1, w, h, () => ReplayUI.JumpAction(-1));
-            Button play = UI.W.Btn(_root.transform, "Play", x, y1, 74f, h, UI.BtnKind.Primary, () => ReplayUI.TogglePlay(), 15f);
+            Button play = UI.W.Btn(_root.transform, "Play", x, y1, 70f, h, UI.BtnKind.Primary, () => ReplayUI.TogglePlay(), 15f);
             _playLabel = play.GetComponentInChildren<TMP_Text>(true);
-            x += 80f;
+            x += 76f;
             TransportBtn(gls, "A>", ref x, y1, w, h, () => ReplayUI.JumpAction(1));
             TransportBtn(gls, "T>", ref x, y1, w, h, () => ReplayUI.JumpTurn(1));
             TransportBtn(gls, ">|", ref x, y1, w, h, () => ReplayUI.SeekToEnd());
-            UI.W.Btn(_root.transform, "Spd −", 452f, y1, 72f, h, UI.BtnKind.Secondary, () => ReplayUI.ChangeSpeed(-2f), 13f);
-            UI.W.Btn(_root.transform, "Spd +", 530f, y1, 72f, h, UI.BtnKind.Secondary, () => ReplayUI.ChangeSpeed(2f), 13f);
+            UI.W.Btn(_root.transform, "Spd −", 402f, y1, 48f, h, UI.BtnKind.Secondary, () => ReplayUI.ChangeSpeed(-2f), 12f);
+            UI.W.Btn(_root.transform, "Spd +", 456f, y1, 48f, h, UI.BtnKind.Secondary, () => ReplayUI.ChangeSpeed(2f), 12f);
 
             // Row 2: keyboard hints left, exit right.
             UI.W.Label(_root.transform, "A: action (↑/↓) · T: turn (PgUp/PgDn) · ←/→: event · Home/End",
-                20f, 158f, 440f, 40f, 12f, UI.Theme.TextMuted, 400, TextAlignmentOptions.TopLeft);
-            UI.W.Btn(_root.transform, "Exit replay", 478f, 150f, 124f, 44f, UI.BtnKind.Danger, () => ReplayUI.ExitReplay(), 14f);
+                20f, 158f, 340f, 40f, 12f, UI.Theme.TextMuted, 400, TextAlignmentOptions.TopLeft);
+            UI.W.Btn(_root.transform, "Exit replay", 378f, 150f, 124f, 44f, UI.BtnKind.Danger, () => ReplayUI.ExitReplay(), 14f);
         }
 
         private static void TransportBtn(GameplayLogicScript gls, string label, ref float x, float y, float w, float h,
