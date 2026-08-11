@@ -180,7 +180,8 @@ namespace LogPose.UI
             MoveToggle(cn, "Rotation", -830f, 76f);
             MoveToggle(cn, "SortByCost", -812f, 34f);
             MoveToggle(cn, "HideNumbers", -812f, -8f);
-            RectTransform help = Move(cn, "SearchHelp", railX, -160f, 276f, 300f);
+            // Bottom stack, spaced so nothing collides: help text, sponsor, utilities.
+            RectTransform help = Move(cn, "SearchHelp", railX, -160f, 276f, 250f);
             if (help != null)
             {
                 TMP_Text ht = help.GetComponent<TMP_Text>();
@@ -188,17 +189,28 @@ namespace LogPose.UI
                 {
                     if (ht.enableAutoSizing)
                         ht.enableAutoSizing = false;
-                    if (ht.fontSize != 13f)
-                        ht.fontSize = 13f;
-                    ht.overflowMode = TextOverflowModes.Truncate;
+                    if (ht.fontSize != 12f)
+                        ht.fontSize = 12f;
+                    ht.overflowMode = TextOverflowModes.Ellipsis;
                 }
             }
-            RectTransform eg = Move(cn, "EgmanEvents", railX, -350f, 0f, 0f);
-            if (eg != null)
-                eg.localScale = new Vector3(0.8f, 0.8f, 1f);
-            Move(cn, "EgmanExplanation", railX, -412f, 260f, 26f);
-            Move(cn, "Customize Images", railX, -455f, 210f, 42f);
-            Move(cn, "DeleteButton", railX, -500f, 210f, 40f);
+            RectTransform eg = Move(cn, "EgmanEvents", railX, -345f, 0f, 0f);
+            if (eg != null && eg.localScale.x != 0.7f)
+                eg.localScale = new Vector3(0.7f, 0.7f, 1f);
+            RectTransform egx = Move(cn, "EgmanExplanation", railX, -410f, 260f, 24f);
+            if (egx != null)
+            {
+                TMP_Text xt = egx.GetComponent<TMP_Text>();
+                if (xt != null && xt.fontSize != 13f)
+                {
+                    xt.enableAutoSizing = false;
+                    xt.fontSize = 13f;
+                }
+            }
+            Move(cn, "Customize Images", railX, -448f, 210f, 38f);
+            SetText(cn, "Customize Images", "Customize images", 14f);
+            Move(cn, "DeleteButton", railX, -488f, 210f, 36f);
+            SetText(cn, "DeleteButton", "Delete selected deck file", 12f);
 
             // Center browser.
             Move(cn, "Card Selector Scrollview", -90f, -44f, 980f, 920f);
