@@ -194,6 +194,39 @@ namespace LogPose.UI
                         WorldRect(sb, child.name, child as RectTransform, c);
                     }
                 }
+                // Full DeckSelector forensics: every component that could dim the caption.
+                Transform dd = cnv != null ? cnv.Find("DeckSelector") : null;
+                if (dd != null)
+                {
+                    UnityEngine.UI.Selectable sl = dd.GetComponent<UnityEngine.UI.Selectable>();
+                    if (sl != null)
+                        sb.AppendLine("DD Selectable type=" + sl.GetType().Name + " transition=" + sl.transition
+                            + " target=" + (sl.targetGraphic != null ? sl.targetGraphic.name : "null")
+                            + " normal=" + ColorUtility.ToHtmlStringRGBA(sl.colors.normalColor));
+                    foreach (Transform tr in dd.GetComponentsInChildren<Transform>(true))
+                    {
+                        string info = "DD " + Path(tr) + (tr.gameObject.activeInHierarchy ? "" : " (inactive)");
+                        TMP_Text tt = tr.GetComponent<TMP_Text>();
+                        if (tt != null)
+                            info += " | TMP '" + tt.text + "' col=" + ColorUtility.ToHtmlStringRGBA(tt.color)
+                                + " a=" + tt.alpha.ToString("F2");
+                        UnityEngine.UI.Text lt = tr.GetComponent<UnityEngine.UI.Text>();
+                        if (lt != null)
+                            info += " | Text '" + lt.text + "' col=" + ColorUtility.ToHtmlStringRGBA(lt.color);
+                        Image im = tr.GetComponent<Image>();
+                        if (im != null)
+                            info += " | Img sprite=" + (im.sprite != null ? im.sprite.name : "null")
+                                + " col=" + ColorUtility.ToHtmlStringRGBA(im.color) + " en=" + im.enabled;
+                        CanvasGroup g = tr.GetComponent<CanvasGroup>();
+                        if (g != null)
+                            info += " | CG alpha=" + g.alpha.ToString("F2");
+                        CanvasRenderer cr = tr.GetComponent<CanvasRenderer>();
+                        if (cr != null)
+                            info += " | CR col=" + ColorUtility.ToHtmlStringRGBA(cr.GetColor())
+                                + " inhA=" + cr.GetInheritedAlpha().ToString("F2");
+                        sb.AppendLine(info);
+                    }
+                }
                 string file = System.IO.Path.Combine(BepInEx.Paths.BepInExRootPath, "logpose-editordump.txt");
                 File.WriteAllText(file, sb.ToString());
                 Plugin.Log.LogInfo("Editor dump written: " + file);

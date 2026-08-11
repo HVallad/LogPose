@@ -23,7 +23,6 @@ namespace LogPose.UI
         private static readonly Image[] _bars = new Image[CostBuckets];
         private static readonly TextMeshProUGUI[] _barCounts = new TextMeshProUGUI[CostBuckets];
         private static string _shownLeader = "?";
-        private static bool _dropdownStyled;
 
         internal static void Update()
         {
@@ -36,7 +35,6 @@ namespace LogPose.UI
                 {
                     _chrome = null;   // scene gone; clones died with it
                     _shownLeader = "?";
-                    _dropdownStyled = false;
                     _chipsStyled = false;
                     return;
                 }
@@ -150,6 +148,39 @@ namespace LogPose.UI
             Plugin.Log.LogInfo("Deck editor 2b chrome built.");
         }
 
+        // The deck-name input kept the vanilla white InputFieldBackground (its sprite
+        // never matched a restyle key). Frame 2b: dark field with a 1px accent edge.
+        // Gated on sprite identity so a recreated control re-styles itself.
+        private static Sprite _nameChrome;
+
+        private static void StyleNameField(Transform cn)
+        {
+            Transform nf = cn.Find("DeckName");
+            if (nf == null)
+                return;
+            if (_nameChrome == null)
+                _nameChrome = UISprites.RoundedRect(48, 48, 8f, Theme.WithA(Theme.Text, 0.04f),
+                    Theme.WithA(Theme.Accent, 0.55f), 1f, 12f);
+            Image bg = nf.GetComponent<Image>();
+            if (bg != null)
+            {
+                if (bg.sprite == _nameChrome)
+                    return;   // already ours
+                bg.sprite = _nameChrome;
+                bg.type = Image.Type.Sliced;
+                bg.color = Color.white;
+            }
+            TMP_InputField inp = nf.GetComponent<TMP_InputField>();
+            if (inp != null)
+            {
+                inp.customCaretColor = true;
+                inp.caretColor = Theme.Accent300;
+                inp.selectionColor = Theme.WithA(Theme.Accent, 0.35f);
+            }
+            foreach (TMP_Text txt in nf.GetComponentsInChildren<TMP_Text>(true))
+                txt.color = txt.name == "Placeholder" ? Theme.WithA(Theme.Text, 0.4f) : Theme.Text;
+        }
+
         private static void Kicker(Transform t, string text, float ax, float x)
         {
             TextMeshProUGUI k = W.Label(t, text, 0f, 0f, 220f, 14f, 10f,
@@ -196,6 +227,7 @@ namespace LogPose.UI
             }
             MoveEdge(cn, "DeckSelector", -790f, -44f, 250f, 48f, 1f);
             StyleDropdown(cn);
+            StyleNameField(cn);
             MoveEdge(cn, "LoadButton", -560f, -44f, 110f, 48f, 1f);
             SetText(cn, "LoadButton", "Load", 16f);
             MoveEdge(cn, "PasteFromClipboard", -428f, -44f, 130f, 48f, 1f);
@@ -536,16 +568,43 @@ namespace LogPose.UI
             catch { }
         }
 
-        // The deck-file dropdown keeps its vanilla prefab look otherwise (white input
-        // sprite + parchment popup). Restyle the closed control and its list template.
+        // The deck-file dropdown keeps its vanilla prefab look otherwise (no root
+        // background at all + a parchment popup) — and the game RECREATES the control
+        // when it rebuilds the deck list, so a one-shot gate goes stale. The absence of
+        // our chrome Image is the trigger: styling re-applies whenever it's missing.
+        private static Sprite _ddChrome;
+
         private static void StyleDropdown(Transform cn)
         {
-            if (_dropdownStyled)
-                return;
             Transform dd = cn.Find("DeckSelector");
             if (dd == null)
                 return;
-            _dropdownStyled = true;
+            // The prefab sits at a LOW sibling index, so the 90%-opaque header-bar
+            // chrome rendered over it — the control was literally behind the bar
+            // (colors were fine all along). Keep it above the chrome layer.
+            if (_chrome != null && dd.GetSiblingIndex() < _chrome.transform.GetSiblingIndex())
+                dd.SetAsLastSibling();
+            // The game re-stamps the caption's ghost color when it refreshes the deck
+            // list, so the text tint runs every poll (the chrome only when missing).
+            foreach (TMP_Text txt in dd.GetComponentsInChildren<TMP_Text>(true))
+            {
+                Color want = txt.name == "Placeholder" ? Theme.WithA(Theme.Text, 0.5f) : Theme.Text;
+                if (txt.color != want)
+                    txt.color = want;
+            }
+            foreach (Text legacy in dd.GetComponentsInChildren<Text>(true))
+                if (legacy.color != Theme.Text)
+                    legacy.color = Theme.Text;
+            CanvasGroup cg = dd.GetComponent<CanvasGroup>();
+            if (cg != null && cg.alpha < 1f)
+                cg.alpha = 1f;
+
+            if (_ddChrome == null)
+                _ddChrome = UISprites.RoundedRect(48, 48, 8f, Theme.WithA(Theme.Text, 0.07f),
+                    Theme.WithA(Theme.Text, 0.3f), 1f, 12f);
+            Image existing = dd.GetComponent<Image>();
+            if (existing != null && existing.sprite == _ddChrome)
+                return;   // already ours
             Transform arrow = dd.Find("Arrow");
             if (arrow != null)
             {
@@ -556,19 +615,31 @@ namespace LogPose.UI
                 if (art != null)
                     art.sizeDelta = new Vector2(24f, 24f);
             }
-            Image bg = dd.GetComponent<Image>();
-            if (bg != null)
-            {
-                bg.sprite = UISprites.RoundedRect(48, 48, 8f, Theme.WithA(Theme.Text, 0.04f),
-                    Theme.WithA(Theme.Text, 0.18f), 1f, 12f);
-                bg.type = Image.Type.Sliced;
-                bg.color = Color.white;
-            }
+            // The control's root has NO background Image in the prefab — it was floating
+            // ghost text over the bar. Give it real chrome at the same weight as the
+            // neighboring buttons (also widens the click target to the whole rect).
+            Image bg = existing != null ? existing : dd.gameObject.AddComponent<Image>();
+            bg.sprite = _ddChrome;
+            bg.type = Image.Type.Sliced;
+            bg.color = Color.white;
+            bg.raycastTarget = true;
             foreach (TMP_Text txt in dd.GetComponentsInChildren<TMP_Text>(true))
-            {
-                txt.color = txt.name == "Placeholder" ? Theme.WithA(Theme.Text, 0.5f) : Theme.Text;
                 if (txt.fontSize > 16f)
                     txt.fontSize = 15f;
+            // The vanilla Selectable tints its targetGraphic — the CAPTION — with a
+            // ghost color every frame, which is why recoloring the text never stuck.
+            // Point the tint at the chrome instead: the label keeps its true color and
+            // hover/press feedback lands on the control body where it belongs.
+            Selectable sel = dd.GetComponent<Selectable>();
+            if (sel != null)
+            {
+                sel.targetGraphic = bg;
+                ColorBlock cb = sel.colors;
+                cb.normalColor = Color.white;
+                cb.highlightedColor = new Color(0.86f, 0.84f, 1f, 1f);
+                cb.pressedColor = new Color(0.74f, 0.7f, 1f, 1f);
+                cb.selectedColor = Color.white;
+                sel.colors = cb;
             }
             Transform template = dd.Find("Template");
             if (template != null)
