@@ -83,6 +83,11 @@ namespace LogPose.UI
             hi.color = Theme.WithA(Theme.Text, 0.1f);
             hi.raycastTarget = false;
 
+            // The name FIELD (what Save writes) and the saved-decks DROPDOWN (what Load
+            // reads) both show a deck name — kickers stop them reading as duplicates.
+            Kicker(t, "DECK NAME", 0f, 300f);
+            Kicker(t, "SAVED DECKS", 1f, -790f);
+
             // The canvas width varies with aspect ratio, so each column anchors to the
             // screen edge it hugs (headings live INSIDE the panels and follow for free).
             Image rail = W.Panel(t, "Rail", 0f, 0f, 320f, 920f, 14f, Theme.WithA(Theme.Surface, 0.55f),
@@ -143,6 +148,16 @@ namespace LogPose.UI
             }
             _shownLeader = "?";
             Plugin.Log.LogInfo("Deck editor 2b chrome built.");
+        }
+
+        private static void Kicker(Transform t, string text, float ax, float x)
+        {
+            TextMeshProUGUI k = W.Label(t, text, 0f, 0f, 220f, 14f, 10f,
+                Theme.WithA(Theme.Text, 0.45f), 600, TextAlignmentOptions.Center, false, 0.14f);
+            RectTransform rt = k.rectTransform;
+            rt.anchorMin = rt.anchorMax = new Vector2(ax, 1f);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.anchoredPosition = new Vector2(x, -12f);
         }
 
         // Side panels hang off the top edge too (they and their headings must never
@@ -531,6 +546,16 @@ namespace LogPose.UI
             if (dd == null)
                 return;
             _dropdownStyled = true;
+            Transform arrow = dd.Find("Arrow");
+            if (arrow != null)
+            {
+                Image ai = arrow.GetComponent<Image>();
+                if (ai != null)
+                    ai.color = Theme.Accent300;   // unmistakably a dropdown
+                RectTransform art = arrow as RectTransform;
+                if (art != null)
+                    art.sizeDelta = new Vector2(24f, 24f);
+            }
             Image bg = dd.GetComponent<Image>();
             if (bg != null)
             {
