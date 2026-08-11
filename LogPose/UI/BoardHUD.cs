@@ -80,7 +80,8 @@ namespace LogPose.UI
                 float w = ((RectTransform)_gls.cn_Canvas.transform).rect.width;
                 if (w > 100f)
                 {
-                    _fieldFromLeft = Mathf.Clamp(Mathf.Min(572f, w - 1201f), 380f, 572f);
+                    // The field centers itself in everything left of the rail (620 + gaps).
+                    _fieldFromLeft = Mathf.Clamp((w - 668f) * 0.5f, 380f, 700f);
                     BoardLayoutPatches.FieldShift = _fieldFromLeft - w * 0.5f;
                     _canvasW = w;
                 }
@@ -143,10 +144,13 @@ namespace LogPose.UI
         {
             try
             {
+                // Raise only from the very bottom edge so the DON!! strip above the hand
+                // stays clickable while tucked; once raised, stay up until the pointer
+                // leaves the hand region entirely.
                 bool preGame = _gls.gsv_CurrentGame == null || _gls.gsv_CurrentGame.iTurnNumber < 1;
                 float frac = Input.mousePosition.y / Mathf.Max(Screen.height, 1);
                 bool raised = preGame
-                    || (BoardLayoutPatches.HandRaised ? frac < 0.34f : frac < 0.24f);
+                    || (BoardLayoutPatches.HandRaised ? frac < 0.28f : frac < 0.08f);
                 int action = _gls.gsv_CurrentGame != null ? _gls.gsv_CurrentGame.iPlayerAction : -1;
                 if (raised == BoardLayoutPatches.HandRaised && action == _lastAction)
                     return;
@@ -241,6 +245,11 @@ namespace LogPose.UI
                 Transform log = cn.Find("LogScrollView");
                 if (log != null)
                 {
+                    if (_railPanel != null && _railPanel.sizeDelta.x != 620f)
+                    {
+                        Object.Destroy(_railPanel.gameObject);   // rebuilt at the new width
+                        _railPanel = null;
+                    }
                     if (_railPanel == null)
                     {
                         GameObject rp = W.Go("LogPoseRail", cn);
@@ -252,17 +261,17 @@ namespace LogPose.UI
                         _railPanel = rp.GetComponent<RectTransform>();
                         W.Label(rp.transform, "COMBAT LOG", 24f, 20f, 300f, 20f, 12f,
                             Theme.WithA(Theme.Text, 0.55f), 600, TextAlignmentOptions.TopLeft, false, 0.12f);
-                        W.Rule(rp.transform, 16f, 56f, 712f);
+                        W.Rule(rp.transform, 16f, 56f, 588f);
                     }
                     int target = log.GetSiblingIndex();
                     if (_railPanel.GetSiblingIndex() > target)
                         _railPanel.SetSiblingIndex(target);
-                    // The rail hugs the RIGHT edge so narrower-than-16:9 canvases can't
-                    // clip it (positions are design-x minus 960, anchored right).
-                    R(_railPanel, -444f, 153f, 744f, 566f);
+                    // The rail hugs the RIGHT edge, slimmed to 620 so the field zone gets
+                    // the lion's share of the width.
+                    R(_railPanel, -334f, 153f, 620f, 566f);
 
                     RectTransform lrt = (RectTransform)log;
-                    R(lrt, -444f, 122f, 716f, 496f);
+                    R(lrt, -334f, 122f, 592f, 496f);
                     Image li = log.GetComponent<Image>();
                     if (li != null && li.enabled)
                         li.enabled = false;
@@ -271,13 +280,13 @@ namespace LogPose.UI
                         RectTransform content = log.GetChild(0).GetChild(0) as RectTransform;
                         if (content != null)
                         {
-                            if (content.sizeDelta.x != 696f)
-                                content.sizeDelta = new Vector2(696f, content.sizeDelta.y);
+                            if (content.sizeDelta.x != 572f)
+                                content.sizeDelta = new Vector2(572f, content.sizeDelta.y);
                             for (int i = 0; i < content.childCount; i++)
                             {
                                 RectTransform line = content.GetChild(i) as RectTransform;
-                                if (line != null && line.sizeDelta.x != 676f)
-                                    line.sizeDelta = new Vector2(676f, line.sizeDelta.y);
+                                if (line != null && line.sizeDelta.x != 552f)
+                                    line.sizeDelta = new Vector2(552f, line.sizeDelta.y);
                             }
                         }
                     }
@@ -287,17 +296,17 @@ namespace LogPose.UI
                 // re-writes their spots each game start, so this re-imposes every poll).
                 // Rail-side objects anchor to the RIGHT edge (design-x minus 960) so a
                 // narrower-than-16:9 canvas can't clip them; solo tools hug the LEFT.
-                MoveBtn(cn, "BackToMain", -255f, -372f, 366f, 56f, 16f, BtnKind.Danger);
-                MoveBtn(cn, "ReportBug", -633f, -372f, 366f, 56f, 14f, BtnKind.Secondary);
-                MoveBtn(cn, "DownloadLog", -170f, 408f, 130f, 40f, 12f, BtnKind.Secondary);
-                MoveEdge(cn, "CancelMatch", -444f, -460f, 200f, 56f, 1f);
-                MoveEdge(cn, "Volume", -184f, -470f, 0f, 0f, 1f);
-                MoveEdge(cn, "Music", -116f, -470f, 0f, 0f, 1f);
-                // Solo save-state tools live in the rail's bottom corner, off the field.
-                RectTransform ss = MoveEdge(cn, "SaveState", -775f, -465f, 0f, 0f, 1f);
+                MoveBtn(cn, "BackToMain", -179f, -372f, 300f, 56f, 15f, BtnKind.Danger);
+                MoveBtn(cn, "ReportBug", -489f, -372f, 300f, 56f, 13f, BtnKind.Secondary);
+                MoveBtn(cn, "DownloadLog", -120f, 408f, 130f, 40f, 12f, BtnKind.Secondary);
+                // Bottom utility row, left to right: save-state tools, cancel, sound.
+                MoveEdge(cn, "CancelMatch", -270f, -462f, 170f, 48f, 1f);
+                MoveEdge(cn, "Volume", -128f, -465f, 0f, 0f, 1f);
+                MoveEdge(cn, "Music", -63f, -465f, 0f, 0f, 1f);
+                RectTransform ss = MoveEdge(cn, "SaveState", -585f, -465f, 0f, 0f, 1f);
                 if (ss != null && ss.localScale.x != 0.7f)
                     ss.localScale = new Vector3(0.7f, 0.7f, 1f);
-                RectTransform ssb = MoveEdge(cn, "SaveStateButtons", -640f, -465f, 0f, 0f, 1f);
+                RectTransform ssb = MoveEdge(cn, "SaveStateButtons", -450f, -465f, 0f, 0f, 1f);
                 if (ssb != null && ssb.localScale.x != 0.7f)
                     ssb.localScale = new Vector3(0.7f, 0.7f, 1f);
                 MoveEdge(cn, "P0HandCount", 115f, -500f, 0f, 0f, 0f);
@@ -309,8 +318,8 @@ namespace LogPose.UI
                 {
                     RectTransform grt = guide as RectTransform;
                     A(grt, 1f);
-                    grt.anchoredPosition = new Vector2(-444f, -95f);
-                    grt.sizeDelta = new Vector2(660f, 48f);
+                    grt.anchoredPosition = new Vector2(-334f, -95f);
+                    grt.sizeDelta = new Vector2(560f, 48f);
                     TMP_Text gt = guide.GetComponent<TMP_Text>();
                     if (gt != null)
                         gt.alignment = TextAlignmentOptions.Center;
@@ -322,7 +331,7 @@ namespace LogPose.UI
                     // Shrunk just enough that the action rows stay visible while hovering.
                     RectTransform prt = prev as RectTransform;
                     A(prt, 1f);
-                    prt.anchoredPosition = new Vector2(-444f, 140f);
+                    prt.anchoredPosition = new Vector2(-334f, 140f);
                     prt.sizeDelta = new Vector2(400f, 562f);
                     if (prev.GetSiblingIndex() != cn.childCount - 1)
                         prev.SetAsLastSibling();
@@ -416,10 +425,10 @@ namespace LogPose.UI
                 CollectChoice(_gls.go_ChoiceButton3, ref end, ref rest);
                 CollectChoice(_gls.go_ChoiceButton4, ref end, ref rest);
                 if (end != null)
-                    PlaceChoice(end, -444f, -280f, 744f, 104f, true);
+                    PlaceChoice(end, -334f, -280f, 620f, 104f, true);
                 if (rest != null)
                     for (int i = 0; i < rest.Count; i++)
-                        PlaceChoice(rest[i], (i % 2 == 0) ? -633f : -255f, -188f + (i / 2) * 78f, 366f, 56f, false);
+                        PlaceChoice(rest[i], (i % 2 == 0) ? -489f : -179f, -188f + (i / 2) * 78f, 300f, 56f, false);
             }
             catch { }
         }
@@ -484,6 +493,12 @@ namespace LogPose.UI
             TMP_Text txt = b.GetComponentInChildren<TMP_Text>(true);
             if (txt != null)
             {
+                // Labels must never intercept clicks — and on STRETCH-anchored children
+                // sizeDelta is a margin, not a size: setting an absolute size there made
+                // the invisible label rect overhang the button and steal its neighbors'
+                // clicks (the "buttons are offset" bug).
+                if (txt.raycastTarget)
+                    txt.raycastTarget = false;
                 if (txt.enableAutoSizing)
                     txt.enableAutoSizing = false;
                 if (txt.fontSize != fontSize)
@@ -491,8 +506,10 @@ namespace LogPose.UI
                 if (txt.color != labelCol)
                     txt.color = labelCol;
                 RectTransform trt = txt.rectTransform;
-                if (trt.sizeDelta.x != w - 16f)
-                    trt.sizeDelta = new Vector2(w - 16f, h - 8f);
+                bool stretch = trt.anchorMin.x != trt.anchorMax.x;
+                Vector2 want = stretch ? new Vector2(-16f, -8f) : new Vector2(w - 16f, h - 8f);
+                if (trt.sizeDelta != want)
+                    trt.sizeDelta = want;
             }
         }
 

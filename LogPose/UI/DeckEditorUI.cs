@@ -380,6 +380,11 @@ namespace LogPose.UI
             TMP_Text txt = t.GetComponentInChildren<TMP_Text>(true);
             if (txt == null)
                 return;
+            // Never let a label intercept clicks; on stretch-anchored children sizeDelta
+            // is a margin — an absolute size there overhangs the button and steals the
+            // neighbors' clicks.
+            if (txt.raycastTarget)
+                txt.raycastTarget = false;
             if (txt.enableAutoSizing)
                 txt.enableAutoSizing = false;
             if (txt.text != text)
@@ -387,8 +392,15 @@ namespace LogPose.UI
             if (txt.fontSize != size)
                 txt.fontSize = size;
             RectTransform prt = t as RectTransform;
-            if (prt != null && txt.rectTransform.sizeDelta.x != prt.sizeDelta.x - 12f)
-                txt.rectTransform.sizeDelta = new Vector2(prt.sizeDelta.x - 12f, prt.sizeDelta.y - 8f);
+            RectTransform trt = txt.rectTransform;
+            if (prt != null)
+            {
+                bool stretch = trt.anchorMin.x != trt.anchorMax.x;
+                Vector2 want = stretch ? new Vector2(-12f, -8f)
+                    : new Vector2(prt.sizeDelta.x - 12f, prt.sizeDelta.y - 8f);
+                if (trt.sizeDelta != want)
+                    trt.sizeDelta = want;
+            }
         }
 
         // ------------------------------------------------------------- count badges ---
