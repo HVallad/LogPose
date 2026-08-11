@@ -1,3 +1,5 @@
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -29,12 +31,13 @@ namespace LogPose.UI
                 return;
             if (_ed == null)
             {
-                _ed = Object.FindFirstObjectByType<DeckEditorScript>();
+                _ed = UnityEngine.Object.FindFirstObjectByType<DeckEditorScript>();
                 if (_ed == null)
                 {
                     _chrome = null;   // scene gone; clones died with it
                     _shownLeader = "?";
                     _dropdownStyled = false;
+                    _chipsStyled = false;
                     return;
                 }
             }
@@ -205,6 +208,7 @@ namespace LogPose.UI
             MoveToggle(cn, "Rotation", 130f, 106f);
             MoveToggle(cn, "SortByCost", 148f, 64f);
             MoveToggle(cn, "HideNumbers", 148f, 22f);
+            StyleToggles(cn);
             // Bottom stack, spaced so nothing collides: help text, sponsor, utilities.
             RectTransform help = MoveEdge(cn, "SearchHelp", railX, -160f, 276f, 250f, 0f);
             if (help != null)
@@ -326,6 +330,185 @@ namespace LogPose.UI
             RectTransform rt = MoveEdge(cn, name, x, y, w, w > 0f ? 40f : 0f, 0f);
             if (rt != null && rt.localScale.x != 0.85f)
                 rt.localScale = new Vector3(0.85f, 0.85f, 1f);
+        }
+
+        // The color filters become design chips: the whole control is the chip, and the
+        // toggle's checkmark graphic — which Unity cross-fades with the on/off state —
+        // stretches to a full-chip accent fill, so the active state reads instantly.
+        // The option toggles keep the checkbox look but get a bright accent mark and
+        // legible labels (the vanilla legacy-Text labels were near-black on dark).
+        private static bool _chipsStyled;
+        private static readonly string[] ColorChips = { "Red", "Green", "Blue", "Purple", "Black", "Yellow" };
+        private static readonly string[] OptionToggles = { "Limit4", "Rotation", "SortByCost", "HideNumbers" };
+
+        private static void StyleToggles(Transform cn)
+        {
+            if (_chipsStyled)
+                return;
+            _chipsStyled = true;
+            foreach (string name in ColorChips)
+            {
+                Transform t = cn.Find(name);
+                if (t == null)
+                    continue;
+                Transform bg = t.Find("Background");
+                Transform ck = bg != null ? bg.Find("Checkmark") : null;
+                Transform lbl = t.Find("Label");
+                if (bg != null)
+                {
+                    RectTransform brt = (RectTransform)bg;
+                    brt.anchorMin = Vector2.zero;
+                    brt.anchorMax = Vector2.one;
+                    brt.offsetMin = brt.offsetMax = Vector2.zero;
+                    Image bi = bg.GetComponent<Image>();
+                    if (bi != null)
+                    {
+                        bi.sprite = UISprites.RoundedRect(32, 32, 8f, Theme.WithA(Theme.Text, 0.03f),
+                            Theme.WithA(Theme.Text, 0.16f), 1f, 9f);
+                        bi.type = Image.Type.Sliced;
+                        bi.color = Color.white;
+                    }
+                }
+                if (ck != null)
+                {
+                    RectTransform crt = (RectTransform)ck;
+                    crt.anchorMin = Vector2.zero;
+                    crt.anchorMax = Vector2.one;
+                    crt.offsetMin = crt.offsetMax = Vector2.zero;
+                    Image ci = ck.GetComponent<Image>();
+                    if (ci != null)
+                    {
+                        ci.sprite = UISprites.RoundedRect(32, 32, 8f, Theme.WithA(Theme.Accent, 0.2f),
+                            Theme.Accent, 1f, 9f);
+                        ci.type = Image.Type.Sliced;
+                        ci.color = Color.white;
+                    }
+                }
+                StyleToggleLabel(lbl, TextAnchor.MiddleCenter, true);
+            }
+            foreach (string name in OptionToggles)
+            {
+                Transform t = cn.Find(name);
+                if (t == null)
+                    continue;
+                Transform bg = t.Find("Background");
+                Transform ck = bg != null ? bg.Find("Checkmark") : null;
+                if (ck != null)
+                {
+                    Image ci = ck.GetComponent<Image>();
+                    if (ci != null)
+                        ci.color = Theme.Accent;
+                }
+                StyleToggleLabel(t.Find("Label"), TextAnchor.MiddleLeft, false);
+            }
+        }
+
+        private static void StyleToggleLabel(Transform lbl, TextAnchor anchor, bool fill)
+        {
+            if (lbl == null)
+                return;
+            Text lt = lbl.GetComponent<Text>();
+            if (lt != null)
+            {
+                lt.color = Theme.Text;
+                lt.alignment = anchor;
+            }
+            if (fill)
+            {
+                RectTransform lrt = (RectTransform)lbl;
+                lrt.anchorMin = Vector2.zero;
+                lrt.anchorMax = Vector2.one;
+                lrt.offsetMin = lrt.offsetMax = Vector2.zero;
+            }
+        }
+
+        // ------------------------------------------------- browser loading performance --
+
+        // The vanilla loader has NO yield on the no-loading-screen path (filter changes),
+        // so every not-yet-loaded thumbnail — disk read + texture upload — lands in ONE
+        // frame: the multi-second freeze when toggling filters. This budgeted version
+        // spends ~6ms per frame and lets thumbnails pop in while the UI stays live.
+        private static Comparison<GameObject> _colorSort;
+
+        [HarmonyLib.HarmonyPrefix]
+        [HarmonyLib.HarmonyPatch(typeof(DeckEditorScript), "LoadCardImages")]
+        private static bool LoadCardImages_Prefix(DeckEditorScript __instance, bool showLoadingScreen,
+            ref IEnumerator __result)
+        {
+            __result = BudgetedLoad(__instance, showLoadingScreen);
+            return false;
+        }
+
+        private static IEnumerator BudgetedLoad(DeckEditorScript ed, bool showLoadingScreen)
+        {
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            Slider bar = showLoadingScreen && ed.CardLoadingBar != null
+                ? ed.CardLoadingBar.GetComponent<Slider>() : null;
+            int total = ed.lgo_CardsToLoad != null ? ed.lgo_CardsToLoad.Count : 0;
+            int done = 0;
+            while (ed.lgo_CardsToLoad != null && ed.lgo_CardsToLoad.Count > 0)
+            {
+                GameObject go = ed.lgo_CardsToLoad[0];
+                ed.lgo_CardsToLoad.RemoveAt(0);
+                done++;
+                if (go != null)
+                    LoadThumb(ed, go);
+                if (sw.ElapsedMilliseconds > 6)
+                {
+                    if (bar != null)
+                    {
+                        bar.value = 100f * done / Mathf.Max(total, 1);
+                        if (ed.CardLoadingText != null)
+                            ed.CardLoadingText.text = "Loading Cards... " + Mathf.CeilToInt(bar.value) + "%";
+                    }
+                    yield return null;
+                    sw.Restart();
+                }
+            }
+            try
+            {
+                if (_colorSort == null)
+                {
+                    var m = HarmonyLib.AccessTools.Method(typeof(DeckEditorScript), "SortByCardColor");
+                    _colorSort = (Comparison<GameObject>)Delegate.CreateDelegate(typeof(Comparison<GameObject>), m);
+                }
+                if (ed.lgo_AvailableCards != null)
+                    ed.lgo_AvailableCards.Sort(_colorSort);
+                HarmonyLib.AccessTools.Field(typeof(DeckEditorScript), "cardsLoading").SetValue(ed, false);
+                if (showLoadingScreen && ed.CardLoadingPanel != null)
+                    ed.CardLoadingPanel.SetActive(false);
+            }
+            catch (Exception e)
+            {
+                Plugin.Log.LogWarning("Budgeted card load tail failed: " + e.Message);
+            }
+        }
+
+        private static void LoadThumb(DeckEditorScript ed, GameObject go)
+        {
+            try
+            {
+                Image img = go.GetComponent<Image>();
+                if (img == null || img.sprite != null)
+                    return;
+                CardLogicScript cls = go.GetComponent<CardLogicScript>();
+                if (cls == null || cls.myCard.cardDef == null)
+                    return;
+                img.sprite = ed.card_Database.GetCardImage(cls.myCard.cardDef.cardID, SpriteState.Thumbnail);
+                if (go.transform.childCount <= 6)
+                    return;
+                Transform fb = go.transform.GetChild(6);
+                if (img.sprite == null)
+                {
+                    fb.gameObject.SetActive(true);
+                    TextMeshProUGUI ft = fb.GetComponent<TextMeshProUGUI>();
+                    if (ft != null)
+                        ft.text = cls.myCard.cardDef.cardID + "\n" + cls.myCard.cardDef.characterName;
+                }
+                else
+                    fb.gameObject.SetActive(false);
+            }
+            catch { }
         }
 
         // The deck-file dropdown keeps its vanilla prefab look otherwise (white input
