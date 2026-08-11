@@ -69,13 +69,71 @@ namespace LogPose
             }
         }
 
+        // ---- Pre-game clock sync -------------------------------------------------
+        // The vanilla sync only starts with turn 1 (TurnHandler bails while
+        // iTurnNumber == 0), so a joiner stares at the default 17:30 through turn
+        // selection and mulligans. While the pre-game window lasts, the host pushes
+        // its banks through the game's own sync RPC once a second; vanilla ticking
+        // takes over seamlessly at turn 1.
+        private static GameplayLogicScript _syncGls;
+
+        internal static void SyncUpdate()
+        {
+            if (_syncGls == null || Time.frameCount % 60 != 0)
+                return;
+            try
+            {
+                GameplayLogicScript gls = _syncGls;
+                if (gls.gsv_CurrentGame == null || gls.gsv_CurrentGame.iTurnNumber >= 1 ||
+                    gls.e_CurrentState == GameplayState.MainMenu || gls.e_CurrentState == GameplayState.GameOver)
+                {
+                    _syncGls = null;
+                    return;
+                }
+                if (gls.nps_Local != null)
+                    gls.nps_Local.SetTimerServerRpc(gls.myTurnTime, gls.opTurnTime);
+            }
+            catch
+            {
+                _syncGls = null;
+            }
+        }
+
+        // Joiner-side: repaint BOTH clock labels whenever a timer sync arrives.
+        // Vanilla only repaints the acting player's label each tick, so the idle
+        // side keeps a stale 17:30 until that player's first turn.
+        [HarmonyPostfix, HarmonyPatch(typeof(NetworkPlayerScript), "SetTimerClientRpc")]
+        private static void SetTimerClientRpc_Postfix(GameplayLogicScript ___gls_Gameplay)
+        {
+            try
+            {
+                GameplayLogicScript gls = ___gls_Gameplay;
+                if (gls == null || gls.isLobbyServer || !gls.isTimerLobby)
+                    return;
+                if (gls.my_text_TurnTime != null)
+                    gls.my_text_TurnTime.text = FormatClock(gls.myTurnTime);
+                if (gls.op_text_TurnTime != null)
+                    gls.op_text_TurnTime.text = FormatClock(gls.opTurnTime);
+            }
+            catch { }
+        }
+
+        private static string FormatClock(float t)
+        {
+            if (t < 0f)
+                t = 0f;
+            return string.Format("{0:00}:{1:00}", Mathf.FloorToInt(t / 60f), Mathf.FloorToInt(t % 60f));
+        }
+
         [HarmonyPostfix, HarmonyPatch(typeof(GameplayLogicScript), nameof(GameplayLogicScript.GameStartMultiplayer))]
         private static void GameStartMultiplayer_Postfix(GameplayLogicScript __instance)
         {
+            _syncGls = null;
             try
             {
                 if (!__instance.isTimerLobby || !__instance.isLobbyServer || !__instance.isPrivate)
                     return;
+                _syncGls = __instance;
                 float mins = Plugin.CfgTimerMinutes.Value;
                 if (mins < 1f || Mathf.Approximately(mins, 17.5f))
                     return;
