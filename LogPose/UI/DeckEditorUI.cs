@@ -41,6 +41,7 @@ namespace LogPose.UI
                     BuildChrome();
                 Impose();
                 RefreshDeckPanel();
+                RefreshBadges(_ed);
             }
             catch (System.Exception e)
             {
@@ -243,6 +244,9 @@ namespace LogPose.UI
             }
 
             // Right deck panel: vanilla deck grid tucked under the leader/curve header.
+            // Stack steps at zero make every copy of a card sit exactly on the first one —
+            // a single visible card per printing, with the ×N badge carrying the count
+            // (clicks still hit the top copy and remove one at a time, as vanilla).
             Move(cn, "Deck Scrollview", 672f, -160f, 470f, 560f);
             _ed.DeckXStart = 60f;
             _ed.DeckXStep = 110f;
@@ -250,6 +254,8 @@ namespace LogPose.UI
             _ed.DeckYStep = -150f;
             _ed.DeckColumns = 4;
             _ed.DeckHeight = 150f;
+            _ed.DeckStackXStep = 0f;
+            _ed.DeckStackYStep = 0f;
             RectTransform copy = Move(cn, "CopyToClipboard", 562f, -475f, 220f, 44f);
             if (copy != null)
                 SetText(cn, "CopyToClipboard", "Copy list", 15f);
@@ -296,6 +302,119 @@ namespace LogPose.UI
             RectTransform prt = t as RectTransform;
             if (prt != null && txt.rectTransform.sizeDelta.x != prt.sizeDelta.x - 12f)
                 txt.rectTransform.sizeDelta = new Vector2(prt.sizeDelta.x - 12f, prt.sizeDelta.y - 8f);
+        }
+
+        // ------------------------------------------------------------- count badges ---
+
+        // One ×N pill per printing, bottom-right of the (now unstacked) top copy. The
+        // game maintains the count on child 7 of the top card each DisplayDeck pass;
+        // the badge mirrors it and the raw number is kept invisible. Respects the
+        // vanilla "Hide Counts" toggle, since that deactivates child 7 outright.
+        private static readonly List<GameObject> _badges = new List<GameObject>();
+
+        [HarmonyLib.HarmonyPostfix]
+        [HarmonyLib.HarmonyPatch(typeof(DeckEditorScript), "DisplayDeck")]
+        private static void DisplayDeck_Postfix(DeckEditorScript __instance)
+        {
+            if (!Plugin.CfgUiReskin.Value)
+                return;
+            try
+            {
+                Theme.Ensure();
+                RefreshBadges(__instance);
+            }
+            catch { }
+        }
+
+        private static void RefreshBadges(DeckEditorScript ed)
+        {
+            if (ed.lgo_CurrentDeck == null)
+                return;
+            var inDeck = new HashSet<Transform>();
+            foreach (GameObject go in ed.lgo_CurrentDeck)
+                if (go != null)
+                    inDeck.Add(go.transform);
+            // Cards are pooled: a badge whose card left the deck must not follow it
+            // into the browser.
+            for (int i = _badges.Count - 1; i >= 0; i--)
+            {
+                GameObject b = _badges[i];
+                if (b == null)
+                    _badges.RemoveAt(i);
+                else if (!inDeck.Contains(b.transform.parent) && b.activeSelf)
+                    b.SetActive(false);
+            }
+
+            // Count copies straight from the (sorted) deck list — the vanilla number
+            // label depends on the "Hide Counts" toggle and can't be trusted for data.
+            var deck = ed.lgo_CurrentDeck;
+            int runStart = 0;
+            string runId = null;
+            for (int i = 0; i <= deck.Count; i++)
+            {
+                string id = null;
+                if (i < deck.Count && deck[i] != null)
+                {
+                    CardLogicScript cls = deck[i].GetComponent<CardLogicScript>();
+                    id = cls != null && cls.myCard.cardDef != null ? cls.myCard.cardDef.cardID : null;
+                }
+                if (i < deck.Count && id == runId)
+                    continue;
+                // The run [runStart, i) just ended; its LAST copy is the visible top.
+                int n = i - runStart;
+                for (int j = runStart; j < i; j++)
+                {
+                    if (deck[j] == null)
+                        continue;
+                    Transform card = deck[j].transform;
+                    if (card.childCount >= 8)
+                    {
+                        TMP_Text num = card.GetChild(7).GetComponent<TMP_Text>();
+                        if (num != null && num.alpha != 0f)
+                            num.alpha = 0f;   // the badge replaces the raw number
+                    }
+                    bool show = j == i - 1 && n > 1;
+                    Transform badge = card.Find("LogPoseBadge");
+                    if (!show)
+                    {
+                        if (badge != null && badge.gameObject.activeSelf)
+                            badge.gameObject.SetActive(false);
+                        continue;
+                    }
+                    if (badge == null)
+                    {
+                        badge = BuildBadge(card);
+                        _badges.Add(badge.gameObject);
+                    }
+                    if (!badge.gameObject.activeSelf)
+                        badge.gameObject.SetActive(true);
+                    TMP_Text bt = badge.GetComponentInChildren<TMP_Text>(true);
+                    string want = "×" + n;
+                    if (bt != null && bt.text != want)
+                        bt.text = want;
+                }
+                runStart = i;
+                runId = id;
+            }
+        }
+
+        private static Transform BuildBadge(Transform card)
+        {
+            GameObject b = W.Go("LogPoseBadge", card);
+            RectTransform rt = b.GetComponent<RectTransform>();
+            rt.anchorMin = rt.anchorMax = new Vector2(1f, 0f);
+            rt.pivot = new Vector2(1f, 0f);
+            rt.anchoredPosition = new Vector2(-3f, 3f);
+            rt.sizeDelta = new Vector2(32f, 22f);
+            Image im = b.AddComponent<Image>();
+            im.sprite = UISprites.RoundedRect(24, 24, 6f, Theme.WithA(Theme.Ground, 0.92f),
+                Theme.WithA(Theme.Accent, 0.5f), 1f, 7f);
+            im.type = Image.Type.Sliced;
+            im.raycastTarget = false;
+            TMP_Text label = W.Label(b.transform, "×2", 0f, 0f, 32f, 22f, 12f,
+                Theme.Accent300, 600, TextAlignmentOptions.Center);
+            W.Fill(label.gameObject);
+            return b.transform;
         }
 
         // ------------------------------------------------------------- deck insights --
