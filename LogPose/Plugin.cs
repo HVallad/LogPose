@@ -11,7 +11,7 @@ namespace LogPose
     {
         public const string GUID = "com.hunter.logpose";
         public const string NAME = "LogPose";
-        public const string VERSION = "0.5.1";
+        public const string VERSION = "0.5.2";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;
@@ -74,7 +74,6 @@ namespace LogPose
             Replay.MatchHistoryUI.Update();
             UpdateCheck.Update();
             TimerLobbyUI.Update();
-            TimerPatches.PollRecovery();
         }
 
         private void OnGUI()

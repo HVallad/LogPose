@@ -14,51 +14,41 @@ namespace LogPose
     // display and the timeout both follow it — they don't even need the mod.
     internal static class TimerPatches
     {
-        private static int _lastTurn = -1;
+        private static int _untapCount;
 
-        // Fischer-style recovery: when a turn completes, the HOST credits the bank of the
-        // player who just finished. Turn completion is detected from iTurnNumber (one tick
-        // per turn) rather than iPlayerAction, which also flips during counter/block windows
-        // inside battles. The regular once-a-second sync carries the credit to the opponent.
-        internal static void PollRecovery()
+        // Fischer-style recovery: credit the bank of the player who just COMPLETED a turn.
+        // PlayerUntap is the refresh-phase routine that runs exactly once at every turn
+        // start, for both players, on each client — the same signal replay turn marks are
+        // built from. (iTurnNumber is NOT usable here: EndTurn_Internal only increments it
+        // once per round.) The player whose turn begins is ps_Player, so the credit goes to
+        // the other one; applied on the HOST, whose once-a-second sync carries it over.
+        [HarmonyPostfix, HarmonyPatch(typeof(GameplayLogicScript), "PlayerUntap")]
+        private static void PlayerUntap_Postfix(GameplayLogicScript __instance, PlayerState ps_Player)
         {
-            float inc = Plugin.CfgTimerRecoverySeconds.Value;
-            if (inc <= 0f)
-                return;
-            GameplayLogicScript gls = Replay.ReplayBridge.FindBoard();
-            if (gls == null || gls.gsv_CurrentGame == null)
+            try
             {
-                _lastTurn = -1;
-                return;
-            }
-            if (!gls.isTimerLobby || !gls.isLobbyServer || !gls.isPrivate)
-                return;
-            int turn = gls.gsv_CurrentGame.iTurnNumber;
-            if (turn < 1)
-            {
-                _lastTurn = -1;
-                return;
-            }
-            if (_lastTurn < 1)
-            {
-                _lastTurn = turn;
-                return;
-            }
-            if (turn != _lastTurn)
-            {
-                _lastTurn = turn;
-                // The new turn's owner is iPlayerAction; the finisher is the other player.
-                if (gls.gsv_CurrentGame.iPlayerAction == 0)
-                    gls.opTurnTime += inc;
+                _untapCount++;
+                if (_untapCount < 2)   // the game's first untap starts turn 1; no one has completed a turn yet
+                    return;
+                float inc = Plugin.CfgTimerRecoverySeconds.Value;
+                if (inc <= 0f)
+                    return;
+                if (!__instance.isTimerLobby || !__instance.isLobbyServer || !__instance.isPrivate)
+                    return;
+                if (__instance.Lps_Players == null || __instance.Lps_Players.Count < 2)
+                    return;
+                if (ps_Player == __instance.Lps_Players[0])
+                    __instance.opTurnTime += inc;
                 else
-                    gls.myTurnTime += inc;
+                    __instance.myTurnTime += inc;
             }
+            catch { }
         }
 
         [HarmonyPostfix, HarmonyPatch(typeof(GameplayLogicScript), nameof(GameplayLogicScript.GameStartMultiplayer))]
         private static void GameStartMultiplayer_Postfix(GameplayLogicScript __instance)
         {
-            _lastTurn = -1;
+            _untapCount = 0;
             try
             {
                 if (!__instance.isTimerLobby || !__instance.isLobbyServer || !__instance.isPrivate)
