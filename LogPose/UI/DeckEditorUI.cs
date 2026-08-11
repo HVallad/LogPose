@@ -154,11 +154,11 @@ namespace LogPose.UI
             float railX = -764f;
 
             // Top bar (y 496 in centered coords).
-            Move(cn, "BackButton", -880f, 496f, 110f, 48f);
-            SetText(cn, "BackButton", "← Back", 16f);
-            Move(cn, "DeckName", -680f, 496f, 360f, 48f);
+            Move(cn, "BackButton", -892f, 496f, 90f, 48f);
+            SetText(cn, "BackButton", "← Back", 14f);
+            Move(cn, "DeckName", -660f, 496f, 360f, 48f);
             Move(cn, "NotificationText", -90f, 430f, 500f, 36f);
-            RectTransform count = Move(cn, "DeckCount", -400f, 494f, 240f, 40f);
+            RectTransform count = Move(cn, "DeckCount", -350f, 494f, 240f, 40f);
             if (count != null)
             {
                 TMP_Text ct = count.GetComponent<TMP_Text>();
@@ -189,12 +189,13 @@ namespace LogPose.UI
                 search.pivot = new Vector2(0.5f, 0.5f);
                 search.anchoredPosition = new Vector2(railX, 384f);
             }
-            MoveToggle(cn, "Red", -845f, 302f);
-            MoveToggle(cn, "Green", -725f, 302f);
-            MoveToggle(cn, "Blue", -845f, 260f);
-            MoveToggle(cn, "Purple", -725f, 260f);
-            MoveToggle(cn, "Black", -845f, 218f);
-            MoveToggle(cn, "Yellow", -725f, 218f);
+            // Color roots shrink to 120 so the two columns' CLICK rects can't overlap.
+            MoveToggle(cn, "Red", -845f, 302f, 120f);
+            MoveToggle(cn, "Green", -725f, 302f, 120f);
+            MoveToggle(cn, "Blue", -845f, 260f, 120f);
+            MoveToggle(cn, "Purple", -725f, 260f, 120f);
+            MoveToggle(cn, "Black", -845f, 218f, 120f);
+            MoveToggle(cn, "Yellow", -725f, 218f, 120f);
             MoveToggle(cn, "Limit4", -830f, 148f);
             MoveToggle(cn, "Rotation", -830f, 106f);
             MoveToggle(cn, "SortByCost", -812f, 64f);
@@ -271,9 +272,9 @@ namespace LogPose.UI
             return rt;
         }
 
-        private static void MoveToggle(Transform cn, string name, float x, float y)
+        private static void MoveToggle(Transform cn, string name, float x, float y, float w = 0f)
         {
-            RectTransform rt = Move(cn, name, x, y, 0f, 0f);
+            RectTransform rt = Move(cn, name, x, y, w, w > 0f ? 40f : 0f);
             if (rt != null && rt.localScale.x != 0.85f)
                 rt.localScale = new Vector3(0.85f, 0.85f, 1f);
         }

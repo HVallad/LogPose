@@ -169,6 +169,31 @@ namespace LogPose.UI
                     DumpRt(sb, "DeckCard0", ed.lgo_CurrentDeck[0].transform as RectTransform);
                 if (ed.lgo_AvailableCards != null && ed.lgo_AvailableCards.Count > 0 && ed.lgo_AvailableCards[0] != null)
                     DumpRt(sb, "SelCard0", ed.lgo_AvailableCards[0].transform as RectTransform);
+
+                // World-space rects of every active top-level control + LogPose chrome
+                // children, for an offline overlap audit.
+                sb.AppendLine("--- WORLD RECTS ---");
+                Transform cnv = ed.go_MainCanvas != null ? ed.go_MainCanvas.transform : null;
+                if (cnv != null)
+                {
+                    Vector3[] c = new Vector3[4];
+                    foreach (Transform child in cnv)
+                    {
+                        if (!child.gameObject.activeInHierarchy)
+                            continue;
+                        if (child.name == "LogPoseEditorChrome")
+                        {
+                            foreach (Transform cc in child)
+                            {
+                                WorldRect(sb, "chrome/" + cc.name, cc as RectTransform, c);
+                                foreach (Transform ccc in cc)
+                                    WorldRect(sb, "chrome/" + cc.name + "/" + ccc.name, ccc as RectTransform, c);
+                            }
+                            continue;
+                        }
+                        WorldRect(sb, child.name, child as RectTransform, c);
+                    }
+                }
                 string file = System.IO.Path.Combine(BepInEx.Paths.BepInExRootPath, "logpose-editordump.txt");
                 File.WriteAllText(file, sb.ToString());
                 Plugin.Log.LogInfo("Editor dump written: " + file);
@@ -177,6 +202,15 @@ namespace LogPose.UI
             {
                 Plugin.Log.LogWarning("Editor dump failed: " + e.Message);
             }
+        }
+
+        private static void WorldRect(StringBuilder sb, string name, RectTransform rt, Vector3[] c)
+        {
+            if (rt == null)
+                return;
+            rt.GetWorldCorners(c);
+            sb.AppendLine("W " + name + " | " + c[0].x.ToString("F0") + "," + c[0].y.ToString("F0")
+                + " -> " + c[2].x.ToString("F0") + "," + c[2].y.ToString("F0"));
         }
 
         private static void DumpRt(StringBuilder sb, string name, RectTransform rt)
