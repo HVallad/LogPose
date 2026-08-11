@@ -28,12 +28,13 @@ namespace LogPose.UI
         private static readonly int[] _maxLife = new int[2];
         private static TMP_Text _vanOppName, _vanPlName, _vanTurnCounter;
 
-        // Center-line chip + per-side counters (overlay canvas). These sit over the mat,
-        // whose position depends on the canvas width — RefreshCounters re-seats them.
+        // Center-line chip + per-side counters. These live ON THE GAME CANVAS, parented
+        // to a container that sits at the field's center: the overlay canvas scales by
+        // width while the game canvas scales by height, so anything mat-anchored drawn
+        // on the overlay drifts vertically on non-16:9 screens.
+        private static RectTransform _fieldLabels;
         private static Image _centerChip;
         private static TextMeshProUGUI _centerLabel;
-        private static Image _centerRule;
-        private static RectTransform _centerChipRt;
         private static TextMeshProUGUI _donP, _deckP, _trashP, _donO, _deckO, _trashO;
 
         // Game-canvas chrome (scene objects die on reload; recreated when null).
@@ -97,6 +98,8 @@ namespace LogPose.UI
                 _railPanel.gameObject.SetActive(inGameAtAll);
             if (_matChrome != null && _matChrome.gameObject.activeSelf != inGameAtAll)
                 _matChrome.gameObject.SetActive(inGameAtAll);
+            if (_fieldLabels != null && _fieldLabels.gameObject.activeSelf != inGameAtAll)
+                _fieldLabels.gameObject.SetActive(inGameAtAll);
 
             bool inGame = inGameAtAll
                 && _gls.gsv_CurrentGame != null
@@ -132,6 +135,11 @@ namespace LogPose.UI
             {
                 Object.Destroy(_matChrome.gameObject);
                 _matChrome = null;
+            }
+            if (_fieldLabels != null)
+            {
+                Object.Destroy(_fieldLabels.gameObject);
+                _fieldLabels = null;
             }
             _matP = _matO = _glowP = _glowO = null;
         }
@@ -325,6 +333,8 @@ namespace LogPose.UI
                         gt.alignment = TextAlignmentOptions.Center;
                 }
 
+                EnsureFieldLabels(cn, F);
+
                 Transform prev = cn.Find("CardPreview");
                 if (prev != null)
                 {
@@ -338,6 +348,44 @@ namespace LogPose.UI
                 }
             }
             catch { }
+        }
+
+        // The field-anchored labels: center rule + whose-turn chip + pile counters,
+        // in game-canvas units relative to the field center so they track the mat
+        // exactly on every aspect ratio. Scene objects — recreated when the scene dies.
+        private static void EnsureFieldLabels(Transform cn, float F)
+        {
+            if (_fieldLabels == null)
+            {
+                GameObject fl = W.Go("LogPoseFieldLabels", cn);
+                _fieldLabels = fl.GetComponent<RectTransform>();
+                _fieldLabels.sizeDelta = Vector2.zero;
+                Transform t = fl.transform;
+
+                _ = W.Rule(t, -355f, -0.5f, 710f);
+                GameObject cc = W.Go("CenterChip", t);
+                W.TL(cc, -90f, -12f, 180f, 25f);
+                _centerChip = cc.AddComponent<Image>();
+                _centerChip.sprite = UISprites.RoundedRect(24, 24, 6f, Theme.WithA(Theme.Ground, 0.92f),
+                    Theme.WithA(Theme.Accent, 0.5f), 1f, 7f);
+                _centerChip.type = Image.Type.Sliced;
+                _centerChip.raycastTarget = false;
+                _centerLabel = W.Label(cc.transform, "YOUR TURN", 0f, 0f, 180f, 25f, 11f,
+                    Theme.Accent300, 600, TextAlignmentOptions.Center, false, 0.16f);
+                W.Fill(_centerLabel.gameObject);
+
+                // Player counters stack in a column just right of the mat — the deck
+                // pile's card stack grows toward the band's inner edge and would cover
+                // an in-band row. The opponent's pile grows away, so their row fits.
+                _donP = Counter(t, 368f, 300f, 150f, TextAlignmentOptions.MidlineLeft);
+                _deckP = Counter(t, 368f, 338f, 150f, TextAlignmentOptions.MidlineLeft);
+                _trashP = Counter(t, 368f, 376f, 150f, TextAlignmentOptions.MidlineLeft);
+                _donO = Counter(t, 5f, -338f, 130f, TextAlignmentOptions.MidlineRight);
+                _deckO = Counter(t, 145f, -338f, 100f, TextAlignmentOptions.Center);
+                _trashO = Counter(t, 255f, -338f, 100f, TextAlignmentOptions.Center);
+            }
+            if (_fieldLabels.anchoredPosition.x != F)
+                _fieldLabels.anchoredPosition = new Vector2(F, 0f);
         }
 
         private static void Move(Transform cn, string name, float x, float y, float w, float h)
@@ -584,29 +632,6 @@ namespace LogPose.UI
             W.TL(pp, 1250f, 18f, 260f, 24f);
             _plPips = pp.transform;
 
-            // Center line + whose-turn chip over the gap between the halves (2a).
-            float matTL = 1920f * _fieldFromLeft / _canvasW;   // mat center in HUD coords
-            _centerRule = W.Rule(t, matTL - 355f, 540f, 710f);
-            GameObject cc = W.Go("CenterChip", t);
-            _centerChipRt = W.TL(cc, matTL - 90f, 528f, 180f, 25f);
-            _centerChip = cc.AddComponent<Image>();
-            _centerChip.sprite = UISprites.RoundedRect(24, 24, 6f, Theme.WithA(Theme.Ground, 0.92f),
-                Theme.WithA(Theme.Accent, 0.5f), 1f, 7f);
-            _centerChip.type = Image.Type.Sliced;
-            _centerChip.raycastTarget = false;
-            _centerLabel = W.Label(cc.transform, "YOUR TURN", 0f, 0f, 180f, 25f, 11f,
-                Theme.Accent300, 600, TextAlignmentOptions.Center, false, 0.16f);
-            W.Fill(_centerLabel.gameObject);
-
-            // Live pile counters over the outer bands (art carries the placards; these
-            // carry the numbers). TL y: player band label row 866, opponent 210.
-            _donP = Counter(t, 577f, 854f, 130f, TextAlignmentOptions.MidlineRight);
-            _deckP = Counter(t, 717f, 854f, 100f, TextAlignmentOptions.Center);
-            _trashP = Counter(t, 827f, 854f, 100f, TextAlignmentOptions.Center);
-            _donO = Counter(t, 577f, 202f, 130f, TextAlignmentOptions.MidlineRight);
-            _deckO = Counter(t, 717f, 202f, 100f, TextAlignmentOptions.Center);
-            _trashO = Counter(t, 827f, 202f, 100f, TextAlignmentOptions.Center);
-
             _maxLife[0] = _maxLife[1] = 0;
             AdoptVanillaLabels();
             Plugin.Log.LogInfo("Board HUD built.");
@@ -625,30 +650,12 @@ namespace LogPose.UI
         {
             try
             {
-                // The mat's on-screen position depends on the canvas width; keep the
-                // mat-anchored overlay items seated over it.
-                float hudX = 1920f * _fieldFromLeft / _canvasW;
-                SetX(_centerRule != null ? _centerRule.rectTransform : null, hudX - 355f);
-                SetX(_centerChipRt, hudX - 90f);
-                SetX(_donP.rectTransform, hudX + 5f);
-                SetX(_deckP.rectTransform, hudX + 145f);
-                SetX(_trashP.rectTransform, hudX + 255f);
-                SetX(_donO.rectTransform, hudX + 5f);
-                SetX(_deckO.rectTransform, hudX + 145f);
-                SetX(_trashO.rectTransform, hudX + 255f);
-
-                if (_gls.Lps_Players == null || _gls.Lps_Players.Count < 2)
+                if (_donP == null || _gls.Lps_Players == null || _gls.Lps_Players.Count < 2)
                     return;
                 CounterTexts(0, _donP, _deckP, _trashP);
                 CounterTexts(1, _donO, _deckO, _trashO);
             }
             catch { }
-        }
-
-        private static void SetX(RectTransform rt, float x)
-        {
-            if (rt != null && rt.anchoredPosition.x != x)
-                rt.anchoredPosition = new Vector2(x, rt.anchoredPosition.y);
         }
 
         private static void CounterTexts(int seat, TMP_Text don, TMP_Text deck, TMP_Text trash)
