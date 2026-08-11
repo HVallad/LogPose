@@ -88,7 +88,7 @@ namespace LogPose.UI
             Image rail = W.Panel(t, "Rail", 0f, 0f, 320f, 920f, 14f, Theme.WithA(Theme.Surface, 0.55f),
                 Theme.WithA(Theme.Text, 0.1f));
             rail.raycastTarget = false;
-            Edge(rail.rectTransform, 0f, 196f, -44f);
+            Edge(rail.rectTransform, 0f, 196f);
             W.Label(rail.transform, "COLOR", 40f, 72f, 200f, 18f, 12f, Theme.WithA(Theme.Text, 0.5f), 600,
                 TextAlignmentOptions.TopLeft, false, 0.12f);
             W.Label(rail.transform, "OPTIONS", 40f, 226f, 200f, 18f, 12f, Theme.WithA(Theme.Text, 0.5f), 600,
@@ -97,7 +97,7 @@ namespace LogPose.UI
             Image deckPanel = W.Panel(t, "DeckPanel", 0f, 0f, 500f, 920f, 14f, Theme.WithA(Theme.Surface, 0.55f),
                 Theme.WithA(Theme.Text, 0.1f));
             deckPanel.raycastTarget = false;
-            Edge(deckPanel.rectTransform, 1f, -288f, -44f);
+            Edge(deckPanel.rectTransform, 1f, -288f);
             Transform dp = deckPanel.transform;
 
             // Deck panel: leader header + cost curve (panel-relative coords).
@@ -145,11 +145,13 @@ namespace LogPose.UI
             Plugin.Log.LogInfo("Deck editor 2b chrome built.");
         }
 
-        private static void Edge(RectTransform rt, float ax, float x, float y)
+        // Side panels hang off the top edge too (they and their headings must never
+        // separate from the header bar's coordinate basis).
+        private static void Edge(RectTransform rt, float ax, float x)
         {
-            rt.anchorMin = rt.anchorMax = new Vector2(ax, 0.5f);
+            rt.anchorMin = rt.anchorMax = new Vector2(ax, 1f);
             rt.pivot = new Vector2(0.5f, 0.5f);
-            rt.anchoredPosition = new Vector2(x, y);
+            rt.anchoredPosition = new Vector2(x, -584f);
         }
 
         // ------------------------------------------------------------- repositioning --
@@ -159,13 +161,13 @@ namespace LogPose.UI
             Transform cn = Cn();
             const float railX = 196f;   // rail column center, measured from the LEFT edge
 
-            // Top bar (y 496 in centered coords): the name/count cluster hugs the left
-            // edge, the action cluster hugs the right — aspect-ratio-proof.
-            MoveEdge(cn, "BackButton", 68f, 496f, 90f, 48f, 0f);
+            // Top bar (44 down from the top, matching the 88h strip's center): the
+            // name/count cluster hugs the left edge, the action cluster the right.
+            MoveEdge(cn, "BackButton", 68f, -44f, 90f, 48f, 0f);
             SetText(cn, "BackButton", "← Back", 14f);
-            MoveEdge(cn, "DeckName", 300f, 496f, 360f, 48f, 0f);
-            Move(cn, "NotificationText", -90f, 430f, 500f, 36f);
-            RectTransform count = MoveEdge(cn, "DeckCount", 610f, 494f, 240f, 40f, 0f);
+            MoveEdge(cn, "DeckName", 300f, -44f, 360f, 48f, 0f);
+            Move(cn, "NotificationText", -90f, -110f, 500f, 36f);
+            RectTransform count = MoveEdge(cn, "DeckCount", 610f, -46f, 240f, 40f, 0f);
             if (count != null)
             {
                 TMP_Text ct = count.GetComponent<TMP_Text>();
@@ -177,40 +179,40 @@ namespace LogPose.UI
                     ct.alignment = TextAlignmentOptions.MidlineLeft;
                 }
             }
-            MoveEdge(cn, "DeckSelector", -790f, 496f, 250f, 48f, 1f);
+            MoveEdge(cn, "DeckSelector", -790f, -44f, 250f, 48f, 1f);
             StyleDropdown(cn);
-            MoveEdge(cn, "LoadButton", -560f, 496f, 110f, 48f, 1f);
+            MoveEdge(cn, "LoadButton", -560f, -44f, 110f, 48f, 1f);
             SetText(cn, "LoadButton", "Load", 16f);
-            MoveEdge(cn, "PasteFromClipboard", -428f, 496f, 130f, 48f, 1f);
+            MoveEdge(cn, "PasteFromClipboard", -428f, -44f, 130f, 48f, 1f);
             SetText(cn, "PasteFromClipboard", "Import", 15f);
-            MoveEdge(cn, "LogPoseAltArts", -296f, 496f, 120f, 48f, 1f);
+            MoveEdge(cn, "LogPoseAltArts", -296f, -44f, 120f, 48f, 1f);
             SetText(cn, "LogPoseAltArts", "Alt arts", 15f);
-            RectTransform save = MoveEdge(cn, "SaveButton", -154f, 496f, 140f, 48f, 1f);
+            RectTransform save = MoveEdge(cn, "SaveButton", -154f, -44f, 140f, 48f, 1f);
             if (save != null)
                 BoardHUD.StyleAsButton(save.gameObject, 140f, 48f, 16f, BtnKind.Primary);
 
             // Left rail (everything left-anchored). The search field's pivot is
             // off-center in the prefab — normalize it so the position lands as aimed.
-            RectTransform search = MoveEdge(cn, "SearchField", railX, 384f, 272f, 44f, 0f);
+            RectTransform search = MoveEdge(cn, "SearchField", railX, -156f, 272f, 44f, 0f);
             if (search != null && search.pivot != new Vector2(0.5f, 0.5f))
             {
                 search.pivot = new Vector2(0.5f, 0.5f);
-                search.anchoredPosition = new Vector2(railX, 384f);
+                search.anchoredPosition = new Vector2(railX, -156f);
             }
             // Color roots shrink to 120 so the two columns' CLICK rects can't overlap.
-            MoveToggle(cn, "Red", 115f, 302f, 120f);
-            MoveToggle(cn, "Green", 235f, 302f, 120f);
-            MoveToggle(cn, "Blue", 115f, 260f, 120f);
-            MoveToggle(cn, "Purple", 235f, 260f, 120f);
-            MoveToggle(cn, "Black", 115f, 218f, 120f);
-            MoveToggle(cn, "Yellow", 235f, 218f, 120f);
-            MoveToggle(cn, "Limit4", 130f, 148f);
-            MoveToggle(cn, "Rotation", 130f, 106f);
-            MoveToggle(cn, "SortByCost", 148f, 64f);
-            MoveToggle(cn, "HideNumbers", 148f, 22f);
+            MoveToggle(cn, "Red", 115f, -238f, 120f);
+            MoveToggle(cn, "Green", 235f, -238f, 120f);
+            MoveToggle(cn, "Blue", 115f, -280f, 120f);
+            MoveToggle(cn, "Purple", 235f, -280f, 120f);
+            MoveToggle(cn, "Black", 115f, -322f, 120f);
+            MoveToggle(cn, "Yellow", 235f, -322f, 120f);
+            MoveToggle(cn, "Limit4", 130f, -392f);
+            MoveToggle(cn, "Rotation", 130f, -434f);
+            MoveToggle(cn, "SortByCost", 148f, -476f);
+            MoveToggle(cn, "HideNumbers", 148f, -518f);
             StyleToggles(cn);
             // Bottom stack, spaced so nothing collides: help text, sponsor, utilities.
-            RectTransform help = MoveEdge(cn, "SearchHelp", railX, -160f, 276f, 250f, 0f);
+            RectTransform help = MoveEdge(cn, "SearchHelp", railX, -700f, 276f, 250f, 0f);
             if (help != null)
             {
                 TMP_Text ht = help.GetComponent<TMP_Text>();
@@ -223,10 +225,10 @@ namespace LogPose.UI
                     ht.overflowMode = TextOverflowModes.Ellipsis;
                 }
             }
-            RectTransform eg = MoveEdge(cn, "EgmanEvents", railX, -345f, 0f, 0f, 0f);
+            RectTransform eg = MoveEdge(cn, "EgmanEvents", railX, -885f, 0f, 0f, 0f);
             if (eg != null && eg.localScale.x != 0.7f)
                 eg.localScale = new Vector3(0.7f, 0.7f, 1f);
-            RectTransform egx = MoveEdge(cn, "EgmanExplanation", railX, -410f, 260f, 24f, 0f);
+            RectTransform egx = MoveEdge(cn, "EgmanExplanation", railX, -950f, 260f, 24f, 0f);
             if (egx != null)
             {
                 TMP_Text xt = egx.GetComponent<TMP_Text>();
@@ -236,25 +238,28 @@ namespace LogPose.UI
                     xt.fontSize = 13f;
                 }
             }
-            MoveEdge(cn, "Customize Images", railX, -448f, 210f, 38f, 0f);
+            MoveEdge(cn, "Customize Images", railX, -988f, 210f, 38f, 0f);
             SetText(cn, "Customize Images", "Customize images", 14f);
-            MoveEdge(cn, "DeleteButton", railX, -488f, 210f, 36f, 0f);
+            MoveEdge(cn, "DeleteButton", railX, -1028f, 210f, 36f, 0f);
             SetText(cn, "DeleteButton", "Delete selected deck file", 12f);
 
             // Center browser: stretches between the two side columns so any aspect
-            // ratio keeps it clear of them; the grid's column count follows its width.
+            // ratio keeps it clear of them; hangs off the top edge vertically like
+            // everything else; the grid's column count follows its width.
             Transform sel = cn.Find("Card Selector Scrollview");
             if (sel != null)
             {
                 RectTransform srt = (RectTransform)sel;
-                if (srt.anchorMin.x != 0f || srt.anchorMax.x != 1f)
+                if (srt.anchorMin.x != 0f || srt.anchorMax.x != 1f || srt.anchorMin.y != 1f)
                 {
-                    srt.anchorMin = new Vector2(0f, 0.5f);
-                    srt.anchorMax = new Vector2(1f, 0.5f);
+                    srt.anchorMin = new Vector2(0f, 1f);
+                    srt.anchorMax = new Vector2(1f, 1f);
                     srt.pivot = new Vector2(0.5f, 0.5f);
                 }
-                srt.offsetMin = new Vector2(376f, -504f);
-                srt.offsetMax = new Vector2(-562f, 416f);
+                srt.offsetMin = new Vector2(376f, srt.offsetMin.y);
+                srt.offsetMax = new Vector2(-562f, srt.offsetMax.y);
+                srt.sizeDelta = new Vector2(srt.sizeDelta.x, 920f);
+                srt.anchoredPosition = new Vector2(srt.anchoredPosition.x, -584f);
                 if (_ed.tf_CardSelectorScrollview != null)
                 {
                     GridLayoutGroup grid = _ed.tf_CardSelectorScrollview.GetComponent<GridLayoutGroup>();
@@ -266,13 +271,13 @@ namespace LogPose.UI
                     }
                 }
             }
-            Move(cn, "NoCardsIndicator", -90f, -44f, 0f, 0f);
+            Move(cn, "NoCardsIndicator", -90f, -584f, 0f, 0f);
 
             // Right deck panel: vanilla deck grid tucked under the leader/curve header.
             // Stack steps at zero make every copy of a card sit exactly on the first one —
             // a single visible card per printing, with the ×N badge carrying the count
             // (clicks still hit the top copy and remove one at a time, as vanilla).
-            MoveEdge(cn, "Deck Scrollview", -288f, -160f, 470f, 560f, 1f);
+            MoveEdge(cn, "Deck Scrollview", -288f, -700f, 470f, 560f, 1f);
             _ed.DeckXStart = 60f;
             _ed.DeckXStep = 110f;
             _ed.DeckYStart = -80f;
@@ -281,30 +286,24 @@ namespace LogPose.UI
             _ed.DeckHeight = 150f;
             _ed.DeckStackXStep = 0f;
             _ed.DeckStackYStep = 0f;
-            RectTransform copy = MoveEdge(cn, "CopyToClipboard", -398f, -475f, 220f, 44f, 1f);
+            RectTransform copy = MoveEdge(cn, "CopyToClipboard", -398f, -1015f, 220f, 44f, 1f);
             if (copy != null)
                 SetText(cn, "CopyToClipboard", "Copy list", 15f);
-            RectTransform clear = MoveEdge(cn, "ClearButton", -160f, -475f, 190f, 44f, 1f);
+            RectTransform clear = MoveEdge(cn, "ClearButton", -160f, -1015f, 190f, 44f, 1f);
             if (clear != null)
                 BoardHUD.StyleAsButton(clear.gameObject, 190f, 44f, 15f, BtnKind.Danger);
         }
 
+        // Everything hangs off the TOP edge (like the header bar itself) so no canvas
+        // scaler mode can vertically separate the bar from its row: y is negative,
+        // measured down from the top.
         private static RectTransform Move(Transform cn, string name, float x, float y, float w, float h)
         {
-            Transform t = cn.Find(name);
-            if (t == null)
-                return null;
-            RectTransform rt = t as RectTransform;
-            if (rt == null)
-                return null;
-            rt.anchoredPosition = new Vector2(x, y);
-            if (w > 0f)
-                rt.sizeDelta = new Vector2(w, h);
-            return rt;
+            return MoveEdge(cn, name, x, y, w, h, 0.5f);
         }
 
-        // Anchor to a screen edge (ax: 0 = left, 1 = right) so the layout survives any
-        // aspect ratio, then position (x is measured from that edge).
+        // Anchor to a screen corner (ax: 0 = left, 1 = right, 0.5 = center-x; always the
+        // top edge vertically) so the layout survives any aspect ratio or scaler mode.
         private static RectTransform MoveEdge(Transform cn, string name, float x, float y,
             float w, float h, float ax)
         {
@@ -314,9 +313,9 @@ namespace LogPose.UI
             RectTransform rt = t as RectTransform;
             if (rt == null)
                 return null;
-            if (rt.anchorMin.x != ax || rt.anchorMin.y != 0.5f)
+            if (rt.anchorMin.x != ax || rt.anchorMin.y != 1f)
             {
-                rt.anchorMin = rt.anchorMax = new Vector2(ax, 0.5f);
+                rt.anchorMin = rt.anchorMax = new Vector2(ax, 1f);
                 rt.pivot = new Vector2(0.5f, 0.5f);
             }
             rt.anchoredPosition = new Vector2(x, y);
