@@ -441,6 +441,17 @@ namespace LogPose.UI
 
         private static IEnumerator BudgetedLoad(DeckEditorScript ed, bool showLoadingScreen)
         {
+            // Release the cardsLoading gate immediately: RefreshCardSelector DROPS filter
+            // changes while it is set, which was invisible when the vanilla loader ran in
+            // a single frame but leaves the grid stale for the whole streaming window
+            // otherwise (toggle Red off mid-stream and the red cards stayed). Concurrent
+            // streams are safe — they drain the same shared list and loading is
+            // idempotent per card.
+            try
+            {
+                HarmonyLib.AccessTools.Field(typeof(DeckEditorScript), "cardsLoading").SetValue(ed, false);
+            }
+            catch { }
             var sw = System.Diagnostics.Stopwatch.StartNew();
             Slider bar = showLoadingScreen && ed.CardLoadingBar != null
                 ? ed.CardLoadingBar.GetComponent<Slider>() : null;
