@@ -156,8 +156,11 @@ namespace LogPose.UI
                 float frac = Input.mousePosition.y / Mathf.Max(Screen.height, 1);
                 bool raised = preGame
                     || (BoardLayoutPatches.HandRaised ? frac < 0.28f : frac < 0.08f);
+                // The flip applies during mulligan too: the game toggles iPlayerAction
+                // between the two seats' keep/mulligan choices, so whoever is choosing
+                // is always the seat playing from the bottom.
                 int action = _gls.gsv_CurrentGame != null ? _gls.gsv_CurrentGame.iPlayerAction : -1;
-                bool flip = !preGame && action == 1
+                bool flip = action == 1
                     && _gls.e_GameStyle == GameStyle.SoloVSelf && !Replay.ReplayBridge.InReplay;
                 if (raised == BoardLayoutPatches.HandRaised && action == _lastAction
                     && flip == BoardLayoutPatches.Flipped)
