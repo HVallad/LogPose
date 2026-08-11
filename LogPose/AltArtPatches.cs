@@ -33,12 +33,19 @@ namespace LogPose
             AltArtManager.SaveSidecar(sFile);
         }
 
-        // Match start: the game reads the selected deck through LoadDeckGeneric — activate the
-        // matching sidecar so variants show during play.
+        // Match start: the game reads each deck through LoadDeckGeneric — player's first,
+        // then the enemy's. Merge (not replace) so the second load can't wipe the first
+        // deck's picks, and start solo matches from a clean map so nothing stale leaks in.
         [HarmonyPostfix, HarmonyPatch(typeof(GameplayLogicScript), "LoadDeckGeneric")]
         private static void LoadDeckGeneric_Postfix(string sFile)
         {
-            AltArtManager.LoadSidecar(sFile);
+            AltArtManager.MergeSidecar(sFile);
+        }
+
+        [HarmonyPrefix, HarmonyPatch(typeof(GameplayLogicScript), "GameStartSolo")]
+        private static void GameStartSolo_Prefix()
+        {
+            AltArtManager.ResetForMatch();
         }
 
         // While the alt-art page is open the editor's Physics2D card hover/click must be

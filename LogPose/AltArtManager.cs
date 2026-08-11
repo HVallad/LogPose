@@ -55,6 +55,40 @@ namespace LogPose
             Plugin.Log.LogInfo("AltArt: merged " + merged.Count + " art choices for replay.");
         }
 
+        // A match shows two decks at once, so gameplay merges each deck's sidecar into
+        // the map instead of replacing it — the enemy deck's (usually empty) sidecar
+        // used to wipe the player's picks. Existing entries win: the player's deck
+        // loads first in solo, so their choice takes priority when both decks picked
+        // an art for the same card. The composite has no owning sidecar, so the path
+        // is cleared to keep it from ever being saved over a real one.
+        internal static void ResetForMatch()
+        {
+            ActiveMap = new Dictionary<string, string>();
+            ActiveSidecarPath = null;
+        }
+
+        internal static void MergeSidecar(string deckFile)
+        {
+            string path = SidecarPathFor(deckFile);
+            ActiveSidecarPath = null;
+            try
+            {
+                if (File.Exists(path))
+                {
+                    var map = JsonConvert.DeserializeObject<Dictionary<string, string>>(File.ReadAllText(path));
+                    if (map != null)
+                        foreach (var kv in map)
+                            if (!string.IsNullOrEmpty(kv.Value) && !ActiveMap.ContainsKey(kv.Key))
+                                ActiveMap[kv.Key] = kv.Value;
+                }
+                Plugin.Log.LogInfo("AltArt: merged sidecar " + path + " (map now " + ActiveMap.Count + " choices)");
+            }
+            catch (Exception e)
+            {
+                Plugin.Log.LogWarning("AltArt: failed to merge sidecar " + path + ": " + e.Message);
+            }
+        }
+
         internal static bool HasActiveVariant(string cardID)
         {
             string suffix;
