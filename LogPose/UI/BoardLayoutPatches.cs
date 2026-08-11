@@ -70,11 +70,16 @@ namespace LogPose.UI
             BoardHUD.ImposeChrome(__instance);   // vanilla just rewrote every position
         }
 
+        // When false, the fan tucks toward the screen edge so the DON!! band and the
+        // deck/trash piles underneath stay readable; moving the pointer toward the hand
+        // raises it (BoardHUD drives this and re-runs the layout on change).
+        internal static bool HandRaised = true;
+
         // Frame 2a's hand presentation, written through MoveTo after each vanilla layout
         // pass (raw transform writes get pulled back by the tween; rotations persist).
         // Player 0: centered fan under the mat. Player 1: a compact face-down cluster
-        // docked beside their leader — except in Solo v Self, where that hand is actively
-        // played and keeps the vanilla row (replays still dock it).
+        // docked beside their leader — in Solo v Self only while that side is not the
+        // one acting (their hand is actively played there); replays always dock it.
         [HarmonyPostfix, HarmonyPatch(typeof(GameplayLogicScript), "RefreshHandPositions")]
         private static void RefreshHandPositions_Postfix(GameplayLogicScript __instance)
         {
@@ -85,11 +90,21 @@ namespace LogPose.UI
                 if (__instance.Lps_Players == null || __instance.Lps_Players.Count == 0)
                     return;
                 FanPlayerHand(__instance);
-                bool dock = __instance.e_GameStyle != GameStyle.SoloVSelf || Replay.ReplayBridge.InReplay;
-                if (dock && __instance.Lps_Players.Count > 1)
+                if (__instance.Lps_Players.Count > 1 && DockWanted(__instance))
                     DockOpponentHand(__instance);
             }
             catch { }
+        }
+
+        internal static bool DockWanted(GameplayLogicScript gls)
+        {
+            if (Replay.ReplayBridge.InReplay)
+                return true;
+            if (gls.e_GameStyle != GameStyle.SoloVSelf)
+                return true;
+            // Solo: dock the second hand while the first seat is acting.
+            return gls.gsv_CurrentGame != null && gls.gsv_CurrentGame.iTurnNumber >= 1
+                && gls.gsv_CurrentGame.iPlayerAction == 0;
         }
 
         private static void FanPlayerHand(GameplayLogicScript gls)
@@ -102,6 +117,8 @@ namespace LogPose.UI
             float baseY = -430f;
             if (loc != null && loc.y < 0f)
                 baseY = loc.y;
+            if (!HandRaised)
+                baseY -= 95f;   // tuck: a slim peek stays above the screen edge
             float m = (n - 1) * 0.5f;
             float dx = Mathf.Min(110f, 760f / Mathf.Max(n, 1));
             for (int i = 0; i < n; i++)

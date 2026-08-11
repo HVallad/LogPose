@@ -36,12 +36,17 @@ namespace LogPose.UI
         // Game-canvas chrome (scene objects die on reload; recreated when null).
         private static RectTransform _railPanel, _matChrome;
 
+        private static int _lastAction = -9;
+
         internal static void Update()
         {
             bool poll = Time.frameCount % 30 == 0;
             if (_gls != null && Plugin.CfgUiReskin.Value
                 && _gls.e_CurrentState != GameplayState.MainMenu)
+            {
                 StackChoices();   // every frame: choice buttons restyle the moment they appear
+                UpdateHandTuck(); // every frame: the fan follows the pointer's intent
+            }
             if (!poll)
                 return;
             if (!Plugin.CfgUiReskin.Value)
@@ -111,6 +116,28 @@ namespace LogPose.UI
                 _matChrome = null;
             }
             _matP = _matO = _glowP = _glowO = null;
+        }
+
+        // The fan raises while the pointer is near it (with hysteresis so it doesn't
+        // flicker at the boundary) and always during mulligan; otherwise it tucks so
+        // the DON!! band and piles stay readable. Also re-runs the hand layout when the
+        // acting seat flips, so the solo dock follows whose turn it is.
+        private static void UpdateHandTuck()
+        {
+            try
+            {
+                bool preGame = _gls.gsv_CurrentGame == null || _gls.gsv_CurrentGame.iTurnNumber < 1;
+                float frac = Input.mousePosition.y / Mathf.Max(Screen.height, 1);
+                bool raised = preGame
+                    || (BoardLayoutPatches.HandRaised ? frac < 0.34f : frac < 0.24f);
+                int action = _gls.gsv_CurrentGame != null ? _gls.gsv_CurrentGame.iPlayerAction : -1;
+                if (raised == BoardLayoutPatches.HandRaised && action == _lastAction)
+                    return;
+                BoardLayoutPatches.HandRaised = raised;
+                _lastAction = action;
+                _gls.RefreshHandPositions();
+            }
+            catch { }
         }
 
         // ------------------------------------------------------------------ field ------
@@ -213,11 +240,12 @@ namespace LogPose.UI
                     int target = log.GetSiblingIndex();
                     if (_railPanel.GetSiblingIndex() > target)
                         _railPanel.SetSiblingIndex(target);
-                    C(_railPanel, 516f, 153f, 744f, 566f);
+                    // The rail hugs the RIGHT edge so narrower-than-16:9 canvases can't
+                    // clip it (positions are design-x minus 960, anchored right).
+                    R(_railPanel, -444f, 153f, 744f, 566f);
 
                     RectTransform lrt = (RectTransform)log;
-                    lrt.anchoredPosition = new Vector2(516f, 122f);
-                    lrt.sizeDelta = new Vector2(716f, 496f);
+                    R(lrt, -444f, 122f, 716f, 496f);
                     Image li = log.GetComponent<Image>();
                     if (li != null && li.enabled)
                         li.enabled = false;
@@ -240,15 +268,21 @@ namespace LogPose.UI
 
                 // Rail action area + relocated utilities (all vanilla objects; the game
                 // re-writes their spots each game start, so this re-imposes every poll).
-                MoveBtn(cn, "BackToMain", 705f, -372f, 366f, 56f, 16f, BtnKind.Danger);
-                MoveBtn(cn, "ReportBug", 327f, -372f, 366f, 56f, 14f, BtnKind.Secondary);
-                MoveBtn(cn, "DownloadLog", 790f, 408f, 130f, 40f, 12f, BtnKind.Secondary);
-                Move(cn, "CancelMatch", 516f, -460f, 200f, 56f);
-                Move(cn, "Volume", 776f, -470f, 0f, 0f);
-                Move(cn, "Music", 844f, -470f, 0f, 0f);
-                Move(cn, "SaveState", -858f, 40f, 0f, 0f);
-                Move(cn, "SaveStateButtons", -845f, -80f, 0f, 0f);
-                Move(cn, "P0HandCount", -845f, -500f, 0f, 0f);
+                // Rail-side objects anchor to the RIGHT edge (design-x minus 960) so a
+                // narrower-than-16:9 canvas can't clip them; solo tools hug the LEFT.
+                MoveBtn(cn, "BackToMain", -255f, -372f, 366f, 56f, 16f, BtnKind.Danger);
+                MoveBtn(cn, "ReportBug", -633f, -372f, 366f, 56f, 14f, BtnKind.Secondary);
+                MoveBtn(cn, "DownloadLog", -170f, 408f, 130f, 40f, 12f, BtnKind.Secondary);
+                MoveEdge(cn, "CancelMatch", -444f, -460f, 200f, 56f, 1f);
+                MoveEdge(cn, "Volume", -184f, -470f, 0f, 0f, 1f);
+                MoveEdge(cn, "Music", -116f, -470f, 0f, 0f, 1f);
+                RectTransform ss = MoveEdge(cn, "SaveState", 96f, 60f, 0f, 0f, 0f);
+                if (ss != null && ss.localScale.x != 0.8f)
+                    ss.localScale = new Vector3(0.8f, 0.8f, 1f);
+                RectTransform ssb = MoveEdge(cn, "SaveStateButtons", 110f, -30f, 0f, 0f, 0f);
+                if (ssb != null && ssb.localScale.x != 0.8f)
+                    ssb.localScale = new Vector3(0.8f, 0.8f, 1f);
+                MoveEdge(cn, "P0HandCount", 115f, -500f, 0f, 0f, 0f);
                 Move(cn, "P1HandCount", -285f, 165f, 0f, 0f);
                 Move(cn, "ActionActor", -90f, 0f, 0f, 0f);   // resolving-card display, over the mat
 
@@ -256,7 +290,8 @@ namespace LogPose.UI
                 if (guide != null)
                 {
                     RectTransform grt = guide as RectTransform;
-                    grt.anchoredPosition = new Vector2(516f, -95f);
+                    A(grt, 1f);
+                    grt.anchoredPosition = new Vector2(-444f, -95f);
                     grt.sizeDelta = new Vector2(660f, 48f);
                     TMP_Text gt = guide.GetComponent<TMP_Text>();
                     if (gt != null)
@@ -268,7 +303,8 @@ namespace LogPose.UI
                 {
                     // Shrunk just enough that the action rows stay visible while hovering.
                     RectTransform prt = prev as RectTransform;
-                    prt.anchoredPosition = new Vector2(516f, 140f);
+                    A(prt, 1f);
+                    prt.anchoredPosition = new Vector2(-444f, 140f);
                     prt.sizeDelta = new Vector2(400f, 562f);
                     if (prev.GetSiblingIndex() != cn.childCount - 1)
                         prev.SetAsLastSibling();
@@ -290,18 +326,45 @@ namespace LogPose.UI
                 rt.sizeDelta = new Vector2(w, h);
         }
 
-        private static void MoveBtn(Transform cn, string name, float x, float y, float w, float h,
-            float fontSize, BtnKind kind)
+        // Re-anchor to a screen edge (ax: 0 = left, 1 = right) with a centered pivot.
+        private static void A(RectTransform rt, float ax)
+        {
+            if (rt.anchorMin.x != ax || rt.anchorMin.y != 0.5f)
+            {
+                rt.anchorMin = rt.anchorMax = new Vector2(ax, 0.5f);
+                rt.pivot = new Vector2(0.5f, 0.5f);
+            }
+        }
+
+        private static RectTransform MoveEdge(Transform cn, string name, float x, float y,
+            float w, float h, float ax)
         {
             Transform t = cn.Find(name);
             if (t == null)
-                return;
+                return null;
             RectTransform rt = t as RectTransform;
             if (rt == null)
-                return;
+                return null;
+            A(rt, ax);
+            rt.anchoredPosition = new Vector2(x, y);
+            if (w > 0f)
+                rt.sizeDelta = new Vector2(w, h);
+            return rt;
+        }
+
+        private static void R(RectTransform rt, float x, float y, float w, float h)
+        {
+            A(rt, 1f);
             rt.anchoredPosition = new Vector2(x, y);
             rt.sizeDelta = new Vector2(w, h);
-            StyleAsButton(t.gameObject, w, h, fontSize, kind);
+        }
+
+        private static void MoveBtn(Transform cn, string name, float x, float y, float w, float h,
+            float fontSize, BtnKind kind)
+        {
+            RectTransform rt = MoveEdge(cn, name, x, y, w, h, 1f);
+            if (rt != null)
+                StyleAsButton(rt.gameObject, w, h, fontSize, kind);
         }
 
         // ------------------------------------------------------------- choice stack ---
@@ -335,10 +398,10 @@ namespace LogPose.UI
                 CollectChoice(_gls.go_ChoiceButton3, ref end, ref rest);
                 CollectChoice(_gls.go_ChoiceButton4, ref end, ref rest);
                 if (end != null)
-                    PlaceChoice(end, 516f, -280f, 744f, 104f, true);
+                    PlaceChoice(end, -444f, -280f, 744f, 104f, true);
                 if (rest != null)
                     for (int i = 0; i < rest.Count; i++)
-                        PlaceChoice(rest[i], (i % 2 == 0) ? 327f : 705f, -188f + (i / 2) * 78f, 366f, 56f, false);
+                        PlaceChoice(rest[i], (i % 2 == 0) ? -633f : -255f, -188f + (i / 2) * 78f, 366f, 56f, false);
             }
             catch { }
         }
@@ -361,6 +424,7 @@ namespace LogPose.UI
         private static void PlaceChoice(GameObject b, float x, float y, float w, float h, bool primary)
         {
             RectTransform rt = b.GetComponent<RectTransform>();
+            A(rt, 1f);
             if (rt.anchoredPosition.x != x || rt.anchoredPosition.y != y)
                 rt.anchoredPosition = new Vector2(x, y);
             if (rt.sizeDelta.x != w)

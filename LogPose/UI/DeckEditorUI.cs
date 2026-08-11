@@ -17,9 +17,11 @@ namespace LogPose.UI
         private static GameObject _chrome;          // scene object: dies on scene unload
         private static Transform _leaderThumb;
         private static TextMeshProUGUI _leaderName, _leaderCode;
-        private static readonly Image[] _bars = new Image[8];
-        private static readonly TextMeshProUGUI[] _barCounts = new TextMeshProUGUI[8];
+        private const int CostBuckets = 11;         // 0..10, every printable cost
+        private static readonly Image[] _bars = new Image[CostBuckets];
+        private static readonly TextMeshProUGUI[] _barCounts = new TextMeshProUGUI[CostBuckets];
         private static string _shownLeader = "?";
+        private static bool _dropdownStyled;
 
         internal static void Update()
         {
@@ -32,6 +34,7 @@ namespace LogPose.UI
                 {
                     _chrome = null;   // scene gone; clones died with it
                     _shownLeader = "?";
+                    _dropdownStyled = false;
                     return;
                 }
             }
@@ -77,13 +80,12 @@ namespace LogPose.UI
             hi.color = Theme.WithA(Theme.Text, 0.1f);
             hi.raycastTarget = false;
 
-            // The vanilla controls are all center-anchored, and the canvas can be wider
-            // than the 1920 design (aspect). Panels are center-anchored on the same basis
-            // and their headings live INSIDE them, so nothing can drift out of alignment.
+            // The canvas width varies with aspect ratio, so each column anchors to the
+            // screen edge it hugs (headings live INSIDE the panels and follow for free).
             Image rail = W.Panel(t, "Rail", 0f, 0f, 320f, 920f, 14f, Theme.WithA(Theme.Surface, 0.55f),
                 Theme.WithA(Theme.Text, 0.1f));
             rail.raycastTarget = false;
-            Center(rail.rectTransform, -764f, -44f);
+            Edge(rail.rectTransform, 0f, 196f, -44f);
             W.Label(rail.transform, "COLOR", 40f, 72f, 200f, 18f, 12f, Theme.WithA(Theme.Text, 0.5f), 600,
                 TextAlignmentOptions.TopLeft, false, 0.12f);
             W.Label(rail.transform, "OPTIONS", 40f, 226f, 200f, 18f, 12f, Theme.WithA(Theme.Text, 0.5f), 600,
@@ -92,7 +94,7 @@ namespace LogPose.UI
             Image deckPanel = W.Panel(t, "DeckPanel", 0f, 0f, 500f, 920f, 14f, Theme.WithA(Theme.Surface, 0.55f),
                 Theme.WithA(Theme.Text, 0.1f));
             deckPanel.raycastTarget = false;
-            Center(deckPanel.rectTransform, 672f, -44f);
+            Edge(deckPanel.rectTransform, 1f, -288f, -44f);
             Transform dp = deckPanel.transform;
 
             // Deck panel: leader header + cost curve (panel-relative coords).
@@ -119,30 +121,30 @@ namespace LogPose.UI
 
             W.Label(dp, "COST CURVE", 32f, 162f, 200f, 18f, 12f, Theme.WithA(Theme.Text, 0.5f), 600,
                 TextAlignmentOptions.TopLeft, false, 0.12f);
-            for (int i = 0; i < 8; i++)
+            for (int i = 0; i < CostBuckets; i++)
             {
                 GameObject b = W.Go("Bar" + i, dp);
                 RectTransform rt = b.GetComponent<RectTransform>();
                 rt.anchorMin = rt.anchorMax = new Vector2(0f, 1f);
                 rt.pivot = new Vector2(0.5f, 0f);       // grow upward from the baseline
-                rt.anchoredPosition = new Vector2(56f + i * 57f, -286f);
-                rt.sizeDelta = new Vector2(44f, 4f);
+                rt.anchoredPosition = new Vector2(48f + i * 39f, -286f);
+                rt.sizeDelta = new Vector2(32f, 4f);
                 _bars[i] = b.AddComponent<Image>();
                 _bars[i].sprite = UISprites.RoundedRect(24, 24, 4f, Color.white, Color.clear, 0f, 5f);
                 _bars[i].type = Image.Type.Sliced;
                 _bars[i].raycastTarget = false;
-                W.Label(dp, i < 7 ? i.ToString() : "7+", 34f + i * 57f, 292f, 44f, 16f, 11f,
+                W.Label(dp, i.ToString(), 28.5f + i * 39f, 292f, 39f, 16f, 11f,
                     Theme.WithA(Theme.Text, 0.45f), 400, TextAlignmentOptions.Center, true);
-                _barCounts[i] = W.Label(dp, "", 34f + i * 57f, 0f, 44f, 16f, 11f,
+                _barCounts[i] = W.Label(dp, "", 28.5f + i * 39f, 0f, 39f, 16f, 11f,
                     Theme.WithA(Theme.Text, 0.7f), 600, TextAlignmentOptions.Center, true);
             }
             _shownLeader = "?";
             Plugin.Log.LogInfo("Deck editor 2b chrome built.");
         }
 
-        private static void Center(RectTransform rt, float x, float y)
+        private static void Edge(RectTransform rt, float ax, float x, float y)
         {
-            rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
+            rt.anchorMin = rt.anchorMax = new Vector2(ax, 0.5f);
             rt.pivot = new Vector2(0.5f, 0.5f);
             rt.anchoredPosition = new Vector2(x, y);
         }
@@ -152,14 +154,15 @@ namespace LogPose.UI
         private static void Impose()
         {
             Transform cn = Cn();
-            float railX = -764f;
+            const float railX = 196f;   // rail column center, measured from the LEFT edge
 
-            // Top bar (y 496 in centered coords).
-            Move(cn, "BackButton", -892f, 496f, 90f, 48f);
+            // Top bar (y 496 in centered coords): the name/count cluster hugs the left
+            // edge, the action cluster hugs the right — aspect-ratio-proof.
+            MoveEdge(cn, "BackButton", 68f, 496f, 90f, 48f, 0f);
             SetText(cn, "BackButton", "← Back", 14f);
-            Move(cn, "DeckName", -660f, 496f, 360f, 48f);
+            MoveEdge(cn, "DeckName", 300f, 496f, 360f, 48f, 0f);
             Move(cn, "NotificationText", -90f, 430f, 500f, 36f);
-            RectTransform count = Move(cn, "DeckCount", -350f, 494f, 240f, 40f);
+            RectTransform count = MoveEdge(cn, "DeckCount", 610f, 494f, 240f, 40f, 0f);
             if (count != null)
             {
                 TMP_Text ct = count.GetComponent<TMP_Text>();
@@ -171,38 +174,39 @@ namespace LogPose.UI
                     ct.alignment = TextAlignmentOptions.MidlineLeft;
                 }
             }
-            Move(cn, "DeckSelector", 170f, 496f, 250f, 48f);
-            Move(cn, "LoadButton", 400f, 496f, 110f, 48f);
+            MoveEdge(cn, "DeckSelector", -790f, 496f, 250f, 48f, 1f);
+            StyleDropdown(cn);
+            MoveEdge(cn, "LoadButton", -560f, 496f, 110f, 48f, 1f);
             SetText(cn, "LoadButton", "Load", 16f);
-            Move(cn, "PasteFromClipboard", 532f, 496f, 130f, 48f);
+            MoveEdge(cn, "PasteFromClipboard", -428f, 496f, 130f, 48f, 1f);
             SetText(cn, "PasteFromClipboard", "Import", 15f);
-            Move(cn, "LogPoseAltArts", 664f, 496f, 120f, 48f);
+            MoveEdge(cn, "LogPoseAltArts", -296f, 496f, 120f, 48f, 1f);
             SetText(cn, "LogPoseAltArts", "Alt arts", 15f);
-            RectTransform save = Move(cn, "SaveButton", 806f, 496f, 140f, 48f);
+            RectTransform save = MoveEdge(cn, "SaveButton", -154f, 496f, 140f, 48f, 1f);
             if (save != null)
                 BoardHUD.StyleAsButton(save.gameObject, 140f, 48f, 16f, BtnKind.Primary);
 
-            // Left rail. The search field's pivot is off-center in the prefab — normalize
-            // it so the position lands where aimed instead of poking out of the panel.
-            RectTransform search = Move(cn, "SearchField", railX, 384f, 272f, 44f);
+            // Left rail (everything left-anchored). The search field's pivot is
+            // off-center in the prefab — normalize it so the position lands as aimed.
+            RectTransform search = MoveEdge(cn, "SearchField", railX, 384f, 272f, 44f, 0f);
             if (search != null && search.pivot != new Vector2(0.5f, 0.5f))
             {
                 search.pivot = new Vector2(0.5f, 0.5f);
                 search.anchoredPosition = new Vector2(railX, 384f);
             }
             // Color roots shrink to 120 so the two columns' CLICK rects can't overlap.
-            MoveToggle(cn, "Red", -845f, 302f, 120f);
-            MoveToggle(cn, "Green", -725f, 302f, 120f);
-            MoveToggle(cn, "Blue", -845f, 260f, 120f);
-            MoveToggle(cn, "Purple", -725f, 260f, 120f);
-            MoveToggle(cn, "Black", -845f, 218f, 120f);
-            MoveToggle(cn, "Yellow", -725f, 218f, 120f);
-            MoveToggle(cn, "Limit4", -830f, 148f);
-            MoveToggle(cn, "Rotation", -830f, 106f);
-            MoveToggle(cn, "SortByCost", -812f, 64f);
-            MoveToggle(cn, "HideNumbers", -812f, 22f);
+            MoveToggle(cn, "Red", 115f, 302f, 120f);
+            MoveToggle(cn, "Green", 235f, 302f, 120f);
+            MoveToggle(cn, "Blue", 115f, 260f, 120f);
+            MoveToggle(cn, "Purple", 235f, 260f, 120f);
+            MoveToggle(cn, "Black", 115f, 218f, 120f);
+            MoveToggle(cn, "Yellow", 235f, 218f, 120f);
+            MoveToggle(cn, "Limit4", 130f, 148f);
+            MoveToggle(cn, "Rotation", 130f, 106f);
+            MoveToggle(cn, "SortByCost", 148f, 64f);
+            MoveToggle(cn, "HideNumbers", 148f, 22f);
             // Bottom stack, spaced so nothing collides: help text, sponsor, utilities.
-            RectTransform help = Move(cn, "SearchHelp", railX, -160f, 276f, 250f);
+            RectTransform help = MoveEdge(cn, "SearchHelp", railX, -160f, 276f, 250f, 0f);
             if (help != null)
             {
                 TMP_Text ht = help.GetComponent<TMP_Text>();
@@ -215,10 +219,10 @@ namespace LogPose.UI
                     ht.overflowMode = TextOverflowModes.Ellipsis;
                 }
             }
-            RectTransform eg = Move(cn, "EgmanEvents", railX, -345f, 0f, 0f);
+            RectTransform eg = MoveEdge(cn, "EgmanEvents", railX, -345f, 0f, 0f, 0f);
             if (eg != null && eg.localScale.x != 0.7f)
                 eg.localScale = new Vector3(0.7f, 0.7f, 1f);
-            RectTransform egx = Move(cn, "EgmanExplanation", railX, -410f, 260f, 24f);
+            RectTransform egx = MoveEdge(cn, "EgmanExplanation", railX, -410f, 260f, 24f, 0f);
             if (egx != null)
             {
                 TMP_Text xt = egx.GetComponent<TMP_Text>();
@@ -228,9 +232,9 @@ namespace LogPose.UI
                     xt.fontSize = 13f;
                 }
             }
-            Move(cn, "Customize Images", railX, -448f, 210f, 38f);
+            MoveEdge(cn, "Customize Images", railX, -448f, 210f, 38f, 0f);
             SetText(cn, "Customize Images", "Customize images", 14f);
-            Move(cn, "DeleteButton", railX, -488f, 210f, 36f);
+            MoveEdge(cn, "DeleteButton", railX, -488f, 210f, 36f, 0f);
             SetText(cn, "DeleteButton", "Delete selected deck file", 12f);
 
             // Center browser.
@@ -247,7 +251,7 @@ namespace LogPose.UI
             // Stack steps at zero make every copy of a card sit exactly on the first one —
             // a single visible card per printing, with the ×N badge carrying the count
             // (clicks still hit the top copy and remove one at a time, as vanilla).
-            Move(cn, "Deck Scrollview", 672f, -160f, 470f, 560f);
+            MoveEdge(cn, "Deck Scrollview", -288f, -160f, 470f, 560f, 1f);
             _ed.DeckXStart = 60f;
             _ed.DeckXStep = 110f;
             _ed.DeckYStart = -80f;
@@ -256,10 +260,10 @@ namespace LogPose.UI
             _ed.DeckHeight = 150f;
             _ed.DeckStackXStep = 0f;
             _ed.DeckStackYStep = 0f;
-            RectTransform copy = Move(cn, "CopyToClipboard", 562f, -475f, 220f, 44f);
+            RectTransform copy = MoveEdge(cn, "CopyToClipboard", -398f, -475f, 220f, 44f, 1f);
             if (copy != null)
                 SetText(cn, "CopyToClipboard", "Copy list", 15f);
-            RectTransform clear = Move(cn, "ClearButton", 800f, -475f, 190f, 44f);
+            RectTransform clear = MoveEdge(cn, "ClearButton", -160f, -475f, 190f, 44f, 1f);
             if (clear != null)
                 BoardHUD.StyleAsButton(clear.gameObject, 190f, 44f, 15f, BtnKind.Danger);
         }
@@ -278,11 +282,77 @@ namespace LogPose.UI
             return rt;
         }
 
+        // Anchor to a screen edge (ax: 0 = left, 1 = right) so the layout survives any
+        // aspect ratio, then position (x is measured from that edge).
+        private static RectTransform MoveEdge(Transform cn, string name, float x, float y,
+            float w, float h, float ax)
+        {
+            Transform t = cn.Find(name);
+            if (t == null)
+                return null;
+            RectTransform rt = t as RectTransform;
+            if (rt == null)
+                return null;
+            if (rt.anchorMin.x != ax || rt.anchorMin.y != 0.5f)
+            {
+                rt.anchorMin = rt.anchorMax = new Vector2(ax, 0.5f);
+                rt.pivot = new Vector2(0.5f, 0.5f);
+            }
+            rt.anchoredPosition = new Vector2(x, y);
+            if (w > 0f)
+                rt.sizeDelta = new Vector2(w, h);
+            return rt;
+        }
+
         private static void MoveToggle(Transform cn, string name, float x, float y, float w = 0f)
         {
-            RectTransform rt = Move(cn, name, x, y, w, w > 0f ? 40f : 0f);
+            RectTransform rt = MoveEdge(cn, name, x, y, w, w > 0f ? 40f : 0f, 0f);
             if (rt != null && rt.localScale.x != 0.85f)
                 rt.localScale = new Vector3(0.85f, 0.85f, 1f);
+        }
+
+        // The deck-file dropdown keeps its vanilla prefab look otherwise (white input
+        // sprite + parchment popup). Restyle the closed control and its list template.
+        private static void StyleDropdown(Transform cn)
+        {
+            if (_dropdownStyled)
+                return;
+            Transform dd = cn.Find("DeckSelector");
+            if (dd == null)
+                return;
+            _dropdownStyled = true;
+            Image bg = dd.GetComponent<Image>();
+            if (bg != null)
+            {
+                bg.sprite = UISprites.RoundedRect(48, 48, 8f, Theme.WithA(Theme.Text, 0.04f),
+                    Theme.WithA(Theme.Text, 0.18f), 1f, 12f);
+                bg.type = Image.Type.Sliced;
+                bg.color = Color.white;
+            }
+            foreach (TMP_Text txt in dd.GetComponentsInChildren<TMP_Text>(true))
+            {
+                txt.color = txt.name == "Placeholder" ? Theme.WithA(Theme.Text, 0.5f) : Theme.Text;
+                if (txt.fontSize > 16f)
+                    txt.fontSize = 15f;
+            }
+            Transform template = dd.Find("Template");
+            if (template != null)
+            {
+                Image tbg = template.GetComponent<Image>();
+                if (tbg != null)
+                {
+                    tbg.sprite = UISprites.RoundedRect(48, 48, 8f, Theme.Surface, Theme.EdgeModal, 1f, 12f);
+                    tbg.type = Image.Type.Sliced;
+                    tbg.color = Color.white;
+                }
+                foreach (Image img in template.GetComponentsInChildren<Image>(true))
+                {
+                    if (img.name == "Item Background")
+                        img.color = Theme.WithA(Theme.Text, 0.05f);
+                    else if (img.name == "Item Checkmark")
+                        img.color = Theme.Accent;
+                }
+            }
         }
 
         private static void SetText(Transform cn, string name, string text, float size)
@@ -424,7 +494,7 @@ namespace LogPose.UI
             if (_ed.lgo_CurrentDeck == null)
                 return;
             string leaderId = null;
-            var counts = new int[8];
+            var counts = new int[CostBuckets];
             int total = 0;
             foreach (GameObject go in _ed.lgo_CurrentDeck)
             {
@@ -439,7 +509,7 @@ namespace LogPose.UI
                     leaderId = def.cardID;
                     continue;
                 }
-                counts[Mathf.Clamp(def.cardCost, 0, 7)]++;
+                counts[Mathf.Clamp(def.cardCost, 0, CostBuckets - 1)]++;
                 total++;
             }
 
@@ -447,10 +517,10 @@ namespace LogPose.UI
             foreach (int c in counts)
                 if (c > max)
                     max = c;
-            for (int i = 0; i < 8; i++)
+            for (int i = 0; i < CostBuckets; i++)
             {
                 float hgt = counts[i] > 0 ? 8f + 86f * counts[i] / max : 4f;
-                _bars[i].rectTransform.sizeDelta = new Vector2(44f, hgt);
+                _bars[i].rectTransform.sizeDelta = new Vector2(32f, hgt);
                 _bars[i].color = counts[i] == max && counts[i] > 0 ? Theme.Accent
                     : Theme.WithA(Theme.Accent, counts[i] > 0 ? 0.45f : 0.12f);
                 RectTransform crt = _barCounts[i].rectTransform;
