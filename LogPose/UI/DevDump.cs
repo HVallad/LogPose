@@ -13,6 +13,8 @@ namespace LogPose.UI
     {
         internal static void Update()
         {
+            if (Input.GetKeyDown(KeyCode.F10))
+                DumpWorld();
             if (!Input.GetKeyDown(KeyCode.F9))
                 return;
             try
@@ -50,6 +52,43 @@ namespace LogPose.UI
             catch (System.Exception e)
             {
                 Plugin.Log.LogWarning("UI dump failed: " + e.Message);
+            }
+        }
+
+        // F10: world-space renderers (the board field is scene geometry, not uGUI).
+        private static void DumpWorld()
+        {
+            try
+            {
+                StringBuilder sb = new StringBuilder();
+                foreach (SpriteRenderer sr in Object.FindObjectsByType<SpriteRenderer>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                {
+                    string spriteName = sr.sprite != null ? sr.sprite.name : "null";
+                    string texSize = sr.sprite != null ? sr.sprite.texture.width + "x" + sr.sprite.texture.height : "-";
+                    sb.AppendLine("SR " + Path(sr.transform) + " | sprite=" + spriteName + " tex=" + texSize
+                        + " | col=#" + ColorUtility.ToHtmlStringRGBA(sr.color)
+                        + " | pos=" + sr.transform.position.ToString("F1")
+                        + " scale=" + sr.transform.lossyScale.ToString("F2")
+                        + " | bounds=" + sr.bounds.size.ToString("F1")
+                        + " | active=" + sr.gameObject.activeInHierarchy + " layer=" + sr.sortingOrder);
+                }
+                foreach (MeshRenderer mr in Object.FindObjectsByType<MeshRenderer>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                {
+                    string mat = mr.sharedMaterial != null ? mr.sharedMaterial.name : "null";
+                    string tex = mr.sharedMaterial != null && mr.sharedMaterial.mainTexture != null
+                        ? mr.sharedMaterial.mainTexture.name : "-";
+                    sb.AppendLine("MR " + Path(mr.transform) + " | mat=" + mat + " tex=" + tex
+                        + " | pos=" + mr.transform.position.ToString("F1")
+                        + " | bounds=" + mr.bounds.size.ToString("F1")
+                        + " | active=" + mr.gameObject.activeInHierarchy);
+                }
+                string file = System.IO.Path.Combine(BepInEx.Paths.BepInExRootPath, "logpose-worlddump.txt");
+                File.WriteAllText(file, sb.ToString());
+                Plugin.Log.LogInfo("World dump written: " + file);
+            }
+            catch (System.Exception e)
+            {
+                Plugin.Log.LogWarning("World dump failed: " + e.Message);
             }
         }
 

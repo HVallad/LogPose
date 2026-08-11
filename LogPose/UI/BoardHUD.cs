@@ -36,7 +36,10 @@ namespace LogPose.UI
                     return;
                 }
             }
-            bool inGame = _gls.e_CurrentState != GameplayState.MainMenu
+            bool inGameAtAll = _gls.e_CurrentState != GameplayState.MainMenu;
+            if (inGameAtAll)
+                EnsureField();   // swap the mat from the first frame (mulligan included)
+            bool inGame = inGameAtAll
                 && _gls.gsv_CurrentGame != null
                 && _gls.gsv_CurrentGame.iTurnNumber >= 1;
             if (inGame && _root == null)
@@ -47,6 +50,44 @@ namespace LogPose.UI
                 _root.SetActive(inGame);
             if (inGame)
                 Refresh();
+        }
+
+        // The game re-assigns the playmat sprites at every game start (leader-color
+        // playsheets), so the design mat is re-asserted each poll rather than swapped once.
+        private static Image _matP, _matO, _glowP, _glowO;
+
+        private static void EnsureField()
+        {
+            try
+            {
+                Sprite mat = FieldMat.Get();
+                if (mat == null || _gls.cn_Canvas == null)
+                    return;
+                if (_matP == null || _matO == null)
+                {
+                    Transform side = _gls.cn_Canvas.transform.Find("SideField");
+                    if (side == null)
+                        return;
+                    Transform p = side.Find("Player/PlayerPlaymat");
+                    Transform o = side.Find("Opponent/OpponentPlaymat");
+                    Transform gp = side.Find("Player/PlayerSideGlow");
+                    Transform go = side.Find("Opponent/OpponentSideGlow");
+                    _matP = p != null ? p.GetComponent<Image>() : null;
+                    _matO = o != null ? o.GetComponent<Image>() : null;
+                    _glowP = gp != null ? gp.GetComponent<Image>() : null;
+                    _glowO = go != null ? go.GetComponent<Image>() : null;
+                }
+                if (_matP != null && _matP.sprite != mat)
+                    _matP.sprite = mat;
+                if (_matO != null && _matO.sprite != mat)
+                    _matO.sprite = mat;
+                Color glow = Theme.WithA(Theme.Accent, 0.78f);
+                if (_glowP != null && _glowP.color != glow)
+                    _glowP.color = glow;
+                if (_glowO != null && _glowO.color != glow)
+                    _glowO.color = glow;
+            }
+            catch { }
         }
 
         private static void Build()
