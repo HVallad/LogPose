@@ -11,7 +11,7 @@ namespace LogPose
     {
         public const string GUID = "com.hunter.logpose";
         public const string NAME = "LogPose";
-        public const string VERSION = "1.0.16";
+        public const string VERSION = "1.0.17";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;
@@ -68,7 +68,12 @@ namespace LogPose
 
             // Scene loads restyle IMMEDIATELY — waiting for the next poll paints a
             // flash of vanilla UI on every transition.
-            UnityEngine.SceneManagement.SceneManager.sceneLoaded += (s, m) => _sceneJustLoaded = true;
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded += (s, m) =>
+            {
+                _sceneJustLoaded = true;
+                Log.LogInfo("Scene '" + s.name + "' loaded at t="
+                    + UnityEngine.Time.realtimeSinceStartup.ToString("F3") + "s");
+            };
 
             var harmony = new Harmony(GUID);
             harmony.PatchAll(typeof(ReplaySyncPatches));
@@ -116,10 +121,18 @@ namespace LogPose
             TimerPatches.SyncUpdate();
             bool sceneLoaded = _sceneJustLoaded;
             _sceneJustLoaded = false;
+            long forceT0 = sceneLoaded ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
             UI.MainMenuUI.Update(sceneLoaded);
             UI.VanillaRestyle.Update(sceneLoaded);
             UI.BoardHUD.Update();
             UI.DeckEditorUI.Update(sceneLoaded);
+            if (sceneLoaded)
+            {
+                double ms = (System.Diagnostics.Stopwatch.GetTimestamp() - forceT0) * 1000.0
+                    / System.Diagnostics.Stopwatch.Frequency;
+                Log.LogInfo("Forced restyle pass: " + ms.ToString("F0") + " ms (t="
+                    + UnityEngine.Time.realtimeSinceStartup.ToString("F3") + "s)");
+            }
             UI.DevDump.Update();
         }
 

@@ -526,6 +526,65 @@ namespace LogPose.UI
             Plugin.Log.LogInfo("Editor step " + name + ": " + ms.ToString("F0") + " ms");
         }
 
+        // Both editor scene hops were SYNCHRONOUS LoadScene calls — ~1s of completely
+        // frozen window each way (measured: 1064 ms back, similar forward; the mod's
+        // own pass is 3 ms). Async keeps frames rendering; a scene-local veil blocks
+        // stray clicks and dies automatically when the new scene activates.
+        [HarmonyLib.HarmonyPrefix]
+        [HarmonyLib.HarmonyPatch(typeof(DeckEditorScript), "LoadMain")]
+        private static bool LoadMain_Prefix()
+        {
+            Plugin.Log.LogInfo("Back clicked at t=" + Time.realtimeSinceStartup.ToString("F3") + "s");
+            LoadVeil();
+            UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("main");
+            return false;
+        }
+
+        [HarmonyLib.HarmonyPrefix]
+        [HarmonyLib.HarmonyPatch(typeof(HostJoinScript), "LoadDeckSelector")]
+        private static bool LoadDeckSelector_Prefix(HostJoinScript __instance)
+        {
+            try
+            {
+                __instance.gls_GameplayLogic.text_GuideText.text =
+                    __instance.tls_Translation.Translate("Msg.DeckEditLoad");
+                __instance.go_DeckEditor.transform.GetChild(0).GetComponent<TextMeshProUGUI>().text =
+                    __instance.tls_Translation.Translate("Msg.Loading");
+            }
+            catch { }
+            UnityEngine.Object.Destroy(GameObject.Find("NetworkManagerRelay"));
+            LoadVeil();
+            UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("deckeditor");
+            return false;
+        }
+
+        // Deliberately NOT DontDestroyOnLoad: the veil belongs to the outgoing scene
+        // and Unity removes it the moment the incoming scene takes over.
+        private static void LoadVeil()
+        {
+            try
+            {
+                Theme.Ensure();
+                GameObject go = new GameObject("LogPoseLoadVeil",
+                    typeof(Canvas), typeof(GraphicRaycaster));
+                Canvas c = go.GetComponent<Canvas>();
+                c.renderMode = RenderMode.ScreenSpaceOverlay;
+                c.sortingOrder = 200;
+                GameObject dim = W.Go("Dim", go.transform);
+                W.Fill(dim);
+                Image di = dim.AddComponent<Image>();
+                di.color = Theme.WithA(Theme.Ground, 0.45f);
+                di.raycastTarget = true;
+                TextMeshProUGUI lbl = W.Label(go.transform, "Loading…", 0f, 0f, 400f, 40f, 15f,
+                    Theme.WithA(Theme.Text, 0.75f), 500, TextAlignmentOptions.Center);
+                RectTransform lrt = lbl.rectTransform;
+                lrt.anchorMin = lrt.anchorMax = new Vector2(0.5f, 0.5f);
+                lrt.pivot = new Vector2(0.5f, 0.5f);
+                lrt.anchoredPosition = Vector2.zero;
+            }
+            catch { }
+        }
+
         // ------------------------------------------------- editor open performance ----
 
         // PopulateCardList instantiates a prefab for EVERY card in the database (~2400)
