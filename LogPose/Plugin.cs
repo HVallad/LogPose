@@ -87,6 +87,7 @@ namespace LogPose
             UI.MainMenuUI.Update();
             UI.VanillaRestyle.Update();
             UI.BoardHUD.Update();
+            UI.DeckEditorUI.Update();
             UI.DevDump.Update();
         }
 

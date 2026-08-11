@@ -368,7 +368,7 @@ namespace LogPose.UI
             StyleAsButton(b, w, h, primary ? 30f : 18f, primary ? BtnKind.Primary : BtnKind.Secondary);
         }
 
-        private static void StyleAsButton(GameObject b, float w, float h, float fontSize, BtnKind kind)
+        internal static void StyleAsButton(GameObject b, float w, float h, float fontSize, BtnKind kind)
         {
             EnsureButtonSprites();
             Sprite normal, hover, press;

@@ -17,6 +17,8 @@ namespace LogPose.UI
                 DumpWorld();
             if (Input.GetKeyDown(KeyCode.F11))
                 DumpLocations();
+            if (Input.GetKeyDown(KeyCode.F12))
+                DumpEditor();
             if (!Input.GetKeyDown(KeyCode.F9))
                 return;
             try
@@ -44,7 +46,10 @@ namespace LogPose.UI
                         }
                         sb.AppendLine(Path(g.transform) + " | " + kind + " | " + detail
                             + " | col=#" + ColorUtility.ToHtmlStringRGBA(g.color)
-                            + " | " + Mathf.RoundToInt(rt.rect.width) + "x" + Mathf.RoundToInt(rt.rect.height));
+                            + " | " + Mathf.RoundToInt(rt.rect.width) + "x" + Mathf.RoundToInt(rt.rect.height)
+                            + " | anch=" + rt.anchoredPosition.ToString("F0")
+                            + " a=" + rt.anchorMin.ToString("F1") + rt.anchorMax.ToString("F1")
+                            + " sib=" + rt.GetSiblingIndex());
                     }
                 }
                 string file = System.IO.Path.Combine(BepInEx.Paths.BepInExRootPath, "logpose-uidump.txt");
@@ -123,6 +128,66 @@ namespace LogPose.UI
             if (s == null) { sb.AppendLine("  " + name + ": null"); return; }
             sb.AppendLine("  " + name + ": x=" + s.x + " y=" + s.y + " step=" + s.step
                 + " step2=" + s.step2 + " width=" + s.width);
+        }
+
+        // F12: the deck editor's layout numbers — the deck-grid constants, scrollview
+        // transforms, the browser's GridLayoutGroup settings and every toggle root.
+        private static void DumpEditor()
+        {
+            try
+            {
+                StringBuilder sb = new StringBuilder();
+                DeckEditorScript ed = Object.FindFirstObjectByType<DeckEditorScript>();
+                if (ed == null)
+                {
+                    Plugin.Log.LogWarning("Editor dump: no DeckEditorScript");
+                    return;
+                }
+                sb.AppendLine("DeckXStart=" + ed.DeckXStart + " DeckXStep=" + ed.DeckXStep
+                    + " DeckYStart=" + ed.DeckYStart + " DeckYStep=" + ed.DeckYStep
+                    + " DeckColumns=" + ed.DeckColumns + " DeckHeight=" + ed.DeckHeight
+                    + " DeckStackXStep=" + ed.DeckStackXStep + " DeckStackYStep=" + ed.DeckStackYStep);
+                DumpRt(sb, "DeckScrollview", ed.tf_DeckScrollview);
+                DumpRt(sb, "SelectorContent", ed.tf_CardSelectorScrollview as RectTransform);
+                if (ed.tf_CardSelectorScrollview != null)
+                {
+                    GridLayoutGroup grid = ed.tf_CardSelectorScrollview.GetComponent<GridLayoutGroup>();
+                    if (grid != null)
+                        sb.AppendLine("SelectorGrid cell=" + grid.cellSize.ToString("F0")
+                            + " spacing=" + grid.spacing.ToString("F0")
+                            + " padding=" + grid.padding.left + "," + grid.padding.top
+                            + " constraint=" + grid.constraint + " count=" + grid.constraintCount);
+                    else
+                        sb.AppendLine("SelectorGrid: none");
+                }
+                Toggle[] toggles = { ed.t_Red, ed.t_Green, ed.t_Blue, ed.t_Purple, ed.t_Black,
+                    ed.t_Yellow, ed.t_Limit4, ed.t_sortByCost, ed.t_hideRotated, ed.t_hideNumbers };
+                foreach (Toggle t in toggles)
+                    if (t != null)
+                        DumpRt(sb, t.name, t.transform as RectTransform);
+                if (ed.lgo_CurrentDeck != null && ed.lgo_CurrentDeck.Count > 0 && ed.lgo_CurrentDeck[0] != null)
+                    DumpRt(sb, "DeckCard0", ed.lgo_CurrentDeck[0].transform as RectTransform);
+                if (ed.lgo_AvailableCards != null && ed.lgo_AvailableCards.Count > 0 && ed.lgo_AvailableCards[0] != null)
+                    DumpRt(sb, "SelCard0", ed.lgo_AvailableCards[0].transform as RectTransform);
+                string file = System.IO.Path.Combine(BepInEx.Paths.BepInExRootPath, "logpose-editordump.txt");
+                File.WriteAllText(file, sb.ToString());
+                Plugin.Log.LogInfo("Editor dump written: " + file);
+            }
+            catch (System.Exception e)
+            {
+                Plugin.Log.LogWarning("Editor dump failed: " + e.Message);
+            }
+        }
+
+        private static void DumpRt(StringBuilder sb, string name, RectTransform rt)
+        {
+            if (rt == null) { sb.AppendLine(name + ": null"); return; }
+            sb.AppendLine(name + ": anch=" + rt.anchoredPosition.ToString("F0")
+                + " size=" + rt.sizeDelta.ToString("F0") + " rect=" + rt.rect.width.ToString("F0")
+                + "x" + rt.rect.height.ToString("F0")
+                + " aMin=" + rt.anchorMin.ToString("F1") + " aMax=" + rt.anchorMax.ToString("F1")
+                + " scale=" + rt.localScale.ToString("F2")
+                + " parent=" + (rt.parent != null ? rt.parent.name : "-"));
         }
 
         // F10: world-space renderers (the board field is scene geometry, not uGUI).
