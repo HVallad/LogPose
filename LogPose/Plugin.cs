@@ -11,7 +11,7 @@ namespace LogPose
     {
         public const string GUID = "com.hunter.logpose";
         public const string NAME = "LogPose";
-        public const string VERSION = "0.5.4";
+        public const string VERSION = "0.5.5";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;
@@ -71,6 +71,7 @@ namespace LogPose
             harmony.PatchAll(typeof(TimerPatches));
 
             UpdateCheck.Init();
+            SafetyNet.Run();
             Log.LogInfo(NAME + " " + VERSION + " loaded.");
         }
 
