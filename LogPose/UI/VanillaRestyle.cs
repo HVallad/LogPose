@@ -14,9 +14,9 @@ namespace LogPose.UI
     {
         private static readonly HashSet<int> Done = new HashSet<int>();
 
-        internal static void Update()
+        internal static void Update(bool force = false)
         {
-            if (!Plugin.CfgUiReskin.Value || Time.frameCount % 30 != 0)
+            if (!Plugin.CfgUiReskin.Value || (!force && Time.frameCount % 30 != 0))
                 return;
             Theme.Ensure();
             try

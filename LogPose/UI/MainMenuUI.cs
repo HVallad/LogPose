@@ -20,10 +20,11 @@ namespace LogPose.UI
         private static Button _updateBtn;
         private static readonly Dictionary<string, Button> Vanilla = new Dictionary<string, Button>();
 
-        internal static void Update()
+        // Runs EVERY frame: the visibility work is cheap once wired, and anything on a
+        // slower cadence shows the vanilla menu for a beat on every transition (the
+        // "old skin flash"). `force` (scene just loaded) re-runs the lookups instantly.
+        internal static void Update(bool force = false)
         {
-            if (Time.frameCount % 30 != 0)
-                return;
             if (!Plugin.CfgUiReskin.Value)
             {
                 if (_root != null)
@@ -32,14 +33,15 @@ namespace LogPose.UI
             }
             if (_hjs == null)
             {
+                // Another scene (deck selector) — the overlay yields. Search again only
+                // on cadence or the moment a scene finishes loading.
+                if (_root != null && _root.activeSelf)
+                    _root.SetActive(false);
+                if (!force && Time.frameCount % 30 != 0)
+                    return;
                 _hjs = UnityEngine.Object.FindFirstObjectByType<HostJoinScript>();
                 if (_hjs == null)
-                {
-                    // Another scene (deck selector, gameplay) — the overlay must yield.
-                    if (_root != null && _root.activeSelf)
-                        _root.SetActive(false);
                     return;
-                }
                 if (_root != null)
                     FindVanillaButtons();   // menu scene reloaded — old button refs died with it
             }
@@ -62,7 +64,7 @@ namespace LogPose.UI
             {
                 if (_root.activeSelf != menuShown)
                     _root.SetActive(menuShown);
-                if (menuShown)
+                if (menuShown && Time.frameCount % 30 == 0)
                     RefreshUpdatePill();
             }
         }

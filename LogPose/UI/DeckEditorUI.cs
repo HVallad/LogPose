@@ -24,9 +24,9 @@ namespace LogPose.UI
         private static readonly TextMeshProUGUI[] _barCounts = new TextMeshProUGUI[CostBuckets];
         private static string _shownLeader = "?";
 
-        internal static void Update()
+        internal static void Update(bool force = false)
         {
-            if (Time.frameCount % 30 != 0 || !Plugin.CfgUiReskin.Value)
+            if ((!force && Time.frameCount % 30 != 0) || !Plugin.CfgUiReskin.Value)
                 return;
             if (_ed == null)
             {

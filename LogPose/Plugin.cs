@@ -11,10 +11,11 @@ namespace LogPose
     {
         public const string GUID = "com.hunter.logpose";
         public const string NAME = "LogPose";
-        public const string VERSION = "1.0.13";
+        public const string VERSION = "1.0.14";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;
+        private static bool _sceneJustLoaded;
 
         internal static ConfigEntry<bool> CfgEmitMissingReplayLines;
         internal static ConfigEntry<bool> CfgWriteCleanLog;
@@ -63,6 +64,10 @@ namespace LogPose
             CfgUiColorway = Config.Bind("UI", "Colorway", "Nocturne",
                 "Reskin colorway: Nocturne (blurple) or Batsu (brand magenta).");
 
+            // Scene loads restyle IMMEDIATELY — waiting for the next poll paints a
+            // flash of vanilla UI on every transition.
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded += (s, m) => _sceneJustLoaded = true;
+
             var harmony = new Harmony(GUID);
             harmony.PatchAll(typeof(ReplaySyncPatches));
             harmony.PatchAll(typeof(CombatLogPatches));
@@ -85,10 +90,12 @@ namespace LogPose
             UpdateCheck.Update();
             TimerLobbyUI.Update();
             TimerPatches.SyncUpdate();
-            UI.MainMenuUI.Update();
-            UI.VanillaRestyle.Update();
+            bool sceneLoaded = _sceneJustLoaded;
+            _sceneJustLoaded = false;
+            UI.MainMenuUI.Update(sceneLoaded);
+            UI.VanillaRestyle.Update(sceneLoaded);
             UI.BoardHUD.Update();
-            UI.DeckEditorUI.Update();
+            UI.DeckEditorUI.Update(sceneLoaded);
             UI.DevDump.Update();
         }
 
