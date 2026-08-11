@@ -66,33 +66,39 @@ namespace LogPose.UI
             W.Fill(_chrome);
 
             Transform t = _chrome.transform;
-            // Top bar strip.
-            Image bar = W.Panel(t, "TopBar", 0f, 0f, 1920f, 88f, 0.01f,
+            // Top bar strip — oversized so wider-than-1920 canvases stay covered.
+            Image bar = W.Panel(t, "TopBar", -120f, 0f, 2200f, 88f, 0.01f,
                 Theme.WithA(Theme.Surface, 0.9f), Color.clear, 0f);
             bar.raycastTarget = false;
             GameObject hair = W.Go("Hairline", t);
-            W.TL(hair, 0f, 88f, 1920f, 1f);
+            W.TL(hair, -120f, 88f, 2200f, 1f);
             Image hi = hair.AddComponent<Image>();
             hi.color = Theme.WithA(Theme.Text, 0.1f);
             hi.raycastTarget = false;
 
-            // Left filter rail + right deck panel.
-            W.Panel(t, "Rail", 36f, 124f, 320f, 920f, 14f, Theme.WithA(Theme.Surface, 0.55f),
-                Theme.WithA(Theme.Text, 0.1f)).raycastTarget = false;
-            W.Panel(t, "DeckPanel", 1380f, 124f, 500f, 920f, 14f, Theme.WithA(Theme.Surface, 0.55f),
-                Theme.WithA(Theme.Text, 0.1f)).raycastTarget = false;
+            // The vanilla controls are all center-anchored, and the canvas can be wider
+            // than the 1920 design (aspect). Panels are center-anchored on the same basis
+            // and their headings live INSIDE them, so nothing can drift out of alignment.
+            Image rail = W.Panel(t, "Rail", 0f, 0f, 320f, 920f, 14f, Theme.WithA(Theme.Surface, 0.55f),
+                Theme.WithA(Theme.Text, 0.1f));
+            rail.raycastTarget = false;
+            Center(rail.rectTransform, -764f, -44f);
+            W.Label(rail.transform, "COLOR", 40f, 72f, 200f, 18f, 12f, Theme.WithA(Theme.Text, 0.5f), 600,
+                TextAlignmentOptions.TopLeft, false, 0.12f);
+            W.Label(rail.transform, "OPTIONS", 40f, 226f, 200f, 18f, 12f, Theme.WithA(Theme.Text, 0.5f), 600,
+                TextAlignmentOptions.TopLeft, false, 0.12f);
 
-            // Rail headings.
-            W.Label(t, "COLOR", 76f, 148f, 200f, 18f, 12f, Theme.WithA(Theme.Text, 0.5f), 600,
-                TextAlignmentOptions.TopLeft, false, 0.12f);
-            W.Label(t, "OPTIONS", 76f, 378f, 200f, 18f, 12f, Theme.WithA(Theme.Text, 0.5f), 600,
-                TextAlignmentOptions.TopLeft, false, 0.12f);
+            Image deckPanel = W.Panel(t, "DeckPanel", 0f, 0f, 500f, 920f, 14f, Theme.WithA(Theme.Surface, 0.55f),
+                Theme.WithA(Theme.Text, 0.1f));
+            deckPanel.raycastTarget = false;
+            Center(deckPanel.rectTransform, 672f, -44f);
+            Transform dp = deckPanel.transform;
 
-            // Deck panel: leader header + cost curve.
-            W.Label(t, "LEADER", 1516f, 158f, 200f, 18f, 12f, Theme.Accent400, 600,
+            // Deck panel: leader header + cost curve (panel-relative coords).
+            W.Label(dp, "LEADER", 136f, 34f, 200f, 18f, 12f, Theme.Accent400, 600,
                 TextAlignmentOptions.TopLeft, false, 0.12f);
-            GameObject thumbSlot = W.Go("LeaderThumb", t);
-            W.TL(thumbSlot, 1412f, 152f, 78f, 110f);
+            GameObject thumbSlot = W.Go("LeaderThumb", dp);
+            W.TL(thumbSlot, 32f, 28f, 78f, 110f);
             Image ts = thumbSlot.AddComponent<Image>();
             ts.sprite = UISprites.RoundedRect(32, 32, 8f, Theme.WithA(Theme.Ground, 0.5f),
                 Theme.WithA(Theme.Text, 0.12f), 1f, 9f);
@@ -104,33 +110,40 @@ namespace LogPose.UI
             ti.raycastTarget = false;
             ti.enabled = false;
             _leaderThumb = thumb.transform;
-            _leaderName = W.Label(t, "No leader", 1516f, 180f, 330f, 30f, 20f, Theme.Text, 500);
+            _leaderName = W.Label(dp, "No leader", 136f, 56f, 330f, 30f, 20f, Theme.Text, 500);
             _leaderName.overflowMode = TextOverflowModes.Ellipsis;
             _leaderName.enableWordWrapping = false;
-            _leaderCode = W.Label(t, "", 1516f, 212f, 330f, 22f, 13f, Theme.TextMuted, 400,
+            _leaderCode = W.Label(dp, "", 136f, 88f, 330f, 22f, 13f, Theme.TextMuted, 400,
                 TextAlignmentOptions.TopLeft, true);
 
-            W.Label(t, "COST CURVE", 1412f, 286f, 200f, 18f, 12f, Theme.WithA(Theme.Text, 0.5f), 600,
+            W.Label(dp, "COST CURVE", 32f, 162f, 200f, 18f, 12f, Theme.WithA(Theme.Text, 0.5f), 600,
                 TextAlignmentOptions.TopLeft, false, 0.12f);
             for (int i = 0; i < 8; i++)
             {
-                GameObject b = W.Go("Bar" + i, t);
+                GameObject b = W.Go("Bar" + i, dp);
                 RectTransform rt = b.GetComponent<RectTransform>();
                 rt.anchorMin = rt.anchorMax = new Vector2(0f, 1f);
                 rt.pivot = new Vector2(0.5f, 0f);       // grow upward from the baseline
-                rt.anchoredPosition = new Vector2(1436f + i * 57f, -410f);
+                rt.anchoredPosition = new Vector2(56f + i * 57f, -286f);
                 rt.sizeDelta = new Vector2(44f, 4f);
                 _bars[i] = b.AddComponent<Image>();
                 _bars[i].sprite = UISprites.RoundedRect(24, 24, 4f, Color.white, Color.clear, 0f, 5f);
                 _bars[i].type = Image.Type.Sliced;
                 _bars[i].raycastTarget = false;
-                W.Label(t, i < 7 ? i.ToString() : "7+", 1414f + i * 57f, 416f, 44f, 16f, 11f,
+                W.Label(dp, i < 7 ? i.ToString() : "7+", 34f + i * 57f, 292f, 44f, 16f, 11f,
                     Theme.WithA(Theme.Text, 0.45f), 400, TextAlignmentOptions.Center, true);
-                _barCounts[i] = W.Label(t, "", 1414f + i * 57f, 0f, 44f, 16f, 11f,
+                _barCounts[i] = W.Label(dp, "", 34f + i * 57f, 0f, 44f, 16f, 11f,
                     Theme.WithA(Theme.Text, 0.7f), 600, TextAlignmentOptions.Center, true);
             }
             _shownLeader = "?";
             Plugin.Log.LogInfo("Deck editor 2b chrome built.");
+        }
+
+        private static void Center(RectTransform rt, float x, float y)
+        {
+            rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.anchoredPosition = new Vector2(x, y);
         }
 
         // ------------------------------------------------------------- repositioning --
@@ -168,18 +181,24 @@ namespace LogPose.UI
             if (save != null)
                 BoardHUD.StyleAsButton(save.gameObject, 140f, 48f, 16f, BtnKind.Primary);
 
-            // Left rail.
-            Move(cn, "SearchField", railX, 410f, 272f, 48f);
-            MoveToggle(cn, "Red", -845f, 350f);
-            MoveToggle(cn, "Green", -725f, 350f);
-            MoveToggle(cn, "Blue", -845f, 308f);
-            MoveToggle(cn, "Purple", -725f, 308f);
-            MoveToggle(cn, "Black", -845f, 266f);
-            MoveToggle(cn, "Yellow", -725f, 266f);
-            MoveToggle(cn, "Limit4", -830f, 118f);
-            MoveToggle(cn, "Rotation", -830f, 76f);
-            MoveToggle(cn, "SortByCost", -812f, 34f);
-            MoveToggle(cn, "HideNumbers", -812f, -8f);
+            // Left rail. The search field's pivot is off-center in the prefab — normalize
+            // it so the position lands where aimed instead of poking out of the panel.
+            RectTransform search = Move(cn, "SearchField", railX, 384f, 272f, 44f);
+            if (search != null && search.pivot != new Vector2(0.5f, 0.5f))
+            {
+                search.pivot = new Vector2(0.5f, 0.5f);
+                search.anchoredPosition = new Vector2(railX, 384f);
+            }
+            MoveToggle(cn, "Red", -845f, 302f);
+            MoveToggle(cn, "Green", -725f, 302f);
+            MoveToggle(cn, "Blue", -845f, 260f);
+            MoveToggle(cn, "Purple", -725f, 260f);
+            MoveToggle(cn, "Black", -845f, 218f);
+            MoveToggle(cn, "Yellow", -725f, 218f);
+            MoveToggle(cn, "Limit4", -830f, 148f);
+            MoveToggle(cn, "Rotation", -830f, 106f);
+            MoveToggle(cn, "SortByCost", -812f, 64f);
+            MoveToggle(cn, "HideNumbers", -812f, 22f);
             // Bottom stack, spaced so nothing collides: help text, sponsor, utilities.
             RectTransform help = Move(cn, "SearchHelp", railX, -160f, 276f, 250f);
             if (help != null)
@@ -315,7 +334,7 @@ namespace LogPose.UI
                 _bars[i].color = counts[i] == max && counts[i] > 0 ? Theme.Accent
                     : Theme.WithA(Theme.Accent, counts[i] > 0 ? 0.45f : 0.12f);
                 RectTransform crt = _barCounts[i].rectTransform;
-                crt.anchoredPosition = new Vector2(crt.anchoredPosition.x, -406f + hgt + 4f);
+                crt.anchoredPosition = new Vector2(crt.anchoredPosition.x, -286f + hgt + 4f);
                 _barCounts[i].text = counts[i] > 0 ? counts[i].ToString() : "";
             }
 
