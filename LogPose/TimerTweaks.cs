@@ -251,9 +251,9 @@ namespace LogPose
             rt.anchorMin = art.anchorMin;
             rt.anchorMax = art.anchorMax;
             rt.pivot = art.pivot;
-            // Nudged right of the checkbox column so the < buttons clear the queue grid
-            // ("Extra Regulation") to the left.
-            rt.anchoredPosition = art.anchoredPosition + new Vector2(75f, -86f);
+            // Below the host-button column: 1.42b added "Show leader" + lobby description
+            // right under the Timed Lobby checkbox, where the steppers used to sit.
+            rt.anchoredPosition = art.anchoredPosition + new Vector2(75f, -400f);
             rt.sizeDelta = new Vector2(290f, 106f);
 
             MakeButton(hjs, "<", new Vector2(-105f, 28f), () => Step(-1));

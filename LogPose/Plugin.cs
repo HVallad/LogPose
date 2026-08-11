@@ -84,6 +84,9 @@ namespace LogPose
             TimerLobbyUI.Update();
             TimerPatches.SyncUpdate();
             UI.MainMenuUI.Update();
+            UI.VanillaRestyle.Update();
+            UI.BoardHUD.Update();
+            UI.DevDump.Update();
         }
 
         private void OnGUI()
