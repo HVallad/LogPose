@@ -11,7 +11,7 @@ namespace LogPose
     {
         public const string GUID = "com.hunter.logpose";
         public const string NAME = "LogPose";
-        public const string VERSION = "1.0.17";
+        public const string VERSION = "1.0.18";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;
@@ -83,6 +83,7 @@ namespace LogPose
             harmony.PatchAll(typeof(TimerPatches));
             harmony.PatchAll(typeof(UI.BoardLayoutPatches));
             harmony.PatchAll(typeof(UI.DeckEditorUI));
+            UI.MenuPerfPatches.Apply(harmony);
 
             // Canvas switches inside the menu scene fire no scene-load event, so hook
             // every screen-switch method — the restyle pass runs the same frame the

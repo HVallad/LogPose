@@ -536,7 +536,7 @@ namespace LogPose.UI
         {
             Plugin.Log.LogInfo("Back clicked at t=" + Time.realtimeSinceStartup.ToString("F3") + "s");
             LoadVeil();
-            UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("main");
+            LoadAsyncTimed("main");
             return false;
         }
 
@@ -554,8 +554,35 @@ namespace LogPose.UI
             catch { }
             UnityEngine.Object.Destroy(GameObject.Find("NetworkManagerRelay"));
             LoadVeil();
-            UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("deckeditor");
+            LoadAsyncTimed("deckeditor");
             return false;
+        }
+
+        // Async load with phase timing: "load" (background, preloadable) vs
+        // "activation" (main-thread instantiate + Awake, the hard floor).
+        private static void LoadAsyncTimed(string scene)
+        {
+            var op = UnityEngine.SceneManagement.SceneManager.LoadSceneAsync(scene);
+            if (Plugin.Instance != null && op != null)
+                Plugin.Instance.StartCoroutine(TimeOp(scene, op));
+        }
+
+        private static IEnumerator TimeOp(string scene, AsyncOperation op)
+        {
+            float t0 = Time.realtimeSinceStartup;
+            float t09 = -1f;
+            while (!op.isDone)
+            {
+                if (t09 < 0f && op.progress >= 0.9f)
+                    t09 = Time.realtimeSinceStartup;
+                yield return null;
+            }
+            float tEnd = Time.realtimeSinceStartup;
+            if (t09 < 0f)
+                t09 = tEnd;
+            Plugin.Log.LogInfo("Scene '" + scene + "' async split: load "
+                + ((t09 - t0) * 1000f).ToString("F0") + " ms, activation "
+                + ((tEnd - t09) * 1000f).ToString("F0") + " ms");
         }
 
         // Deliberately NOT DontDestroyOnLoad: the veil belongs to the outgoing scene
