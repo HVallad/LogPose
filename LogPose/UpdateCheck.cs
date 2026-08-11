@@ -27,6 +27,11 @@ namespace LogPose
         private static GameObject _button;
         private static TMP_Text _label;
 
+        // Surface for the reskinned menu's top-bar pill.
+        internal static bool Offering => _state != State.Idle;
+        internal static string OfferText => LabelText();
+        internal static void Trigger() => OnClick();
+
         public static void Init()
         {
             CleanupOldDll();

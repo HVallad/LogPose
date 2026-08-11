@@ -26,6 +26,8 @@ namespace LogPose
         internal static ConfigEntry<bool> CfgCheckForUpdates;
         internal static ConfigEntry<float> CfgTimerMinutes;
         internal static ConfigEntry<float> CfgTimerRecoverySeconds;
+        internal static ConfigEntry<bool> CfgUiReskin;
+        internal static ConfigEntry<string> CfgUiColorway;
 
         private void Awake()
         {
@@ -56,6 +58,11 @@ namespace LogPose
             CfgTimerRecoverySeconds = Config.Bind("Timer", "RecoverySeconds", 0f,
                 "Seconds returned to a player's bank each time they complete a turn (Fischer-style increment) in private timed lobbies you host. 0 = off.");
 
+            CfgUiReskin = Config.Bind("UI", "Reskin", true,
+                "Replace the game's menu chrome with the LogPose 1.0 redesign. Turn off to keep the vanilla look.");
+            CfgUiColorway = Config.Bind("UI", "Colorway", "Nocturne",
+                "Reskin colorway: Nocturne (blurple) or Batsu (brand magenta).");
+
             var harmony = new Harmony(GUID);
             harmony.PatchAll(typeof(ReplaySyncPatches));
             harmony.PatchAll(typeof(CombatLogPatches));
@@ -75,6 +82,7 @@ namespace LogPose
             UpdateCheck.Update();
             TimerLobbyUI.Update();
             TimerPatches.SyncUpdate();
+            UI.MainMenuUI.Update();
         }
 
         private void OnGUI()

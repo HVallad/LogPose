@@ -1,0 +1,85 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../_ds/nocturne-f41e4d5b-5acc-4880-bf72-938580608e84/styles.css"><style>body{margin:0;background:#0f111c}
+body{margin:0;background:#0f111c}
+.dv-turn{padding:40px 44px 32px;border-bottom:1px solid rgba(233,233,237,.08);scroll-margin-top:16px}
+.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 20px}
+.dv-tid{font:600 10px ui-monospace,Menlo,monospace;padding:3px 7px;background:#e9e9ed;color:#161826;border-radius:4px;text-decoration:none}
+.dv-tname{font:500 13px/1.2 Inter,system-ui,sans-serif;color:#e9e9ed}
+.dv-opts{display:flex;flex-wrap:wrap;gap:36px;align-items:flex-start}
+.dv-opt{flex:none;display:flex;flex-direction:column;gap:9px;scroll-margin-top:16px}
+.dv-oid{font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(233,233,237,.12);color:#e9e9ed;border-radius:5px;text-decoration:none}
+.dv-olabel{display:flex;align-items:baseline;gap:8px;font:400 11px/1.3 Inter,system-ui,sans-serif;color:rgba(233,233,237,.55)}
+.dv-card{max-width:100%;background:#161826;border:1px solid rgba(233,233,237,.1);border-radius:8px;box-shadow:0 16px 40px rgba(0,0,0,.65);overflow:hidden}
+.dv-opt:target .dv-oid{background:#9184d9;color:#161826}
+.dv-next{margin:22px 0 0;font:12px/1.5 Inter,system-ui,sans-serif;color:rgba(233,233,237,.5)}
+a{color:#9184d9}a:hover{color:#b5abfc}
+.spec{font:600 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.06em;color:#9184d9;text-transform:uppercase}
+.mm-row:hover{background:linear-gradient(90deg,rgba(145,132,217,.14),transparent 70%)}
+.mm-row:hover .mm-chev{opacity:1;transform:translateX(4px)}
+</style></head><body><div class="dv-card" style="width:1920px;height:1080px;position:relative;background:#161826;overflow:hidden;font-family:Inter,sans-serif;color:#e9e9ed">
+<div style="position:absolute;inset:0;background:radial-gradient(1100px 800px at 78% 18%,rgba(76,83,151,.4),transparent 70%)"></div>
+<div style="position:absolute;left:120px;top:132px;opacity:.28"><div style="font:600 13px Inter,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#b5abfc;margin-bottom:24px">One Piece Card Game · Simulator</div><div style="font-size:96px;font-weight:500;letter-spacing:-.02em;line-height:.95">OPTCGSim</div></div>
+<div style="position:absolute;inset:0;background:rgba(15,17,28,.72)"></div>
+
+<div style="position:absolute;left:50%;top:96px;transform:translateX(-50%);width:1160px;height:888px;background:#232532;border-radius:14px;box-shadow:0 0 0 1px #9397ab,0 16px 40px rgba(0,0,0,.65);display:flex;flex-direction:column">
+<div style="padding:28px 32px;display:flex;align-items:center;gap:20px;box-shadow:inset 0 -1px 0 rgba(233,233,237,.1)">
+<div><div style="font:600 11px Inter,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#b5abfc;margin-bottom:6px">LogPose</div><div style="font-size:28px;font-weight:500">Match history</div></div>
+<div style="flex:1"></div>
+<div class="seg"><span class="seg-opt" style="font-size:14px;color:#9184d9;box-shadow:inset 0 0 0 1px #9184d9">All</span><span class="seg-opt" style="font-size:14px">Wins</span><span class="seg-opt" style="font-size:14px">Losses</span></div>
+<button style="width:48px;height:48px;border-radius:8px;border:1px solid rgba(233,233,237,.16);background:transparent;color:#e9e9ed;cursor:pointer"><svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor"><path d="M205.66 194.34a8 8 0 0 1-11.32 11.32L128 139.31l-66.34 66.35a8 8 0 0 1-11.32-11.32L116.69 128 50.34 61.66a8 8 0 0 1 11.32-11.32L128 116.69l66.34-66.35a8 8 0 0 1 11.32 11.32L139.31 128Z"></path></svg></button>
+</div>
+<div style="flex:1;padding:24px 32px;display:flex;flex-direction:column;gap:6px">
+<div style="height:96px;border-radius:8px;background:#161826;display:flex;align-items:center;padding:0 20px;gap:20px">
+<div style="width:56px;height:78px;border-radius:6px;background:#3f424d"></div>
+<div style="flex:1"><div style="font-size:20px;font-weight:500">Luffy#0001 <span style="color:rgba(233,233,237,.4);font-weight:400">vs</span> Zoro#0002</div><div style="font:13px ui-monospace,monospace;color:rgba(233,233,237,.5);margin-top:4px">2026-08-08 14:28 · game 1 · 12 turns</div></div>
+<span class="tag tag-accent" style="font-size:13px;padding:6px 14px">WIN</span>
+<button style="height:44px;padding:0 18px;border-radius:8px;border:1px solid rgba(233,233,237,.16);background:transparent;color:#e9e9ed;font:500 15px Inter,sans-serif;cursor:pointer;white-space:nowrap;flex:none">Watch replay</button>
+<div style="width:56px;height:78px;border-radius:6px;background:#3f424d"></div>
+</div>
+<div style="height:96px;border-radius:8px;background:#161826;box-shadow:inset 0 0 0 1px #9184d9,inset 3px 0 0 #9184d9;display:flex;align-items:center;padding:0 20px;gap:20px">
+<div style="width:56px;height:78px;border-radius:6px;background:#3f424d"></div>
+<div style="flex:1"><div style="font-size:20px;font-weight:500">Luffy#0001 <span style="color:rgba(233,233,237,.4);font-weight:400">vs</span> Zoro#0002</div><div style="font:13px ui-monospace,monospace;color:rgba(233,233,237,.5);margin-top:4px">2026-08-08 14:28 · game 2 · 9 turns</div></div>
+<span class="tag tag-neutral" style="font-size:13px;padding:6px 14px">LOSS</span>
+<button style="height:44px;padding:0 18px;border-radius:8px;border:1px solid #9184d9;background:rgba(145,132,217,.12);color:#b5abfc;font:500 15px Inter,sans-serif;cursor:pointer;white-space:nowrap;flex:none">Watch replay</button>
+<div style="width:56px;height:78px;border-radius:6px;background:#3f424d"></div>
+</div>
+<div style="height:96px;border-radius:8px;background:#161826;display:flex;align-items:center;padding:0 20px;gap:20px">
+<div style="width:56px;height:78px;border-radius:6px;background:#3f424d"></div>
+<div style="flex:1"><div style="font-size:20px;font-weight:500">Luffy#0001 <span style="color:rgba(233,233,237,.4);font-weight:400">vs</span> Zoro#0002</div><div style="font:13px ui-monospace,monospace;color:rgba(233,233,237,.5);margin-top:4px">2026-08-08 13:05 · game 1 · 15 turns</div></div>
+<span class="tag tag-accent" style="font-size:13px;padding:6px 14px">WIN</span>
+<button style="height:44px;padding:0 18px;border-radius:8px;border:1px solid rgba(233,233,237,.16);background:transparent;color:#e9e9ed;font:500 15px Inter,sans-serif;cursor:pointer;white-space:nowrap;flex:none">Watch replay</button>
+<div style="width:56px;height:78px;border-radius:6px;background:#3f424d"></div>
+</div>
+<div style="height:96px;border-radius:8px;background:#161826;display:flex;align-items:center;padding:0 20px;gap:20px">
+<div style="width:56px;height:78px;border-radius:6px;background:#3f424d"></div>
+<div style="flex:1"><div style="font-size:20px;font-weight:500">Luffy#0001 <span style="color:rgba(233,233,237,.4);font-weight:400">vs</span> Zoro#0002</div><div style="font:13px ui-monospace,monospace;color:rgba(233,233,237,.5);margin-top:4px">2026-08-08 13:05 · game 2 · 7 turns</div></div>
+<span class="tag tag-neutral" style="font-size:13px;padding:6px 14px">LOSS</span>
+<button style="height:44px;padding:0 18px;border-radius:8px;border:1px solid rgba(233,233,237,.16);background:transparent;color:#e9e9ed;font:500 15px Inter,sans-serif;cursor:pointer;white-space:nowrap;flex:none">Watch replay</button>
+<div style="width:56px;height:78px;border-radius:6px;background:#3f424d"></div>
+</div>
+<div style="height:96px;border-radius:8px;background:#161826;display:flex;align-items:center;padding:0 20px;gap:20px">
+<div style="width:56px;height:78px;border-radius:6px;background:#3f424d"></div>
+<div style="flex:1"><div style="font-size:20px;font-weight:500">Luffy#0001 <span style="color:rgba(233,233,237,.4);font-weight:400">vs</span> Zoro#0002</div><div style="font:13px ui-monospace,monospace;color:rgba(233,233,237,.5);margin-top:4px">2026-08-07 19:42 · game 1 · 11 turns</div></div>
+<span class="tag tag-accent" style="font-size:13px;padding:6px 14px">WIN</span>
+<button style="height:44px;padding:0 18px;border-radius:8px;border:1px solid rgba(233,233,237,.16);background:transparent;color:#e9e9ed;font:500 15px Inter,sans-serif;cursor:pointer;white-space:nowrap;flex:none">Watch replay</button>
+<div style="width:56px;height:78px;border-radius:6px;background:#3f424d"></div>
+</div>
+<div style="height:96px;border-radius:8px;background:#161826;display:flex;align-items:center;padding:0 20px;gap:20px">
+<div style="width:56px;height:78px;border-radius:6px;background:#3f424d"></div>
+<div style="flex:1"><div style="font-size:20px;font-weight:500">Luffy#0001 <span style="color:rgba(233,233,237,.4);font-weight:400">vs</span> Zoro#0002</div><div style="font:13px ui-monospace,monospace;color:rgba(233,233,237,.5);margin-top:4px">2026-08-07 19:42 · game 2 · 14 turns</div></div>
+<span class="tag tag-neutral" style="font-size:13px;padding:6px 14px">LOSS</span>
+<button style="height:44px;padding:0 18px;border-radius:8px;border:1px solid rgba(233,233,237,.16);background:transparent;color:#e9e9ed;font:500 15px Inter,sans-serif;cursor:pointer;white-space:nowrap;flex:none">Watch replay</button>
+<div style="width:56px;height:78px;border-radius:6px;background:#3f424d"></div>
+</div>
+</div>
+<div style="padding:24px 32px;display:flex;align-items:center;gap:16px;box-shadow:inset 0 1px 0 rgba(233,233,237,.1)">
+<div style="font-size:15px;color:rgba(233,233,237,.55)">6 matches · 3W 3L</div>
+<div style="flex:1"></div>
+<button style="height:48px;padding:0 20px;border-radius:8px;border:1px solid rgba(233,233,237,.16);background:transparent;color:rgba(233,233,237,.45);font:500 15px Inter,sans-serif">Previous</button>
+<span style="font:13px ui-monospace,monospace;color:rgba(233,233,237,.5)">Page 1 / 1</span>
+<button style="height:48px;padding:0 20px;border-radius:8px;border:1px solid rgba(233,233,237,.16);background:transparent;color:rgba(233,233,237,.45);font:500 15px Inter,sans-serif">Next</button>
+</div>
+</div>
+</div>
+</div>
+
+</body></html>

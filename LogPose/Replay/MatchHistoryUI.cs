@@ -25,6 +25,10 @@ namespace LogPose.Replay
 
         private static GameObject _menuButton;
         private static GameObject _page;
+
+        internal static bool PageOpen => _page != null;
+
+        internal static void Open(HostJoinScript hjs) => OpenPage(hjs);
         private static List<Entry> _entries;
         private static int _pageIdx;
         private const int RowsPerPage = 7;

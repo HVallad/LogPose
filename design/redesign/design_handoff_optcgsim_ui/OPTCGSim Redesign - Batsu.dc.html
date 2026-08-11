@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/nocturne-f41e4d5b-5acc-4880-bf72-938580608e84/styles.css">
+<script src="_ds/nocturne-f41e4d5b-5acc-4880-bf72-938580608e84/_ds_bundle.js"></script>
+<style>
+body{margin:0;background:#100c16}
+.dv-turn{padding:40px 44px 32px;border-bottom:1px solid rgba(240,233,242,.08);scroll-margin-top:16px}
+.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 20px}
+.dv-tid{font:600 10px ui-monospace,Menlo,monospace;padding:3px 7px;background:#f0e9f2;color:#17121e;border-radius:4px;text-decoration:none}
+.dv-tname{font:500 13px/1.2 Inter,system-ui,sans-serif;color:#f0e9f2}
+.dv-opts{display:flex;flex-wrap:wrap;gap:36px;align-items:flex-start}
+.dv-opt{flex:none;display:flex;flex-direction:column;gap:9px;scroll-margin-top:16px}
+.dv-oid{font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(240,233,242,.12);color:#f0e9f2;border-radius:5px;text-decoration:none}
+.dv-olabel{display:flex;align-items:baseline;gap:8px;font:400 11px/1.3 Inter,system-ui,sans-serif;color:rgba(240,233,242,.55)}
+.dv-card{max-width:100%;background:#17121e;border:1px solid rgba(240,233,242,.1);border-radius:8px;box-shadow:0 16px 40px rgba(0,0,0,.65);overflow:hidden}
+.dv-opt:target .dv-oid{background:#d81fb4;color:#17121e}
+.dv-next{margin:22px 0 0;font:12px/1.5 Inter,system-ui,sans-serif;color:rgba(240,233,242,.5)}
+a{color:#d81fb4}a:hover{color:#ea55c8}
+.tag-accent{background:#5a1149;color:#fbd3f1}
+.tag-accent-2{background:#5a1149;color:#fbd3f1}
+.tag-neutral{background:#473c52;color:#f0e9f2}
+.tag-outline{border-color:#d81fb4;color:#d81fb4}
+.seg{border-color:rgba(240,233,242,.16)}
+.seg-opt+.seg-opt{border-left-color:rgba(240,233,242,.16)}
+.seg-opt:has(input:checked){color:#d81fb4;box-shadow:inset 0 0 0 1px #d81fb4}
+.input{background:#241d2e;border-color:rgba(240,233,242,.16);color:#f0e9f2;caret-color:#d81fb4}
+.input:focus-visible{border-color:#d81fb4}
+:focus-visible{outline-color:#d81fb4}
+::selection{background:rgba(216,31,180,.3)}
+.spec{font:600 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.06em;color:#d81fb4;text-transform:uppercase}
+.mm-row:hover{background:linear-gradient(90deg,rgba(216,31,180,.14),transparent 70%)}
+.mm-row:hover .mm-chev{opacity:1;transform:translateX(4px)}
+</style>
+</helmet>
+
+<section class="dv-turn" id="t2">
+<div class="dv-thd"><a class="dv-tid" href="#t2">2</a><span class="dv-tname">Batsu colorway — the other eight screens + sprite manifest</span></div>
+<div class="dv-opts">
+
+<div class="dv-opt" id="2a">
+<div class="dv-olabel"><a class="dv-oid" href="#2a">2a</a>Board in play — zones unchanged, HUD bar on top, hand fanned, log in a collapsible rail</div>
+<div class="dv-card" style="width:1920px;height:1080px;position:relative;background:#17121e;overflow:hidden;font-family:Inter,sans-serif;color:#f0e9f2">
+<div style="position:absolute;inset:0;background:radial-gradient(1200px 700px at 30% 46%,rgba(26,127,160,.28),transparent 72%)"></div>
+<div style="position:absolute;left:0;top:0;right:0;height:72px;background:#241d2ebf;box-shadow:inset 0 -1px 0 rgba(240,233,242,.12);display:flex;align-items:center;padding:0 24px;gap:20px">
+<div style="width:40px;height:40px;border-radius:8px;background:#473c52"></div>
+<div><div style="font-size:16px;font-weight:500">Zoro#0002</div><div style="font:12px ui-monospace,monospace;color:rgba(240,233,242,.5)">Portgas D. Ace · OP16-001</div></div>
+<div style="display:flex;align-items:center;gap:6px;margin-left:8px"><span style="font:600 11px Inter,sans-serif;letter-spacing:.08em;color:rgba(240,233,242,.5);margin-right:6px">LIFE</span><span style="width:16px;height:20px;border-radius:3px;background:#2e2639;box-shadow:0 0 0 1px #d81fb4;display:inline-flex;align-items:center;justify-content:center;font:700 9px ui-monospace,monospace;color:#f7a8e4" title="Top life card is face-up">T</span><span style="width:12px;height:20px;border-radius:3px;background:#ea55c8"></span><span style="width:12px;height:20px;border-radius:3px;background:#ea55c8"></span><span style="width:12px;height:20px;border-radius:3px;background:#473c52"></span><span style="font:11px Inter,sans-serif;color:rgba(240,233,242,.5);margin-left:4px">1 face-up</span></div>
+<div style="flex:1"></div>
+<div style="display:flex;align-items:center;gap:16px"><span style="font:600 13px Inter,sans-serif;letter-spacing:.14em;color:rgba(240,233,242,.5)">TURN 4</span><div style="display:flex;align-items:center;gap:4px">
+<span style="height:32px;padding:0 14px;border-radius:8px;display:inline-flex;align-items:center;font-size:14px;color:rgba(240,233,242,.4)">Refresh</span>
+<span style="height:32px;padding:0 14px;border-radius:8px;display:inline-flex;align-items:center;font-size:14px;color:rgba(240,233,242,.4)">Draw</span>
+<span style="height:32px;padding:0 14px;border-radius:8px;display:inline-flex;align-items:center;font-size:14px;color:rgba(240,233,242,.4)">DON!!</span>
+<span style="height:32px;padding:0 16px;border-radius:8px;display:inline-flex;align-items:center;font:500 14px Inter,sans-serif;color:#f7a8e4;background:#d81fb429;box-shadow:inset 0 0 0 1px #d81fb4">Main</span>
+<span style="height:32px;padding:0 14px;border-radius:8px;display:inline-flex;align-items:center;font-size:14px;color:rgba(240,233,242,.4)">End</span></div></div>
+<div style="flex:1"></div>
+<div style="display:flex;align-items:center;gap:6px;margin-right:8px"><span style="font:600 11px Inter,sans-serif;letter-spacing:.08em;color:rgba(240,233,242,.5);margin-right:6px">LIFE</span><span style="width:12px;height:20px;border-radius:3px;background:#ea55c8"></span><span style="width:12px;height:20px;border-radius:3px;background:#ea55c8"></span><span style="width:12px;height:20px;border-radius:3px;background:#ea55c8"></span><span style="width:12px;height:20px;border-radius:3px;background:#ea55c8"></span></div>
+<div style="text-align:right"><div style="font-size:16px;font-weight:500">Luffy#0001</div><div style="font:12px ui-monospace,monospace;color:rgba(240,233,242,.5)">Monkey D. Luffy · OP13-001</div></div>
+<div style="width:40px;height:40px;border-radius:8px;background:#473c52"></div>
+<span style="width:1px;height:32px;background:rgba(240,233,242,.14)"></span>
+<button style="width:48px;height:48px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:#f0e9f2;cursor:pointer"><svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M144 128a16 16 0 1 1-16-16 16 16 0 0 1 16 16m-84-16a16 16 0 1 0 16 16 16 16 0 0 0-16-16m136 0a16 16 0 1 0 16 16 16 16 0 0 0-16-16"></path></svg></button>
+</div>
+<div style="position:absolute;left:72px;top:112px;width:1000px;height:718px;border-radius:14px;background:linear-gradient(180deg,#1d1726,rgba(23,18,30,.35) 50%,#1d1726);box-shadow:0 0 0 1px #473c52,0 16px 40px rgba(0,0,0,.45);padding:20px;display:flex;flex-direction:column;gap:8px"><div style="display:flex;gap:12px;height:86px;align-items:stretch"><div style="flex:1;position:relative;border-radius:8px;background:rgba(23,18,30,.35);box-shadow:inset 0 0 0 1px rgba(240,233,242,.1);display:flex;align-items:center;justify-content:center;gap:8px"><span style="position:absolute;left:16px;top:50%;transform:translateY(-50%);font:600 12px Inter,sans-serif;letter-spacing:.16em;color:rgba(240,233,242,.14)">DON!!</span><div style="width:54px;height:66px;border-radius:5px;background:#272130"></div><div style="width:54px;height:66px;border-radius:5px;background:#272130"></div><div style="width:54px;height:66px;border-radius:5px;background:#272130"></div><div style="width:54px;height:66px;border-radius:5px;background:#272130"></div><div style="width:54px;height:66px;border-radius:5px;background:#272130"></div><div style="width:54px;height:66px;border-radius:5px;background:#272130"></div><div style="width:54px;height:66px;border-radius:5px;background:#272130"></div><span style="position:absolute;right:16px;top:50%;transform:translateY(-50%);font:600 11px ui-monospace,monospace;color:rgba(240,233,242,.4)">4 / 6 ACTIVE</span></div><div style="width:80px;height:86px;border-radius:6px;background:#2e2639;box-shadow:0 0 0 1px #473c52;display:flex;align-items:flex-end;justify-content:center;padding-bottom:5px;font:600 10px Inter,sans-serif;letter-spacing:.1em;color:rgba(240,233,242,.45)">DECK 38</div><div style="width:80px;height:86px;border-radius:6px;background:rgba(23,18,30,.35);box-shadow:inset 0 0 0 1px rgba(240,233,242,.14);display:flex;align-items:flex-end;justify-content:center;padding-bottom:5px;font:600 10px Inter,sans-serif;letter-spacing:.1em;color:rgba(240,233,242,.45)">TRASH 3</div></div><div style="display:flex;gap:14px;align-items:stretch"><div style="width:118px;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:7px;border-radius:8px;background:rgba(23,18,30,.35);box-shadow:inset 0 0 0 1px rgba(240,233,242,.1);padding:10px 0"><span style="font:600 10px Inter,sans-serif;letter-spacing:.14em;color:rgba(240,233,242,.45)">LIFE 3</span><div style="display:flex;flex-direction:column;align-items:center"><div style="width:94px;height:32px;border-radius:6px;background:#2e2639;box-shadow:0 0 0 1px #473c52;"></div><div style="width:94px;height:32px;border-radius:6px;background:#2e2639;box-shadow:0 0 0 1px #473c52;margin-top:-10px"></div><div style="width:94px;height:32px;border-radius:6px;background:#2e2639;box-shadow:0 0 0 1px #473c52;margin-top:-10px"></div></div></div><div style="flex:1;display:flex;flex-direction:column;gap:8px"><div style="display:flex;gap:14px;height:130px;align-items:flex-end;justify-content:center"><div style="width:70px;height:96px;border-radius:6px;background:rgba(23,18,30,.35);box-shadow:inset 0 0 0 1px rgba(240,233,242,.14);display:flex;align-items:flex-end;justify-content:center;padding-bottom:5px;font:600 10px Inter,sans-serif;letter-spacing:.1em;color:rgba(240,233,242,.45)">STAGE</div><div style="width:96px;height:126px;border-radius:8px;background:#2e2639;box-shadow:0 0 0 1px #655770;display:flex;align-items:flex-end;justify-content:center;padding-bottom:6px;font:600 10px Inter,sans-serif;letter-spacing:.1em;color:rgba(240,233,242,.5)">LEADER</div><div style="display:flex;align-items:center;gap:12px;margin-left:40px"><div style="width:54px;height:76px;border-radius:5px;background:#272130;box-shadow:0 0 0 1px #473c52;transform:rotate(-6deg);"></div><div style="width:54px;height:76px;border-radius:5px;background:#272130;box-shadow:0 0 0 1px #473c52;transform:rotate(-2deg);margin-left:-15px"></div><div style="width:54px;height:76px;border-radius:5px;background:#272130;box-shadow:0 0 0 1px #473c52;transform:rotate(2deg);margin-left:-15px"></div><div style="width:54px;height:76px;border-radius:5px;background:#272130;box-shadow:0 0 0 1px #473c52;transform:rotate(6deg);margin-left:-15px"></div><span style="font:600 10px Inter,sans-serif;letter-spacing:.12em;color:rgba(240,233,242,.4);margin-left:10px">HAND 4</span></div></div><div style="height:96px;position:relative;border-radius:8px;background:rgba(23,18,30,.35);box-shadow:inset 0 0 0 1px rgba(240,233,242,.1);display:flex;align-items:center;justify-content:center;gap:12px"><span style="position:absolute;left:16px;top:50%;transform:translateY(-50%);font:600 12px Inter,sans-serif;letter-spacing:.16em;color:rgba(240,233,242,.14)">CHARACTER AREA</span><div style="width:78px;height:80px;border-radius:5px;background:#2e2639;box-shadow:0 0 0 1px #473c52"></div><div style="width:78px;height:80px;border-radius:5px;background:#2e2639;box-shadow:0 0 0 1px #473c52"></div><div style="width:78px;height:80px;border-radius:5px;background:transparent;box-shadow:inset 0 0 0 1px rgba(240,233,242,.08)"></div><div style="width:78px;height:80px;border-radius:5px;background:transparent;box-shadow:inset 0 0 0 1px rgba(240,233,242,.08)"></div><div style="width:78px;height:80px;border-radius:5px;background:transparent;box-shadow:inset 0 0 0 1px rgba(240,233,242,.08)"></div></div></div></div><div style="height:1px;margin:5px 0;background:linear-gradient(to right,transparent,#d81fb480 100px,#d81fb480 calc(100% - 100px),transparent);position:relative"><span style="position:absolute;left:50%;top:-9px;transform:translateX(-50%);background:#1d1726;padding:0 12px;font:600 11px Inter,sans-serif;letter-spacing:.16em;color:rgba(240,233,242,.45)">YOUR TURN</span></div><div style="display:flex;gap:14px;align-items:stretch"><div style="width:118px;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:7px;border-radius:8px;background:rgba(23,18,30,.35);box-shadow:inset 0 0 0 1px rgba(240,233,242,.1);padding:10px 0"><span style="font:600 10px Inter,sans-serif;letter-spacing:.14em;color:rgba(240,233,242,.45)">LIFE 4</span><div style="display:flex;flex-direction:column;align-items:center"><div style="width:94px;height:32px;border-radius:6px;background:#2e2639;box-shadow:0 0 0 1px #473c52;"></div><div style="width:94px;height:32px;border-radius:6px;background:#2e2639;box-shadow:0 0 0 1px #473c52;margin-top:-10px"></div><div style="width:94px;height:32px;border-radius:6px;background:#2e2639;box-shadow:0 0 0 1px #473c52;margin-top:-10px"></div><div style="width:94px;height:32px;border-radius:6px;background:#2e2639;box-shadow:0 0 0 1px #473c52;margin-top:-10px"></div></div></div><div style="flex:1;display:flex;flex-direction:column;gap:8px"><div style="height:96px;position:relative;border-radius:8px;background:rgba(23,18,30,.35);box-shadow:inset 0 0 0 1px rgba(240,233,242,.1);display:flex;align-items:center;justify-content:center;gap:12px"><span style="position:absolute;left:16px;top:50%;transform:translateY(-50%);font:600 12px Inter,sans-serif;letter-spacing:.16em;color:rgba(240,233,242,.14)">CHARACTER AREA</span><div style="width:78px;height:80px;border-radius:5px;background:#2e2639;box-shadow:0 0 0 1px #473c52"></div><div style="width:78px;height:80px;border-radius:5px;background:#2e2639;box-shadow:0 0 0 1px #d81fb4"></div><div style="width:78px;height:80px;border-radius:5px;background:#2e2639;box-shadow:0 0 0 1px #473c52"></div><div style="width:78px;height:80px;border-radius:5px;background:transparent;box-shadow:inset 0 0 0 1px rgba(240,233,242,.08)"></div><div style="width:78px;height:80px;border-radius:5px;background:transparent;box-shadow:inset 0 0 0 1px rgba(240,233,242,.08)"></div></div><div style="display:flex;gap:14px;height:130px;align-items:flex-start;justify-content:center"><div style="width:96px;height:126px;border-radius:8px;background:#2e2639;box-shadow:0 0 0 1px #d81fb4,0 0 24px #d81fb459;display:flex;align-items:flex-end;justify-content:center;padding-bottom:6px;font:600 10px Inter,sans-serif;letter-spacing:.1em;color:#f7a8e4">LEADER</div><div style="width:70px;height:96px;border-radius:6px;background:rgba(23,18,30,.35);box-shadow:inset 0 0 0 1px rgba(240,233,242,.14);display:flex;align-items:flex-end;justify-content:center;padding-bottom:5px;font:600 10px Inter,sans-serif;letter-spacing:.1em;color:rgba(240,233,242,.45)">STAGE</div></div></div></div><div style="display:flex;gap:12px;height:86px;align-items:stretch"><div style="flex:1;position:relative;border-radius:8px;background:#d81fb40f;box-shadow:inset 0 0 0 1px #d81fb459;display:flex;align-items:center;justify-content:center;gap:8px"><span style="position:absolute;left:16px;top:50%;transform:translateY(-50%);font:600 12px Inter,sans-serif;letter-spacing:.16em;color:rgba(240,233,242,.14)">YOUR DON!!</span><div style="width:54px;height:66px;border-radius:5px;background:#5a1149;box-shadow:0 0 0 1px #b81c98"></div><div style="width:54px;height:66px;border-radius:5px;background:#5a1149;box-shadow:0 0 0 1px #b81c98"></div><div style="width:54px;height:66px;border-radius:5px;background:#5a1149;box-shadow:0 0 0 1px #b81c98"></div><div style="width:54px;height:66px;border-radius:5px;background:#5a1149;box-shadow:0 0 0 1px #b81c98"></div><div style="width:54px;height:66px;border-radius:5px;background:#5a1149;box-shadow:0 0 0 1px #b81c98"></div><div style="width:54px;height:66px;border-radius:5px;background:#272130"></div><div style="width:54px;height:66px;border-radius:5px;background:#272130"></div><span style="position:absolute;right:16px;top:50%;transform:translateY(-50%);font:600 11px ui-monospace,monospace;color:#ea55c8">5 / 7 ACTIVE</span></div><div style="width:80px;height:86px;border-radius:6px;background:#2e2639;box-shadow:0 0 0 1px #473c52;display:flex;align-items:flex-end;justify-content:center;padding-bottom:5px;font:600 10px Inter,sans-serif;letter-spacing:.1em;color:rgba(240,233,242,.45)">DECK 36</div><div style="width:80px;height:86px;border-radius:6px;background:rgba(23,18,30,.35);box-shadow:inset 0 0 0 1px rgba(240,233,242,.14);display:flex;align-items:flex-end;justify-content:center;padding-bottom:5px;font:600 10px Inter,sans-serif;letter-spacing:.1em;color:rgba(240,233,242,.45)">TRASH 2</div></div></div>
+
+<div style="position:absolute;left:72px;width:1000px;bottom:0;height:252px;display:flex;align-items:flex-end;justify-content:center">
+<div style="display:flex;align-items:flex-end;padding-bottom:34px">
+<div style="width:120px;height:166px;border-radius:8px;background:#2e2639;box-shadow:0 0 0 1px #473c52,0 -8px 24px rgba(0,0,0,.5);transform:rotate(-8deg) translateY(10px);transform-origin:bottom center;"></div><div style="width:120px;height:166px;border-radius:8px;background:#2e2639;box-shadow:0 0 0 1px #473c52,0 -8px 24px rgba(0,0,0,.5);margin-left:-22px;transform:rotate(-6deg) translateY(6px);transform-origin:bottom center;"></div><div style="width:120px;height:166px;border-radius:8px;background:#2e2639;box-shadow:0 0 0 1px #473c52,0 -8px 24px rgba(0,0,0,.5);margin-left:-22px;transform:rotate(-3deg) translateY(2px);transform-origin:bottom center;"></div><div style="width:120px;height:182px;border-radius:8px;background:#2e2639;box-shadow:0 0 0 1px #d81fb4,0 0 28px #d81fb466;margin-left:-22px;transform:translateY(-16px);transform-origin:bottom center;position:relative;z-index:2"><span style="position:absolute;left:0;right:0;bottom:8px;text-align:center;font:600 10px Inter,sans-serif;letter-spacing:.1em;color:#f7a8e4">PLAYABLE · 3</span></div><div style="width:120px;height:166px;border-radius:8px;background:#2e2639;box-shadow:0 0 0 1px #473c52,0 -8px 24px rgba(0,0,0,.5);margin-left:-22px;transform:rotate(3deg) translateY(2px);transform-origin:bottom center;"></div><div style="width:120px;height:166px;border-radius:8px;background:#2e2639;box-shadow:0 0 0 1px #473c52,0 -8px 24px rgba(0,0,0,.5);margin-left:-22px;transform:rotate(6deg) translateY(6px);transform-origin:bottom center;"></div><div style="width:120px;height:166px;border-radius:8px;background:#2e2639;box-shadow:0 0 0 1px #473c52,0 -8px 24px rgba(0,0,0,.5);margin-left:-22px;transform:rotate(8deg) translateY(10px);transform-origin:bottom center;"></div>
+</div>
+<div style="position:absolute;left:0;bottom:26px;font:600 11px Inter,sans-serif;letter-spacing:.1em;color:rgba(240,233,242,.4)">YOUR HAND 7</div></div>
+<div style="position:absolute;left:1104px;top:104px;width:744px;height:566px;border-radius:14px;background:#241d2e;box-shadow:0 0 0 1px #473c52;display:flex;flex-direction:column">
+<div style="height:56px;display:flex;align-items:center;padding:0 20px;gap:12px;box-shadow:inset 0 -1px 0 rgba(240,233,242,.1)"><span style="font:600 12px Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:rgba(240,233,242,.6);flex:1">Combat log</span><button style="height:32px;padding:0 20px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:#f0e9f2;font:500 15px Inter,sans-serif;cursor:pointer;font-size:13px">Download</button><button style="width:32px;height:32px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:rgba(240,233,242,.7);cursor:pointer"><svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor"><path d="m181.66 133.66-80 80a8 8 0 0 1-11.32-11.32L164.69 128 90.34 53.66a8 8 0 0 1 11.32-11.32l80 80a8 8 0 0 1 0 11.32"></path></svg></button></div>
+<div style="flex:1;padding:16px 20px;display:flex;flex-direction:column;gap:12px;overflow:hidden">
+<div style="display:flex;gap:12px"><span style="font:600 11px ui-monospace,monospace;color:rgba(240,233,242,.35);width:44px;padding-top:3px">T3</span><div style="font-size:15px;color:rgba(240,233,242,.65);line-height:1.5">Zoro#0002 attaches 2 DON!! to <span style="color:#f0e9f2">Portgas D. Ace</span> <span style="font-family:ui-monospace,monospace;font-size:13px;color:rgba(240,233,242,.5)">OP16-001</span></div></div>
+<div style="display:flex;gap:12px"><span style="font:600 11px ui-monospace,monospace;color:rgba(240,233,242,.35);width:44px;padding-top:3px">T3</span><div style="font-size:15px;color:rgba(240,233,242,.65);line-height:1.5">Attack on your leader — 7000 vs 5000</div></div>
+<div style="display:flex;gap:12px"><span style="font:600 11px ui-monospace,monospace;color:rgba(240,233,242,.35);width:44px;padding-top:3px">T3</span><div style="font-size:15px;color:rgba(240,233,242,.65);line-height:1.5">You counter with <span style="color:#f0e9f2">Nami</span> <span style="font-family:ui-monospace,monospace;font-size:13px;color:rgba(240,233,242,.5)">+2000</span> — attack blocked</div></div>
+<div style="height:1px;background:linear-gradient(to right,transparent,rgba(240,233,242,.12) 24px,rgba(240,233,242,.12) calc(100% - 24px),transparent)"></div>
+<div style="display:flex;gap:12px"><span style="font:600 11px ui-monospace,monospace;color:#ea55c8;width:44px;padding-top:3px">T4</span><div style="font-size:15px;color:#f0e9f2;line-height:1.5">You draw 1 card and 2 DON!!</div></div>
+<div style="display:flex;gap:12px"><span style="font:600 11px ui-monospace,monospace;color:#ea55c8;width:44px;padding-top:3px">T4</span><div style="font-size:15px;color:#f0e9f2;line-height:1.5">Played <span style="font-weight:500">Roronoa Zoro</span> <span style="font-family:ui-monospace,monospace;font-size:13px;color:rgba(240,233,242,.5)">OP01-025</span> for 4</div></div>
+</div></div>
+<div style="position:absolute;left:1104px;top:694px;width:744px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;gap:12px"><button style="height:56px;padding:0 20px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:#f0e9f2;font:500 15px Inter,sans-serif;cursor:pointer;flex:1;font-size:17px">Attach all DON!!</button><button style="height:56px;padding:0 20px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:#f0e9f2;font:500 15px Inter,sans-serif;cursor:pointer;flex:1;font-size:17px">Restart turn</button></div>
+<button style="height:104px;border-radius:14px;border:1px solid #d81fb4;background:#d81fb41f;color:#f7a8e4;font:500 32px Inter,sans-serif;letter-spacing:-.01em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:14px">End turn<svg width="26" height="26" viewBox="0 0 256 256" fill="currentColor"><path d="m181.66 133.66-80 80a8 8 0 0 1-11.32-11.32L164.69 128 90.34 53.66a8 8 0 0 1 11.32-11.32l80 80a8 8 0 0 1 0 11.32"></path></svg></button>
+<div style="display:flex;gap:12px"><button style="height:48px;padding:0 20px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:#f0e9f2;font:500 15px Inter,sans-serif;cursor:pointer;flex:1;color:rgba(240,233,242,.7)">Report a bug</button><button style="flex:1;height:48px;border-radius:8px;border:1px solid #dd6f5f;background:transparent;color:#dd6f5f;font:500 15px Inter,sans-serif;cursor:pointer">Concede match</button></div></div>
+</div>
+</div>
+
+<div class="dv-opt" id="2b">
+<div class="dv-olabel"><a class="dv-oid" href="#2b">2b</a>Deck editor — three columns: filters, browser, the deck itself</div>
+<div class="dv-card" style="width:1920px;height:1080px;position:relative;background:#17121e;overflow:hidden;font-family:Inter,sans-serif;color:#f0e9f2">
+<div style="position:absolute;left:0;top:0;right:0;height:88px;background:rgba(36,29,46,.75);box-shadow:inset 0 -1px 0 rgba(240,233,242,.12);display:flex;align-items:center;padding:0 36px;gap:20px">
+<button style="width:48px;height:48px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:#f0e9f2;cursor:pointer"><svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M224 128a8 8 0 0 1-8 8H59.31l58.35 58.34a8 8 0 0 1-11.32 11.32l-72-72a8 8 0 0 1 0-11.32l72-72a8 8 0 0 1 11.32 11.32L59.31 120H216a8 8 0 0 1 8 8"></path></svg></button>
+<div style="height:48px;min-width:360px;border-radius:8px;background:#241d2e;border:1px solid #d81fb4;display:flex;align-items:center;padding:0 16px;font:500 17px Inter,sans-serif">G Shanks Take 1</div>
+<div style="display:flex;align-items:baseline;gap:8px"><span style="font:500 24px ui-monospace,monospace;color:#ea55c8">51</span><span style="font-size:15px;color:rgba(240,233,242,.5)">/ 51 · legal for Standard</span></div>
+<div style="flex:1"></div>
+<button style="height:48px;padding:0 20px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:#f0e9f2;font:500 16px Inter,sans-serif;cursor:pointer">Load…</button>
+<button style="height:48px;padding:0 20px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:#f0e9f2;font:500 16px Inter,sans-serif;cursor:pointer">Import</button>
+<button style="height:48px;padding:0 20px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:#f0e9f2;font:500 16px Inter,sans-serif;cursor:pointer">Alt arts</button>
+<button style="height:48px;padding:0 24px;border-radius:8px;border:1px solid #d81fb4;background:rgba(216,31,180,.12);color:#ea55c8;font:500 16px Inter,sans-serif;cursor:pointer">Save deck</button>
+</div>
+
+<div style="position:absolute;left:36px;top:124px;width:320px;bottom:36px;background:#241d2e;border-radius:14px;box-shadow:0 0 0 1px #473c52;padding:24px;display:flex;flex-direction:column;gap:24px">
+<div style="height:48px;border-radius:8px;background:#17121e;border:1px solid rgba(240,233,242,.16);display:flex;align-items:center;padding:0 14px;gap:10px;color:rgba(240,233,242,.5);font-size:15px"><svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor"><path d="m229.66 218.34-50.07-50.06a88.11 88.11 0 1 0-11.31 11.31l50.06 50.07a8 8 0 0 0 11.32-11.32M40 112a72 72 0 1 1 72 72 72.08 72.08 0 0 1-72-72"></path></svg>Search cards…</div>
+<div>
+<div style="font:600 11px Inter,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:rgba(240,233,242,.5);margin-bottom:12px">Color</div>
+<div style="display:flex;flex-wrap:wrap;gap:8px">
+<span style="height:36px;padding:0 16px;border-radius:8px;display:inline-flex;align-items:center;font-size:15px;color:#f7a8e4;background:rgba(216,31,180,.16);box-shadow:inset 0 0 0 1px #d81fb4">Green</span>
+<span style="height:36px;padding:0 16px;border-radius:8px;display:inline-flex;align-items:center;font-size:15px;color:rgba(240,233,242,.65);box-shadow:inset 0 0 0 1px rgba(240,233,242,.16)">Red</span>
+<span style="height:36px;padding:0 16px;border-radius:8px;display:inline-flex;align-items:center;font-size:15px;color:rgba(240,233,242,.65);box-shadow:inset 0 0 0 1px rgba(240,233,242,.16)">Blue</span>
+<span style="height:36px;padding:0 16px;border-radius:8px;display:inline-flex;align-items:center;font-size:15px;color:rgba(240,233,242,.65);box-shadow:inset 0 0 0 1px rgba(240,233,242,.16)">Purple</span>
+<span style="height:36px;padding:0 16px;border-radius:8px;display:inline-flex;align-items:center;font-size:15px;color:rgba(240,233,242,.65);box-shadow:inset 0 0 0 1px rgba(240,233,242,.16)">Black</span>
+<span style="height:36px;padding:0 16px;border-radius:8px;display:inline-flex;align-items:center;font-size:15px;color:rgba(240,233,242,.65);box-shadow:inset 0 0 0 1px rgba(240,233,242,.16)">Yellow</span>
+</div>
+</div>
+<div>
+<div style="font:600 11px Inter,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:rgba(240,233,242,.5);margin-bottom:12px">Cost</div>
+<div style="display:flex;gap:6px">
+<span style="flex:1;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font:500 14px ui-monospace,monospace;color:rgba(240,233,242,.65);box-shadow:inset 0 0 0 1px rgba(240,233,242,.16)">0</span>
+<span style="flex:1;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font:500 14px ui-monospace,monospace;color:rgba(240,233,242,.65);box-shadow:inset 0 0 0 1px rgba(240,233,242,.16)">1</span>
+<span style="flex:1;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font:500 14px ui-monospace,monospace;color:#f7a8e4;background:rgba(216,31,180,.16);box-shadow:inset 0 0 0 1px #d81fb4">2</span>
+<span style="flex:1;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font:500 14px ui-monospace,monospace;color:#f7a8e4;background:rgba(216,31,180,.16);box-shadow:inset 0 0 0 1px #d81fb4">3</span>
+<span style="flex:1;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font:500 14px ui-monospace,monospace;color:rgba(240,233,242,.65);box-shadow:inset 0 0 0 1px rgba(240,233,242,.16)">4</span>
+<span style="flex:1;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font:500 14px ui-monospace,monospace;color:rgba(240,233,242,.65);box-shadow:inset 0 0 0 1px rgba(240,233,242,.16)">5+</span>
+</div>
+</div>
+<div>
+<div style="font:600 11px Inter,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:rgba(240,233,242,.5);margin-bottom:12px">Options</div>
+<div style="display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:15px">Limit to 4 copies</span><div style="width:52px;height:28px;border-radius:14px;background:rgba(216,31,180,.22);box-shadow:inset 0 0 0 1px #d81fb4;position:relative"><div style="position:absolute;top:3px;left:27px;width:22px;height:22px;border-radius:11px;background:#d81fb4"></div></div></div>
+<div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:15px">Hide rotated sets</span><div style="width:52px;height:28px;border-radius:14px;background:#272130;box-shadow:inset 0 0 0 1px rgba(240,233,242,.16);position:relative"><div style="position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:11px;background:#8a7c94"></div></div></div>
+<div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:15px">Sort by cost</span><div style="width:52px;height:28px;border-radius:14px;background:rgba(216,31,180,.22);box-shadow:inset 0 0 0 1px #d81fb4;position:relative"><div style="position:absolute;top:3px;left:27px;width:22px;height:22px;border-radius:11px;background:#d81fb4"></div></div></div>
+</div>
+</div>
+<div style="flex:1"></div>
+<div style="font-size:13px;line-height:1.6;color:rgba(240,233,242,.5)">Search syntax: <span style="font-family:ui-monospace,monospace">[exact]</span> · <span style="font-family:ui-monospace,monospace">P7000</span> · <span style="font-family:ui-monospace,monospace">C2000</span> · <span style="font-family:ui-monospace,monospace">#1</span> · Blocker, Rush, Trigger…<br><a href="#2b" style="text-decoration:none">Full reference</a></div>
+</div>
+
+<div style="position:absolute;left:380px;top:124px;right:552px;bottom:36px;display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;align-items:center;gap:20px">
+<div style="display:flex;gap:24px;box-shadow:inset 0 -1px 0 rgba(240,233,242,.12);flex:1">
+<div style="height:44px;display:flex;align-items:center;font:500 16px Inter,sans-serif;color:#d81fb4;box-shadow:inset 0 -2px 0 #d81fb4">All cards</div>
+<div style="height:44px;display:flex;align-items:center;font:500 16px Inter,sans-serif;color:rgba(240,233,242,.55)">Leaders</div>
+<div style="height:44px;display:flex;align-items:center;font:500 16px Inter,sans-serif;color:rgba(240,233,242,.55)">Characters</div>
+<div style="height:44px;display:flex;align-items:center;font:500 16px Inter,sans-serif;color:rgba(240,233,242,.55)">Events</div>
+<div style="height:44px;display:flex;align-items:center;font:500 16px Inter,sans-serif;color:rgba(240,233,242,.55)">Stages</div>
+</div>
+<span style="font:13px ui-monospace,monospace;color:rgba(240,233,242,.45)">248 results</span>
+</div>
+<div style="flex:1;display:grid;grid-template-columns:repeat(7,1fr);grid-template-rows:repeat(4,186px);gap:14px;align-content:start;overflow:hidden;position:relative;padding-right:22px"><div style="position:absolute;right:0;top:0;bottom:0;width:12px;border-radius:6px;background:#272130"><div style="position:absolute;left:0;top:0;width:12px;height:38%;border-radius:6px;background:#655770"></div></div>
+<div style="border-radius:8px;background:#2e2639;box-shadow:0 0 0 1px #473c52;position:relative"><span style="position:absolute;right:8px;top:8px;font:600 11px ui-monospace,monospace;color:rgba(240,233,242,.5)">×4</span></div>
+<div style="border-radius:8px;background:#2e2639;box-shadow:0 0 0 1px #d81fb4,0 0 20px rgba(216,31,180,.3);position:relative"><span style="position:absolute;right:8px;top:8px;font:600 11px ui-monospace,monospace;color:#f7a8e4">×2</span></div>
+<div style="border-radius:8px;background:#2e2639;box-shadow:0 0 0 1px #473c52"></div>
+<div style="border-radius:8px;background:#2e2639;box-shadow:0 0 0 1px #473c52"></div>
+<div style="border-radius:8px;background:#2e2639;box-shadow:0 0 0 1px #473c52;position:relative"><span style="position:absolute;right:8px;top:8px;font:600 11px ui-monospace,monospace;color:rgba(240,233,242,.5)">×1</span></div>
+<div style="border-radius:8px;background:#2e2639;box-shadow:0 0 0 1px #473c52"></div>
+<div style="border-radius:8px;background:#2e2639;box-shadow:0 0 0 1px #473c52"></div>
+<div style="border-radius:8px;background:#2e2639;box-shadow:0 0 0 1px #473c52"></div>
+<div style="border-radius:8px;background:#2e2639;box-shadow:0 0 0 1px #473c52"></div>
+<div style="border-radius:8px;background:#2e2639;box-shadow:0 0 0 1px #473c52"></div>
+<div style="border-radius:8px;background:#2e2639;box-shadow:0 0 0 1px #473c52"></div>
+<div style="border-radius:8px;background:#2e2639;box-shadow:0 0 0 1px #473c52"></div>
+<div style="border-radius:8px;background:#2e2639;box-shadow:0 0 0 1px #473c52"></div>
+<div style="border-radius:8px;background:#2e2639;box-shadow:0 0 0 1px #473c52"></div>
+<div style="border-radius:8px;background:#2e2639;box-shadow:0 0 0 1px #473c52"></div>
+<div style="border-radius:8px;background:#2e2639;box-shadow:0 0 0 1px #473c52"></div>
+<div style="border-radius:8px;background:#2e2639;box-shadow:0 0 0 1px #473c52"></div>
+<div style="border-radius:8px;background:#2e2639;box-shadow:0 0 0 1px #473c52"></div>
+<div style="border-radius:8px;background:#2e2639;box-shadow:0 0 0 1px #473c52"></div>
+<div style="border-radius:8px;background:#2e2639;box-shadow:0 0 0 1px #473c52"></div>
+<div style="border-radius:8px;background:#2e2639;box-shadow:0 0 0 1px #473c52"></div>
+<div style="border-radius:8px;background:#2e2639;box-shadow:0 0 0 1px #473c52"></div>
+<div style="border-radius:8px;background:#2e2639;box-shadow:0 0 0 1px #473c52"></div>
+<div style="border-radius:8px;background:#2e2639;box-shadow:0 0 0 1px #473c52"></div>
+<div style="border-radius:8px;background:#2e2639;box-shadow:0 0 0 1px #473c52"></div>
+<div style="border-radius:8px;background:#2e2639;box-shadow:0 0 0 1px #473c52"></div>
+<div style="border-radius:8px;background:#2e2639;box-shadow:0 0 0 1px #473c52"></div>
+<div style="border-radius:8px;background:#2e2639;box-shadow:0 0 0 1px #473c52"></div>
+</div>
+<div style="font-size:13px;color:rgba(240,233,242,.4)">Card images are game content — the grid sizes to 148×207 thumbnails at 1080p.</div>
+</div>
+
+<div style="position:absolute;right:36px;top:124px;width:500px;bottom:36px;background:#241d2e;border-radius:14px;box-shadow:0 0 0 1px #473c52;display:flex;flex-direction:column">
+<div style="padding:24px 24px 18px;display:flex;gap:18px;align-items:center;box-shadow:inset 0 -1px 0 rgba(240,233,242,.1)">
+<div style="width:96px;height:134px;border-radius:8px;background:#2e2639;box-shadow:0 0 0 1px #655770"></div>
+<div>
+<div style="font:600 11px Inter,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#ea55c8;margin-bottom:6px">Leader</div>
+<div style="font-size:22px;font-weight:500">Shanks</div>
+<div style="font:13px ui-monospace,monospace;color:rgba(240,233,242,.5);margin-top:4px">ST16-004 · Green/Red</div>
+<div style="display:flex;gap:6px;margin-top:12px"><span class="tag tag-neutral">Slash</span><span class="tag tag-neutral">Red Hair Pirates</span></div>
+</div>
+</div>
+<div style="padding:18px 24px;box-shadow:inset 0 -1px 0 rgba(240,233,242,.1)">
+<div style="font:600 11px Inter,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:rgba(240,233,242,.5);margin-bottom:12px">Cost curve</div>
+<div style="display:flex;align-items:flex-end;gap:8px;height:72px">
+<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;height:100%"><div style="height:24%;background:#8a1571;border-radius:4px"></div><span style="font:11px ui-monospace,monospace;color:rgba(240,233,242,.45);text-align:center">1</span></div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;height:100%"><div style="height:52%;background:#8a1571;border-radius:4px"></div><span style="font:11px ui-monospace,monospace;color:rgba(240,233,242,.45);text-align:center">2</span></div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;height:100%"><div style="height:78%;background:#b81c98;border-radius:4px"></div><span style="font:11px ui-monospace,monospace;color:rgba(240,233,242,.45);text-align:center">3</span></div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;height:100%"><div style="height:100%;background:#d81fb4;border-radius:4px"></div><span style="font:11px ui-monospace,monospace;color:rgba(240,233,242,.45);text-align:center">4</span></div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;height:100%"><div style="height:60%;background:#b81c98;border-radius:4px"></div><span style="font:11px ui-monospace,monospace;color:rgba(240,233,242,.45);text-align:center">5</span></div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;height:100%"><div style="height:34%;background:#8a1571;border-radius:4px"></div><span style="font:11px ui-monospace,monospace;color:rgba(240,233,242,.45);text-align:center">6</span></div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;height:100%"><div style="height:20%;background:#8a1571;border-radius:4px"></div><span style="font:11px ui-monospace,monospace;color:rgba(240,233,242,.45);text-align:center">7+</span></div>
+</div>
+</div>
+<div style="flex:1;padding:18px 24px;display:flex;flex-direction:column;gap:6px;overflow:hidden">
+<div style="height:56px;border-radius:8px;background:#17121e;display:flex;align-items:center;padding:0 14px;gap:12px"><span style="width:34px;height:34px;border-radius:6px;background:#473c52"></span><span style="flex:1;font-size:16px">Perona</span><span style="font:13px ui-monospace,monospace;color:rgba(240,233,242,.45)">OP12-034</span><span style="font:500 15px ui-monospace,monospace;color:#ea55c8;width:28px;text-align:right">×4</span></div>
+<div style="height:56px;border-radius:8px;background:#17121e;display:flex;align-items:center;padding:0 14px;gap:12px"><span style="width:34px;height:34px;border-radius:6px;background:#473c52"></span><span style="flex:1;font-size:16px">Laboon</span><span style="font:13px ui-monospace,monospace;color:rgba(240,233,242,.45)">OP01-032</span><span style="font:500 15px ui-monospace,monospace;color:#ea55c8;width:28px;text-align:right">×4</span></div>
+<div style="height:56px;border-radius:8px;background:#17121e;box-shadow:inset 0 0 0 1px #d81fb4;display:flex;align-items:center;padding:0 14px;gap:12px"><span style="width:34px;height:34px;border-radius:6px;background:#473c52"></span><span style="flex:1;font-size:16px">Dracule Mihawk</span><span style="font:13px ui-monospace,monospace;color:rgba(240,233,242,.45)">OP01-070</span><span style="font:500 15px ui-monospace,monospace;color:#ea55c8;width:28px;text-align:right">×3</span></div>
+<div style="height:56px;border-radius:8px;background:#17121e;display:flex;align-items:center;padding:0 14px;gap:12px"><span style="width:34px;height:34px;border-radius:6px;background:#473c52"></span><span style="flex:1;font-size:16px">Benn Beckman</span><span style="font:13px ui-monospace,monospace;color:rgba(240,233,242,.45)">OP09-005</span><span style="font:500 15px ui-monospace,monospace;color:#ea55c8;width:28px;text-align:right">×2</span></div>
+<div style="height:56px;border-radius:8px;background:#17121e;display:flex;align-items:center;padding:0 14px;gap:12px"><span style="width:34px;height:34px;border-radius:6px;background:#473c52"></span><span style="flex:1;font-size:16px">Kouzuki Oden</span><span style="font:13px ui-monospace,monospace;color:rgba(240,233,242,.45)">OP12-021</span><span style="font:500 15px ui-monospace,monospace;color:#ea55c8;width:28px;text-align:right">×2</span></div>
+<div style="height:56px;border-radius:8px;background:#17121e;display:flex;align-items:center;padding:0 14px;gap:12px"><span style="width:34px;height:34px;border-radius:6px;background:#473c52"></span><span style="flex:1;font-size:16px">Electrical Luna</span><span style="font:13px ui-monospace,monospace;color:rgba(240,233,242,.45)">OP14-018</span><span style="font:500 15px ui-monospace,monospace;color:#ea55c8;width:28px;text-align:right">×4</span></div>
+<div style="height:56px;border-radius:8px;background:#17121e;display:flex;align-items:center;padding:0 14px;gap:12px"><span style="width:34px;height:34px;border-radius:6px;background:#473c52"></span><span style="flex:1;font-size:16px">Yasopp</span><span style="font:13px ui-monospace,monospace;color:rgba(240,233,242,.45)">OP11-009</span><span style="font:500 15px ui-monospace,monospace;color:#ea55c8;width:28px;text-align:right">×3</span></div>
+</div>
+<div style="padding:18px 24px;display:flex;gap:12px;box-shadow:inset 0 1px 0 rgba(240,233,242,.1)">
+<button style="flex:1;height:48px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:#f0e9f2;font:500 15px Inter,sans-serif;cursor:pointer">Copy list</button>
+<button style="flex:1;height:48px;border-radius:8px;border:1px solid #dd6f5f;background:transparent;color:#dd6f5f;font:500 15px Inter,sans-serif;cursor:pointer">Clear deck</button>
+</div>
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="2c">
+<div class="dv-olabel"><a class="dv-oid" href="#2c">2c</a>Settings — grouped sections, description under the label, toggle on the right</div>
+<div class="dv-card" style="width:1920px;height:1080px;position:relative;background:#17121e;overflow:hidden;font-family:Inter,sans-serif;color:#f0e9f2">
+<div style="position:absolute;inset:0;background:radial-gradient(900px 600px at 88% 8%,rgba(26,127,160,.28),transparent 70%)"></div>
+<div style="position:absolute;left:72px;top:72px;right:72px;display:flex;align-items:flex-end;gap:24px">
+<button style="width:48px;height:48px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:#f0e9f2;cursor:pointer;margin-bottom:6px"><svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M224 128a8 8 0 0 1-8 8H59.31l58.35 58.34a8 8 0 0 1-11.32 11.32l-72-72a8 8 0 0 1 0-11.32l72-72a8 8 0 0 1 11.32 11.32L59.31 120H216a8 8 0 0 1 8 8"></path></svg></button>
+<div><div style="font:600 13px Inter,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#ea55c8;margin-bottom:12px">Preferences</div><div style="font-size:56px;font-weight:500;letter-spacing:-.02em;line-height:1">Settings</div></div>
+<div style="flex:1"></div>
+<button style="height:48px;padding:0 22px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:rgba(240,233,242,.7);font:500 16px Inter,sans-serif;cursor:pointer">Restore defaults</button>
+</div>
+
+<div style="position:absolute;left:72px;top:232px;right:72px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:36px;align-items:start">
+
+<div style="background:#241d2e;border-radius:14px;box-shadow:0 0 0 1px #473c52;padding:24px">
+<div style="font:600 12px Inter,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#ea55c8;margin-bottom:18px">Turn flow</div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="min-height:80px;border-radius:8px;background:#17121e;display:flex;align-items:center;padding:16px 18px;gap:20px"><div style="flex:1"><div style="font-size:17px;font-weight:500">Auto draw</div><div style="font-size:14px;color:rgba(240,233,242,.55);margin-top:3px">Draw at the start of each turn without clicking</div></div><div style="width:52px;height:28px;border-radius:14px;background:rgba(216,31,180,.22);box-shadow:inset 0 0 0 1px #d81fb4;position:relative;flex:none"><div style="position:absolute;top:3px;left:27px;width:22px;height:22px;border-radius:11px;background:#d81fb4"></div></div></div>
+<div style="min-height:80px;border-radius:8px;background:#17121e;display:flex;align-items:center;padding:16px 18px;gap:20px"><div style="flex:1"><div style="font-size:17px;font-weight:500">Confirm end turn</div><div style="font-size:14px;color:rgba(240,233,242,.55);margin-top:3px">End Turn must be clicked twice</div></div><div style="width:52px;height:28px;border-radius:14px;background:#272130;box-shadow:inset 0 0 0 1px rgba(240,233,242,.16);position:relative;flex:none"><div style="position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:11px;background:#8a7c94"></div></div></div>
+<div style="min-height:80px;border-radius:8px;background:#17121e;display:flex;align-items:center;padding:16px 18px;gap:20px"><div style="flex:1"><div style="font-size:17px;font-weight:500">Offset End Turn button</div><div style="font-size:14px;color:rgba(240,233,242,.55);margin-top:3px">Place it away from the other action buttons</div></div><div style="width:52px;height:28px;border-radius:14px;background:#272130;box-shadow:inset 0 0 0 1px rgba(240,233,242,.16);position:relative;flex:none"><div style="position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:11px;background:#8a7c94"></div></div></div>
+</div>
+</div>
+
+<div style="background:#241d2e;border-radius:14px;box-shadow:0 0 0 1px #473c52;padding:24px">
+<div style="font:600 12px Inter,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#ea55c8;margin-bottom:18px">Combat</div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="min-height:80px;border-radius:8px;background:#17121e;display:flex;align-items:center;padding:16px 18px;gap:20px"><div style="flex:1"><div style="font-size:17px;font-weight:500">Auto skip block</div><div style="font-size:14px;color:rgba(240,233,242,.55);margin-top:3px">Skip the block step when you have no blockers</div></div><div style="width:52px;height:28px;border-radius:14px;background:rgba(216,31,180,.22);box-shadow:inset 0 0 0 1px #d81fb4;position:relative;flex:none"><div style="position:absolute;top:3px;left:27px;width:22px;height:22px;border-radius:11px;background:#d81fb4"></div></div></div>
+<div style="min-height:80px;border-radius:8px;background:#17121e;display:flex;align-items:center;padding:16px 18px;gap:20px"><div style="flex:1"><div style="font-size:17px;font-weight:500">Auto skip trigger</div><div style="font-size:14px;color:#dd6f5f;margin-top:3px">Skips when the life card has no trigger — may leak information</div></div><div style="width:52px;height:28px;border-radius:14px;background:#272130;box-shadow:inset 0 0 0 1px rgba(240,233,242,.16);position:relative;flex:none"><div style="position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:11px;background:#8a7c94"></div></div></div>
+<div style="min-height:80px;border-radius:8px;background:#17121e;display:flex;align-items:center;padding:16px 18px;gap:20px"><div style="flex:1"><div style="font-size:17px;font-weight:500">Confirm DON!! attach</div><div style="font-size:14px;color:rgba(240,233,242,.55);margin-top:3px">Confirm or cancel after attaching</div></div><div style="width:52px;height:28px;border-radius:14px;background:#272130;box-shadow:inset 0 0 0 1px rgba(240,233,242,.16);position:relative;flex:none"><div style="position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:11px;background:#8a7c94"></div></div></div>
+<div style="min-height:80px;border-radius:8px;background:#17121e;display:flex;align-items:center;padding:16px 18px;gap:20px"><div style="flex:1"><div style="font-size:17px;font-weight:500">Confirm before countering</div><div style="font-size:14px;color:rgba(240,233,242,.55);margin-top:3px">Don’t auto-trash characters during the counter step</div></div><div style="width:52px;height:28px;border-radius:14px;background:#272130;box-shadow:inset 0 0 0 1px rgba(240,233,242,.16);position:relative;flex:none"><div style="position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:11px;background:#8a7c94"></div></div></div>
+<div style="min-height:80px;border-radius:8px;background:#17121e;display:flex;align-items:center;padding:16px 18px;gap:20px"><div style="flex:1"><div style="font-size:17px;font-weight:500">Enable Attach All DON!!</div><div style="font-size:14px;color:rgba(240,233,242,.55);margin-top:3px">Show the bulk attach action above card actions</div></div><div style="width:52px;height:28px;border-radius:14px;background:#272130;box-shadow:inset 0 0 0 1px rgba(240,233,242,.16);position:relative;flex:none"><div style="position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:11px;background:#8a7c94"></div></div></div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:36px">
+<div style="background:#241d2e;border-radius:14px;box-shadow:0 0 0 1px #473c52;padding:24px">
+<div style="font:600 12px Inter,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#ea55c8;margin-bottom:18px">Display</div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="min-height:80px;border-radius:8px;background:#17121e;display:flex;align-items:center;padding:16px 18px;gap:20px"><div style="flex:1"><div style="font-size:17px;font-weight:500">Dynamic playsheets</div><div style="font-size:14px;color:rgba(240,233,242,.55);margin-top:3px">Use a playmat matched to each leader’s color</div></div><div style="width:52px;height:28px;border-radius:14px;background:rgba(216,31,180,.22);box-shadow:inset 0 0 0 1px #d81fb4;position:relative;flex:none"><div style="position:absolute;top:3px;left:27px;width:22px;height:22px;border-radius:11px;background:#d81fb4"></div></div></div>
+<div style="min-height:80px;border-radius:8px;background:#17121e;display:flex;align-items:center;padding:16px 18px;gap:20px"><div style="flex:1"><div style="font-size:17px;font-weight:500">Interface scale</div><div style="font-size:14px;color:rgba(240,233,242,.55);margin-top:3px">1080p through 4K</div></div><div class="seg" style="flex:none"><span class="seg-opt" style="font-size:14px">100%</span><span class="seg-opt" style="font-size:14px;color:#d81fb4;box-shadow:inset 0 0 0 1px #d81fb4">125%</span><span class="seg-opt" style="font-size:14px">150%</span><span class="seg-opt" style="font-size:14px">200%</span></div></div>
+</div>
+</div>
+
+<div style="background:#241d2e;border-radius:14px;box-shadow:0 0 0 1px #473c52;padding:24px">
+<div style="font:600 12px Inter,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#ea55c8;margin-bottom:18px">Privacy</div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="min-height:80px;border-radius:8px;background:#17121e;display:flex;align-items:center;padding:16px 18px;gap:20px"><div style="flex:1"><div style="font-size:17px;font-weight:500">Hide player names</div><div style="font-size:14px;color:rgba(240,233,242,.55);margin-top:3px">Keep both names hidden in multiplayer matches</div></div><div style="width:52px;height:28px;border-radius:14px;background:#272130;box-shadow:inset 0 0 0 1px rgba(240,233,242,.16);position:relative;flex:none"><div style="position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:11px;background:#8a7c94"></div></div></div>
+<div style="min-height:80px;border-radius:8px;background:#17121e;display:flex;align-items:center;padding:16px 18px;gap:20px"><div style="flex:1"><div style="font-size:17px;font-weight:500">Keep combat logs</div><div style="font-size:14px;color:rgba(240,233,242,.55);margin-top:3px">Store logs locally so matches can be replayed <span class="tag tag-outline" style="margin-left:6px">LogPose</span></div></div><div style="width:52px;height:28px;border-radius:14px;background:rgba(216,31,180,.22);box-shadow:inset 0 0 0 1px #d81fb4;position:relative;flex:none"><div style="position:absolute;top:3px;left:27px;width:22px;height:22px;border-radius:11px;background:#d81fb4"></div></div></div>
+</div>
+</div>
+</div>
+</div>
+<div style="position:absolute;left:72px;bottom:56px;font:13px ui-monospace,monospace;color:rgba(240,233,242,.4)">1.42a.34 · LogPose 2.1</div>
+</div>
+</div>
+
+<div class="dv-opt" id="2d">
+<div class="dv-olabel"><a class="dv-oid" href="#2d">2d</a>Multiplayer queues — formats as a list, detail and deck choice on the right</div>
+<div class="dv-card" style="width:1920px;height:1080px;position:relative;background:#17121e;overflow:hidden;font-family:Inter,sans-serif;color:#f0e9f2">
+<div style="position:absolute;inset:0;background:radial-gradient(1000px 700px at 80% 12%,rgba(26,127,160,.3),transparent 70%)"></div>
+<div style="position:absolute;left:72px;top:72px;display:flex;align-items:flex-end;gap:24px">
+<button style="width:48px;height:48px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:#f0e9f2;cursor:pointer;margin-bottom:6px"><svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M224 128a8 8 0 0 1-8 8H59.31l58.35 58.34a8 8 0 0 1-11.32 11.32l-72-72a8 8 0 0 1 0-11.32l72-72a8 8 0 0 1 11.32 11.32L59.31 120H216a8 8 0 0 1 8 8"></path></svg></button>
+<div><div style="font:600 13px Inter,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#ea55c8;margin-bottom:12px">Multiplayer</div><div style="font-size:56px;font-weight:500;letter-spacing:-.02em;line-height:1">Choose a format</div></div>
+</div>
+
+<div style="position:absolute;left:72px;top:264px;width:960px;display:flex;flex-direction:column;gap:6px">
+<div style="height:104px;border-radius:8px;background:rgba(216,31,180,.1);box-shadow:inset 0 0 0 1px #d81fb4;display:flex;align-items:center;padding:0 28px;gap:24px;cursor:pointer">
+<div style="flex:1"><div style="font-size:26px;font-weight:500;color:#f7a8e4">Standard</div><div style="font-size:15px;color:rgba(240,233,242,.6);margin-top:2px">Cards up to OP16 / ST36 · Block 1 restricted</div></div>
+<div style="text-align:right"><div style="font:500 20px ui-monospace,monospace;color:#ea55c8">742</div><div style="font-size:13px;color:rgba(240,233,242,.5)">in queue</div></div>
+<svg width="24" height="24" viewBox="0 0 256 256" fill="#d81fb4"><path d="m181.66 133.66-80 80a8 8 0 0 1-11.32-11.32L164.69 128 90.34 53.66a8 8 0 0 1 11.32-11.32l80 80a8 8 0 0 1 0 11.32"></path></svg>
+</div>
+<div class="mm-row" style="height:92px;border-radius:8px;background:#241d2e;display:flex;align-items:center;padding:0 28px;gap:24px;cursor:pointer">
+<div style="flex:1"><div style="font-size:22px;font-weight:500">OP17</div><div style="font-size:15px;color:rgba(240,233,242,.55);margin-top:2px">Cards up to OP17 · Block 1 restricted</div></div>
+<div style="text-align:right"><div style="font:500 20px ui-monospace,monospace;color:rgba(240,233,242,.75)">318</div><div style="font-size:13px;color:rgba(240,233,242,.45)">in queue</div></div>
+</div>
+<div class="mm-row" style="height:92px;border-radius:8px;background:#241d2e;display:flex;align-items:center;padding:0 28px;gap:24px;cursor:pointer">
+<div style="flex:1"><div style="font-size:22px;font-weight:500">Extra Regulation</div><div style="font-size:15px;color:rgba(240,233,242,.55);margin-top:2px">Cards up to OP16 / ST36</div></div>
+<div style="text-align:right"><div style="font:500 20px ui-monospace,monospace;color:rgba(240,233,242,.75)">86</div><div style="font-size:13px;color:rgba(240,233,242,.45)">in queue</div></div>
+</div>
+<div class="mm-row" style="height:92px;border-radius:8px;background:#241d2e;display:flex;align-items:center;padding:0 28px;gap:24px;cursor:pointer">
+<div style="flex:1"><div style="font-size:22px;font-weight:500">Unlimited</div><div style="font-size:15px;color:rgba(240,233,242,.55);margin-top:2px">No card restrictions · standard deckbuilding rules</div></div>
+<div style="text-align:right"><div style="font:500 20px ui-monospace,monospace;color:rgba(240,233,242,.75)">124</div><div style="font-size:13px;color:rgba(240,233,242,.45)">in queue</div></div>
+</div>
+<div class="mm-row" style="height:92px;border-radius:8px;background:#241d2e;display:flex;align-items:center;padding:0 28px;gap:24px;cursor:pointer">
+<div style="flex:1"><div style="font-size:22px;font-weight:500">Korean</div><div style="font-size:15px;color:rgba(240,233,242,.55);margin-top:2px">Cards up to OP12 / ST28 / EB02</div></div>
+<div style="text-align:right"><div style="font:500 20px ui-monospace,monospace;color:rgba(240,233,242,.75)">41</div><div style="font-size:13px;color:rgba(240,233,242,.45)">in queue</div></div>
+</div>
+<div class="mm-row" style="height:92px;border-radius:8px;background:#241d2e;display:flex;align-items:center;padding:0 28px;gap:24px;cursor:pointer">
+<div style="flex:1"><div style="font-size:22px;font-weight:500">Private lobby</div><div style="font-size:15px;color:rgba(240,233,242,.55);margin-top:2px">Host or join with a code · standard rules or none</div></div>
+<button style="height:44px;padding:0 20px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:#f0e9f2;font:500 15px Inter,sans-serif;cursor:pointer">Host…</button>
+</div>
+</div>
+
+<div style="position:absolute;right:72px;top:264px;width:712px;background:#241d2e;border-radius:14px;box-shadow:0 0 0 1px #473c52;padding:32px;display:flex;flex-direction:column;gap:24px">
+<div>
+<div style="font:600 12px Inter,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#ea55c8;margin-bottom:10px">Standard</div>
+<div style="font-size:32px;font-weight:500">Ranked queue</div>
+<div style="font-size:16px;color:rgba(240,233,242,.65);margin-top:8px">Best of one. Restricted list applies to Block 1 sets — the editor flags illegal decks before you queue.</div>
+</div>
+<div style="height:1px;background:linear-gradient(to right,transparent,rgba(240,233,242,.14) 32px,rgba(240,233,242,.14) calc(100% - 32px),transparent)"></div>
+<div>
+<div style="font:600 12px Inter,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:rgba(240,233,242,.5);margin-bottom:12px">Your deck</div>
+<div style="display:flex;gap:18px;align-items:center">
+<div style="width:88px;height:124px;border-radius:8px;background:#2e2639;box-shadow:0 0 0 1px #655770"></div>
+<div style="flex:1">
+<div style="height:48px;border-radius:8px;background:#17121e;border:1px solid #d81fb4;display:flex;align-items:center;justify-content:space-between;padding:0 14px;font-size:16px">G Shanks Take 1<svg width="16" height="16" viewBox="0 0 256 256" fill="#d81fb4"><path d="M213.66 101.66l-80 80a8 8 0 0 1-11.32 0l-80-80A8 8 0 0 1 53.66 90.34L128 164.69l74.34-74.35a8 8 0 0 1 11.32 11.32"></path></svg></div>
+<div style="display:flex;align-items:center;gap:10px;margin-top:12px;font-size:14px;color:rgba(240,233,242,.6)"><span style="width:8px;height:8px;border-radius:4px;background:#d81fb4"></span>51 / 51 cards · legal for Standard</div>
+</div>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<button style="height:72px;border-radius:8px;border:1px solid #d81fb4;background:rgba(216,31,180,.12);color:#f7a8e4;font:500 22px Inter,sans-serif;cursor:pointer">Enter queue</button>
+<div style="text-align:center;font-size:14px;color:rgba(240,233,242,.5)">Average wait 24s</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="2e">
+<div class="dv-olabel"><a class="dv-oid" href="#2e">2e</a>Solo setup — two seats facing each other, one primary action</div>
+<div class="dv-card" style="width:1920px;height:1080px;position:relative;background:#17121e;overflow:hidden;font-family:Inter,sans-serif;color:#f0e9f2">
+<div style="position:absolute;inset:0;background:radial-gradient(900px 620px at 50% 44%,rgba(26,127,160,.34),transparent 70%)"></div>
+<button style="position:absolute;left:72px;top:72px;height:48px;padding:0 20px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:#f0e9f2;font:500 16px Inter,sans-serif;display:inline-flex;align-items:center;gap:10px;cursor:pointer"><svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor"><path d="M224 128a8 8 0 0 1-8 8H59.31l58.35 58.34a8 8 0 0 1-11.32 11.32l-72-72a8 8 0 0 1 0-11.32l72-72a8 8 0 0 1 11.32 11.32L59.31 120H216a8 8 0 0 1 8 8"></path></svg>Main menu</button>
+<div style="position:absolute;left:0;right:0;top:150px;text-align:center">
+<div style="font:600 13px Inter,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#ea55c8;margin-bottom:14px">Solo play</div>
+<div style="font-size:56px;font-weight:500;letter-spacing:-.02em">Pilot both sides</div>
+</div>
+<div style="position:absolute;left:0;right:0;top:352px;display:flex;align-items:center;justify-content:center;gap:48px">
+<div style="width:592px;background:#241d2e;border-radius:14px;box-shadow:0 0 0 1px #473c52;padding:32px;display:flex;flex-direction:column;gap:20px">
+<div style="font:600 12px Inter,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:rgba(240,233,242,.5)">Player 1</div>
+<div style="display:flex;gap:20px;align-items:center">
+<div style="width:120px;height:168px;border-radius:8px;background:#2e2639;box-shadow:0 0 0 1px #655770;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;font:600 10px Inter,sans-serif;letter-spacing:.1em;color:rgba(240,233,242,.45)">LEADER</div>
+<div style="flex:1">
+<div style="height:56px;border-radius:8px;background:#17121e;border:1px solid #d81fb4;display:flex;align-items:center;justify-content:space-between;padding:0 16px;font-size:18px">RG Luffy<svg width="16" height="16" viewBox="0 0 256 256" fill="#d81fb4"><path d="M213.66 101.66l-80 80a8 8 0 0 1-11.32 0l-80-80A8 8 0 0 1 53.66 90.34L128 164.69l74.34-74.35a8 8 0 0 1 11.32 11.32"></path></svg></div>
+<div style="font:13px ui-monospace,monospace;color:rgba(240,233,242,.5);margin-top:10px">Monkey D. Luffy · OP13-001 · 51 cards</div>
+</div>
+</div>
+</div>
+<div style="font:500 24px Inter,sans-serif;color:rgba(240,233,242,.35);letter-spacing:.2em">VS</div>
+<div style="width:592px;background:#241d2e;border-radius:14px;box-shadow:0 0 0 1px #473c52;padding:32px;display:flex;flex-direction:column;gap:20px">
+<div style="font:600 12px Inter,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:rgba(240,233,242,.5)">Player 2</div>
+<div style="display:flex;gap:20px;align-items:center">
+<div style="width:120px;height:168px;border-radius:8px;background:#2e2639;box-shadow:0 0 0 1px #655770;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;font:600 10px Inter,sans-serif;letter-spacing:.1em;color:rgba(240,233,242,.45)">LEADER</div>
+<div style="flex:1">
+<div style="height:56px;border-radius:8px;background:#17121e;border:1px solid rgba(240,233,242,.16);display:flex;align-items:center;justify-content:space-between;padding:0 16px;font-size:18px">Bro ioeven know ace<svg width="16" height="16" viewBox="0 0 256 256" fill="rgba(240,233,242,.6)"><path d="M213.66 101.66l-80 80a8 8 0 0 1-11.32 0l-80-80A8 8 0 0 1 53.66 90.34L128 164.69l74.34-74.35a8 8 0 0 1 11.32 11.32"></path></svg></div>
+<div style="font:13px ui-monospace,monospace;color:rgba(240,233,242,.5);margin-top:10px">Portgas D. Ace · OP16-001 · 51 cards</div>
+</div>
+</div>
+</div>
+</div>
+<div style="position:absolute;left:0;right:0;top:700px;display:flex;flex-direction:column;align-items:center;gap:16px">
+<button style="width:420px;height:72px;border-radius:8px;border:1px solid #d81fb4;background:rgba(216,31,180,.12);color:#f7a8e4;font:500 22px Inter,sans-serif;cursor:pointer">Start match</button>
+<button style="height:48px;padding:0 22px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:rgba(240,233,242,.7);font:500 15px Inter,sans-serif;cursor:pointer">Load state from clipboard</button>
+</div>
+<div style="position:absolute;right:72px;top:72px;display:flex;gap:12px">
+<button style="width:48px;height:48px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:#f0e9f2;cursor:pointer"><svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M155.51 24.81a8 8 0 0 0-8.42.88L77.25 80H32a16 16 0 0 0-16 16v64a16 16 0 0 0 16 16h45.25l69.84 54.31A8 8 0 0 0 160 224V32a8 8 0 0 0-4.49-7.19M32 96h40v64H32Z"></path></svg></button>
+<button style="width:48px;height:48px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:rgba(240,233,242,.45);cursor:pointer"><svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M212 32a12 12 0 0 0-12 12v107.68l-56-31.11V44a12 12 0 0 0-17.83-10.47l-96 53.33a12 12 0 0 0 0 21l96 53.33A12 12 0 0 0 144 152v-4.43l56 31.11V212a12 12 0 0 0 24 0V44a12 12 0 0 0-12-12"></path></svg></button>
+</div>
+<div style="position:absolute;right:72px;bottom:56px;font:13px ui-monospace,monospace;color:rgba(240,233,242,.4)">1.42a.34</div>
+</div>
+</div>
+
+<div class="dv-opt" id="2f">
+<div class="dv-olabel"><a class="dv-oid" href="#2f">2f</a>Match history — modal over the menu, replay entry on each row</div>
+<div class="dv-card" style="width:1920px;height:1080px;position:relative;background:#17121e;overflow:hidden;font-family:Inter,sans-serif;color:#f0e9f2">
+<div style="position:absolute;inset:0;background:radial-gradient(1100px 800px at 78% 18%,rgba(26,127,160,.4),transparent 70%)"></div>
+<div style="position:absolute;left:120px;top:132px;opacity:.28"><div style="font:600 13px Inter,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#ea55c8;margin-bottom:24px">One Piece Card Game · Simulator</div><div style="font-size:96px;font-weight:500;letter-spacing:-.02em;line-height:.95">OPTCGSim</div></div>
+<div style="position:absolute;inset:0;background:rgba(16,12,22,.72)"></div>
+
+<div style="position:absolute;left:50%;top:96px;transform:translateX(-50%);width:1160px;height:888px;background:#241d2e;border-radius:14px;box-shadow:0 0 0 1px #a294ab,0 16px 40px rgba(0,0,0,.65);display:flex;flex-direction:column">
+<div style="padding:28px 32px;display:flex;align-items:center;gap:20px;box-shadow:inset 0 -1px 0 rgba(240,233,242,.1)">
+<div><div style="font:600 11px Inter,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#ea55c8;margin-bottom:6px">LogPose</div><div style="font-size:28px;font-weight:500">Match history</div></div>
+<div style="flex:1"></div>
+<div class="seg"><span class="seg-opt" style="font-size:14px;color:#d81fb4;box-shadow:inset 0 0 0 1px #d81fb4">All</span><span class="seg-opt" style="font-size:14px">Wins</span><span class="seg-opt" style="font-size:14px">Losses</span></div>
+<button style="width:48px;height:48px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:#f0e9f2;cursor:pointer"><svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor"><path d="M205.66 194.34a8 8 0 0 1-11.32 11.32L128 139.31l-66.34 66.35a8 8 0 0 1-11.32-11.32L116.69 128 50.34 61.66a8 8 0 0 1 11.32-11.32L128 116.69l66.34-66.35a8 8 0 0 1 11.32 11.32L139.31 128Z"></path></svg></button>
+</div>
+<div style="flex:1;padding:24px 32px;display:flex;flex-direction:column;gap:6px">
+<div style="height:96px;border-radius:8px;background:#17121e;display:flex;align-items:center;padding:0 20px;gap:20px">
+<div style="width:56px;height:78px;border-radius:6px;background:#473c52"></div>
+<div style="flex:1"><div style="font-size:20px;font-weight:500">Luffy#0001 <span style="color:rgba(240,233,242,.4);font-weight:400">vs</span> Zoro#0002</div><div style="font:13px ui-monospace,monospace;color:rgba(240,233,242,.5);margin-top:4px">2026-08-08 14:28 · game 1 · 12 turns</div></div>
+<span class="tag tag-accent" style="font-size:13px;padding:6px 14px">WIN</span>
+<button style="height:44px;padding:0 18px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:#f0e9f2;font:500 15px Inter,sans-serif;cursor:pointer;white-space:nowrap;flex:none">Watch replay</button>
+<div style="width:56px;height:78px;border-radius:6px;background:#473c52"></div>
+</div>
+<div style="height:96px;border-radius:8px;background:#17121e;box-shadow:inset 0 0 0 1px #d81fb4,inset 3px 0 0 #d81fb4;display:flex;align-items:center;padding:0 20px;gap:20px">
+<div style="width:56px;height:78px;border-radius:6px;background:#473c52"></div>
+<div style="flex:1"><div style="font-size:20px;font-weight:500">Luffy#0001 <span style="color:rgba(240,233,242,.4);font-weight:400">vs</span> Zoro#0002</div><div style="font:13px ui-monospace,monospace;color:rgba(240,233,242,.5);margin-top:4px">2026-08-08 14:28 · game 2 · 9 turns</div></div>
+<span class="tag tag-neutral" style="font-size:13px;padding:6px 14px">LOSS</span>
+<button style="height:44px;padding:0 18px;border-radius:8px;border:1px solid #d81fb4;background:rgba(216,31,180,.12);color:#ea55c8;font:500 15px Inter,sans-serif;cursor:pointer;white-space:nowrap;flex:none">Watch replay</button>
+<div style="width:56px;height:78px;border-radius:6px;background:#473c52"></div>
+</div>
+<div style="height:96px;border-radius:8px;background:#17121e;display:flex;align-items:center;padding:0 20px;gap:20px">
+<div style="width:56px;height:78px;border-radius:6px;background:#473c52"></div>
+<div style="flex:1"><div style="font-size:20px;font-weight:500">Luffy#0001 <span style="color:rgba(240,233,242,.4);font-weight:400">vs</span> Zoro#0002</div><div style="font:13px ui-monospace,monospace;color:rgba(240,233,242,.5);margin-top:4px">2026-08-08 13:05 · game 1 · 15 turns</div></div>
+<span class="tag tag-accent" style="font-size:13px;padding:6px 14px">WIN</span>
+<button style="height:44px;padding:0 18px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:#f0e9f2;font:500 15px Inter,sans-serif;cursor:pointer;white-space:nowrap;flex:none">Watch replay</button>
+<div style="width:56px;height:78px;border-radius:6px;background:#473c52"></div>
+</div>
+<div style="height:96px;border-radius:8px;background:#17121e;display:flex;align-items:center;padding:0 20px;gap:20px">
+<div style="width:56px;height:78px;border-radius:6px;background:#473c52"></div>
+<div style="flex:1"><div style="font-size:20px;font-weight:500">Luffy#0001 <span style="color:rgba(240,233,242,.4);font-weight:400">vs</span> Zoro#0002</div><div style="font:13px ui-monospace,monospace;color:rgba(240,233,242,.5);margin-top:4px">2026-08-08 13:05 · game 2 · 7 turns</div></div>
+<span class="tag tag-neutral" style="font-size:13px;padding:6px 14px">LOSS</span>
+<button style="height:44px;padding:0 18px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:#f0e9f2;font:500 15px Inter,sans-serif;cursor:pointer;white-space:nowrap;flex:none">Watch replay</button>
+<div style="width:56px;height:78px;border-radius:6px;background:#473c52"></div>
+</div>
+<div style="height:96px;border-radius:8px;background:#17121e;display:flex;align-items:center;padding:0 20px;gap:20px">
+<div style="width:56px;height:78px;border-radius:6px;background:#473c52"></div>
+<div style="flex:1"><div style="font-size:20px;font-weight:500">Luffy#0001 <span style="color:rgba(240,233,242,.4);font-weight:400">vs</span> Zoro#0002</div><div style="font:13px ui-monospace,monospace;color:rgba(240,233,242,.5);margin-top:4px">2026-08-07 19:42 · game 1 · 11 turns</div></div>
+<span class="tag tag-accent" style="font-size:13px;padding:6px 14px">WIN</span>
+<button style="height:44px;padding:0 18px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:#f0e9f2;font:500 15px Inter,sans-serif;cursor:pointer;white-space:nowrap;flex:none">Watch replay</button>
+<div style="width:56px;height:78px;border-radius:6px;background:#473c52"></div>
+</div>
+<div style="height:96px;border-radius:8px;background:#17121e;display:flex;align-items:center;padding:0 20px;gap:20px">
+<div style="width:56px;height:78px;border-radius:6px;background:#473c52"></div>
+<div style="flex:1"><div style="font-size:20px;font-weight:500">Luffy#0001 <span style="color:rgba(240,233,242,.4);font-weight:400">vs</span> Zoro#0002</div><div style="font:13px ui-monospace,monospace;color:rgba(240,233,242,.5);margin-top:4px">2026-08-07 19:42 · game 2 · 14 turns</div></div>
+<span class="tag tag-neutral" style="font-size:13px;padding:6px 14px">LOSS</span>
+<button style="height:44px;padding:0 18px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:#f0e9f2;font:500 15px Inter,sans-serif;cursor:pointer;white-space:nowrap;flex:none">Watch replay</button>
+<div style="width:56px;height:78px;border-radius:6px;background:#473c52"></div>
+</div>
+</div>
+<div style="padding:24px 32px;display:flex;align-items:center;gap:16px;box-shadow:inset 0 1px 0 rgba(240,233,242,.1)">
+<div style="font-size:15px;color:rgba(240,233,242,.55)">6 matches · 3W 3L</div>
+<div style="flex:1"></div>
+<button style="height:48px;padding:0 20px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:rgba(240,233,242,.45);font:500 15px Inter,sans-serif">Previous</button>
+<span style="font:13px ui-monospace,monospace;color:rgba(240,233,242,.5)">Page 1 / 1</span>
+<button style="height:48px;padding:0 20px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:rgba(240,233,242,.45);font:500 15px Inter,sans-serif">Next</button>
+</div>
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="2g">
+<div class="dv-olabel"><a class="dv-oid" href="#2g">2g</a>Alt art selector — card list, art grid, one large preview</div>
+<div class="dv-card" style="width:1920px;height:1080px;position:relative;background:#17121e;overflow:hidden;font-family:Inter,sans-serif;color:#f0e9f2">
+<div style="position:absolute;inset:0;background:rgba(16,12,22,.6)"></div>
+<div style="position:absolute;left:60px;top:60px;right:60px;bottom:60px;background:#241d2e;border-radius:14px;box-shadow:0 0 0 1px #a294ab,0 16px 40px rgba(0,0,0,.65);display:flex;flex-direction:column;overflow:hidden">
+<div style="padding:28px 32px;display:flex;align-items:center;gap:20px;box-shadow:inset 0 -1px 0 rgba(240,233,242,.1)">
+<div><div style="font:600 11px Inter,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#ea55c8;margin-bottom:6px">LogPose</div><div style="font-size:28px;font-weight:500">Alt art selector</div></div>
+<div style="font-size:15px;color:rgba(240,233,242,.55);margin-left:12px;max-width:360px">Click an art to use it — choices save immediately.</div>
+<div style="flex:1"></div>
+<div style="height:48px;width:300px;border-radius:8px;background:#17121e;border:1px solid rgba(240,233,242,.16);display:flex;align-items:center;padding:0 14px;gap:10px;color:rgba(240,233,242,.5);font-size:15px"><svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor"><path d="m229.66 218.34-50.07-50.06a88.11 88.11 0 1 0-11.31 11.31l50.06 50.07a8 8 0 0 0 11.32-11.32M40 112a72 72 0 1 1 72 72 72.08 72.08 0 0 1-72-72"></path></svg>Filter deck cards…</div>
+<button style="height:48px;padding:0 20px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:#f0e9f2;font:500 15px Inter,sans-serif;cursor:pointer">Fetch arts</button>
+<button style="width:48px;height:48px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:#f0e9f2;cursor:pointer"><svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor"><path d="M205.66 194.34a8 8 0 0 1-11.32 11.32L128 139.31l-66.34 66.35a8 8 0 0 1-11.32-11.32L116.69 128 50.34 61.66a8 8 0 0 1 11.32-11.32L128 116.69l66.34-66.35a8 8 0 0 1 11.32 11.32L139.31 128Z"></path></svg></button>
+</div>
+<div style="flex:1;display:flex;overflow:hidden">
+<div style="width:320px;padding:20px;display:flex;flex-direction:column;gap:6px;box-shadow:inset -1px 0 0 rgba(240,233,242,.1)">
+<div style="height:72px;border-radius:8px;background:rgba(216,31,180,.12);box-shadow:inset 0 0 0 1px #d81fb4,inset 3px 0 0 #d81fb4;display:flex;align-items:center;padding:0 16px;gap:14px"><div style="width:36px;height:50px;border-radius:5px;background:#473c52"></div><div><div style="font-size:16px;font-weight:500;color:#f7a8e4">Perona</div><div style="font:12px ui-monospace,monospace;color:rgba(240,233,242,.5)">OP12-034 · 3 arts</div></div></div>
+<div style="height:72px;border-radius:8px;background:#17121e;display:flex;align-items:center;padding:0 16px;gap:14px"><div style="width:36px;height:50px;border-radius:5px;background:#473c52"></div><div><div style="font-size:16px;font-weight:500">Shanks</div><div style="font:12px ui-monospace,monospace;color:rgba(240,233,242,.5)">OP14-027 · 2 arts</div></div></div>
+<div style="height:72px;border-radius:8px;background:#17121e;display:flex;align-items:center;padding:0 16px;gap:14px"><div style="width:36px;height:50px;border-radius:5px;background:#473c52"></div><div><div style="font-size:16px;font-weight:500">Shanks</div><div style="font:12px ui-monospace,monospace;color:rgba(240,233,242,.5)">ST16-004 · 3 arts</div></div></div>
+<div style="height:72px;border-radius:8px;background:#17121e;display:flex;align-items:center;padding:0 16px;gap:14px"><div style="width:36px;height:50px;border-radius:5px;background:#473c52"></div><div><div style="font-size:16px;font-weight:500">Shanks</div><div style="font:12px ui-monospace,monospace;color:rgba(240,233,242,.5)">OP13-028 · 2 arts</div></div></div>
+<div style="height:72px;border-radius:8px;background:#17121e;display:flex;align-items:center;padding:0 16px;gap:14px"><div style="width:36px;height:50px;border-radius:5px;background:#473c52"></div><div><div style="font-size:16px;font-weight:500">I Know You’re Strong…</div><div style="font:12px ui-monospace,monospace;color:rgba(240,233,242,.5)">OP13-040 · 2 arts</div></div></div>
+<div style="flex:1"></div>
+<div style="display:flex;align-items:center;gap:12px"><button style="flex:1;height:44px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:rgba(240,233,242,.45);font:500 14px Inter,sans-serif">Prev</button><span style="font:12px ui-monospace,monospace;color:rgba(240,233,242,.5)">1 / 2</span><button style="flex:1;height:44px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:#f0e9f2;font:500 14px Inter,sans-serif;cursor:pointer">Next</button></div>
+</div>
+<div style="flex:1;min-height:0;padding:28px 32px;display:flex;flex-direction:column;gap:20px;overflow:hidden">
+<div style="display:flex;align-items:baseline;gap:14px"><span style="font-size:24px;font-weight:500">Perona</span><span style="font:14px ui-monospace,monospace;color:rgba(240,233,242,.5)">OP12-034</span><span class="tag tag-outline" style="margin-left:6px">3 arts available</span></div>
+<div style="display:flex;gap:18px">
+<div style="width:168px;height:236px;border-radius:8px;background:#2e2639;box-shadow:0 0 0 1px #473c52"></div>
+<div style="width:168px;height:236px;border-radius:8px;background:#2e2639;box-shadow:0 0 0 1px #d81fb4,0 0 24px rgba(216,31,180,.35);position:relative"><span style="position:absolute;left:0;right:0;bottom:10px;text-align:center;font:600 10px Inter,sans-serif;letter-spacing:.1em;color:#f7a8e4">IN USE</span></div>
+<div style="width:168px;height:236px;border-radius:8px;background:#2e2639;box-shadow:0 0 0 1px #473c52"></div>
+</div>
+<div style="flex:1;display:flex;gap:32px;align-items:flex-start">
+<div style="width:400px;height:472px;border-radius:14px;background:#2e2639;box-shadow:0 0 0 1px #655770,0 16px 40px rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center;padding-bottom:16px;font:600 11px Inter,sans-serif;letter-spacing:.1em;color:rgba(240,233,242,.45)">PREVIEW · CARD ART (GAME CONTENT)</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:20px;padding-top:8px">
+<div><div style="font:600 11px Inter,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:rgba(240,233,242,.5);margin-bottom:8px">Selected art</div><div style="font-size:20px;font-weight:500">3rd Anniversary · Special</div><div style="font:14px ui-monospace,monospace;color:rgba(240,233,242,.5);margin-top:4px">OP12-034 SR · counter +1000</div></div>
+<div style="height:1px;background:linear-gradient(to right,transparent,rgba(240,233,242,.14) 24px,rgba(240,233,242,.14) calc(100% - 24px),transparent)"></div>
+<div style="font-size:15px;color:rgba(240,233,242,.65);line-height:1.6">Applies everywhere this card appears — hand, board, deck editor and replays. Hover any thumbnail to enlarge it here.</div>
+<div style="display:flex;gap:12px;margin-top:8px">
+<button style="height:48px;padding:0 20px;border-radius:8px;border:1px solid #d81fb4;background:rgba(216,31,180,.12);color:#ea55c8;font:500 15px Inter,sans-serif;cursor:pointer">Use this art</button>
+<button style="height:48px;padding:0 20px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:#f0e9f2;font:500 15px Inter,sans-serif;cursor:pointer">Reset to default</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="2h">
+<div class="dv-olabel"><a class="dv-oid" href="#2h">2h</a>Replay viewer — scrubbable timeline, transport docked bottom, log synced</div>
+<div class="dv-card" style="width:1920px;height:1080px;position:relative;background:#17121e;overflow:hidden;font-family:Inter,sans-serif;color:#f0e9f2">
+<div style="position:absolute;inset:0;background:radial-gradient(1200px 700px at 30% 44%,rgba(26,127,160,.24),transparent 72%)"></div>
+<div style="position:absolute;left:0;top:0;right:0;height:72px;background:#241d2ebf;box-shadow:inset 0 -1px 0 rgba(240,233,242,.12);display:flex;align-items:center;padding:0 24px;gap:20px">
+<span class="tag tag-outline" style="font-size:13px;padding:6px 14px">REPLAY</span>
+<div style="font-size:16px;font-weight:500">Zoro#0002 <span style="color:rgba(240,233,242,.4);font-weight:400">vs</span> Luffy#0001</div>
+<span style="font:13px ui-monospace,monospace;color:rgba(240,233,242,.5)">2026-08-08 14:28 · game 2</span>
+<div style="flex:1"></div><div style="display:flex;align-items:center;gap:14px"><span style="font:600 13px Inter,sans-serif;letter-spacing:.14em;color:rgba(240,233,242,.5)">TURN 2 / 20</span><span style="font:13px ui-monospace,monospace;color:#ea55c8">event 169 / 746</span></div><div style="flex:1"></div>
+<button style="height:48px;padding:0 20px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:#f0e9f2;font:500 15px Inter,sans-serif;cursor:pointer;font-size:16px">Exit replay</button></div>
+<div style="position:absolute;left:72px;top:104px;width:1000px;height:640px;border-radius:14px;background:linear-gradient(180deg,#1d1726,rgba(23,18,30,.35) 50%,#1d1726);box-shadow:0 0 0 1px #473c52;padding:20px;display:flex;flex-direction:column;gap:8px"><div style="display:flex;gap:12px;height:76px;align-items:stretch"><div style="flex:1;position:relative;border-radius:8px;background:rgba(23,18,30,.35);box-shadow:inset 0 0 0 1px rgba(240,233,242,.1);display:flex;align-items:center;justify-content:center;gap:8px"><span style="position:absolute;left:16px;top:50%;transform:translateY(-50%);font:600 11px Inter,sans-serif;letter-spacing:.16em;color:rgba(240,233,242,.14)">DON!!</span><div style="width:46px;height:58px;border-radius:5px;background:#272130"></div><div style="width:46px;height:58px;border-radius:5px;background:#272130"></div><div style="width:46px;height:58px;border-radius:5px;background:#272130"></div><div style="width:46px;height:58px;border-radius:5px;background:#272130"></div><div style="width:46px;height:58px;border-radius:5px;background:#272130"></div><div style="width:46px;height:58px;border-radius:5px;background:#272130"></div><div style="width:46px;height:58px;border-radius:5px;background:#272130"></div><span style="position:absolute;right:16px;top:50%;transform:translateY(-50%);font:600 10px ui-monospace,monospace;color:rgba(240,233,242,.4)">4 / 6 ACTIVE</span></div><div style="width:70px;height:76px;border-radius:6px;background:#2e2639;box-shadow:0 0 0 1px #473c52;display:flex;align-items:flex-end;justify-content:center;padding-bottom:5px;font:600 9px Inter,sans-serif;letter-spacing:.1em;color:rgba(240,233,242,.45)">DECK 38</div><div style="width:70px;height:76px;border-radius:6px;background:rgba(23,18,30,.35);box-shadow:inset 0 0 0 1px rgba(240,233,242,.14);display:flex;align-items:flex-end;justify-content:center;padding-bottom:5px;font:600 9px Inter,sans-serif;letter-spacing:.1em;color:rgba(240,233,242,.45)">TRASH 3</div></div><div style="display:flex;gap:14px;align-items:stretch"><div style="width:104px;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:7px;border-radius:8px;background:rgba(23,18,30,.35);box-shadow:inset 0 0 0 1px rgba(240,233,242,.1);padding:10px 0"><span style="font:600 9px Inter,sans-serif;letter-spacing:.14em;color:rgba(240,233,242,.45)">LIFE 3</span><div style="display:flex;flex-direction:column;align-items:center"><div style="width:80px;height:26px;border-radius:6px;background:#2e2639;box-shadow:0 0 0 1px #473c52;"></div><div style="width:80px;height:26px;border-radius:6px;background:#2e2639;box-shadow:0 0 0 1px #473c52;margin-top:-8px"></div><div style="width:80px;height:26px;border-radius:6px;background:#2e2639;box-shadow:0 0 0 1px #473c52;margin-top:-8px"></div></div></div><div style="flex:1;display:flex;flex-direction:column;gap:8px"><div style="display:flex;gap:14px;height:112px;align-items:flex-end;justify-content:center"><div style="width:62px;height:84px;border-radius:6px;background:rgba(23,18,30,.35);box-shadow:inset 0 0 0 1px rgba(240,233,242,.14);display:flex;align-items:flex-end;justify-content:center;padding-bottom:5px;font:600 9px Inter,sans-serif;letter-spacing:.1em;color:rgba(240,233,242,.45)">STAGE</div><div style="width:84px;height:110px;border-radius:8px;background:#2e2639;box-shadow:0 0 0 1px #655770;display:flex;align-items:flex-end;justify-content:center;padding-bottom:6px;font:600 9px Inter,sans-serif;letter-spacing:.1em;color:rgba(240,233,242,.5)">LEADER</div><div style="display:flex;align-items:center;gap:12px;margin-left:40px"><div style="width:46px;height:64px;border-radius:5px;background:#272130;box-shadow:0 0 0 1px #473c52;transform:rotate(-6deg);"></div><div style="width:46px;height:64px;border-radius:5px;background:#272130;box-shadow:0 0 0 1px #473c52;transform:rotate(-2deg);margin-left:-13px"></div><div style="width:46px;height:64px;border-radius:5px;background:#272130;box-shadow:0 0 0 1px #473c52;transform:rotate(2deg);margin-left:-13px"></div><div style="width:46px;height:64px;border-radius:5px;background:#272130;box-shadow:0 0 0 1px #473c52;transform:rotate(6deg);margin-left:-13px"></div><span style="font:600 10px Inter,sans-serif;letter-spacing:.12em;color:rgba(240,233,242,.4);margin-left:10px">HAND 5</span></div></div><div style="height:86px;position:relative;border-radius:8px;background:rgba(23,18,30,.35);box-shadow:inset 0 0 0 1px rgba(240,233,242,.1);display:flex;align-items:center;justify-content:center;gap:12px"><span style="position:absolute;left:16px;top:50%;transform:translateY(-50%);font:600 11px Inter,sans-serif;letter-spacing:.16em;color:rgba(240,233,242,.14)">CHARACTER AREA</span><div style="width:68px;height:70px;border-radius:5px;background:#2e2639;box-shadow:0 0 0 1px #473c52"></div><div style="width:68px;height:70px;border-radius:5px;background:#2e2639;box-shadow:0 0 0 1px #473c52"></div><div style="width:68px;height:70px;border-radius:5px;background:transparent;box-shadow:inset 0 0 0 1px rgba(240,233,242,.08)"></div><div style="width:68px;height:70px;border-radius:5px;background:transparent;box-shadow:inset 0 0 0 1px rgba(240,233,242,.08)"></div><div style="width:68px;height:70px;border-radius:5px;background:transparent;box-shadow:inset 0 0 0 1px rgba(240,233,242,.08)"></div></div></div></div><div style="height:1px;margin:5px 0;background:linear-gradient(to right,transparent,#d81fb480 100px,#d81fb480 calc(100% - 100px),transparent);position:relative"><span style="position:absolute;left:50%;top:-9px;transform:translateX(-50%);background:#1d1726;padding:0 12px;font:600 10px Inter,sans-serif;letter-spacing:.16em;color:rgba(240,233,242,.45)">TURN 2</span></div><div style="display:flex;gap:14px;align-items:stretch"><div style="width:104px;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:7px;border-radius:8px;background:rgba(23,18,30,.35);box-shadow:inset 0 0 0 1px rgba(240,233,242,.1);padding:10px 0"><span style="font:600 9px Inter,sans-serif;letter-spacing:.14em;color:rgba(240,233,242,.45)">LIFE 4</span><div style="display:flex;flex-direction:column;align-items:center"><div style="width:80px;height:26px;border-radius:6px;background:#2e2639;box-shadow:0 0 0 1px #473c52;"></div><div style="width:80px;height:26px;border-radius:6px;background:#2e2639;box-shadow:0 0 0 1px #473c52;margin-top:-8px"></div><div style="width:80px;height:26px;border-radius:6px;background:#2e2639;box-shadow:0 0 0 1px #473c52;margin-top:-8px"></div><div style="width:80px;height:26px;border-radius:6px;background:#2e2639;box-shadow:0 0 0 1px #473c52;margin-top:-8px"></div></div></div><div style="flex:1;display:flex;flex-direction:column;gap:8px"><div style="height:86px;position:relative;border-radius:8px;background:rgba(23,18,30,.35);box-shadow:inset 0 0 0 1px rgba(240,233,242,.1);display:flex;align-items:center;justify-content:center;gap:12px"><span style="position:absolute;left:16px;top:50%;transform:translateY(-50%);font:600 11px Inter,sans-serif;letter-spacing:.16em;color:rgba(240,233,242,.14)">CHARACTER AREA</span><div style="width:68px;height:70px;border-radius:5px;background:#2e2639;box-shadow:0 0 0 1px #473c52"></div><div style="width:68px;height:70px;border-radius:5px;background:#2e2639;box-shadow:0 0 0 1px #d81fb4"></div><div style="width:68px;height:70px;border-radius:5px;background:#2e2639;box-shadow:0 0 0 1px #473c52"></div><div style="width:68px;height:70px;border-radius:5px;background:transparent;box-shadow:inset 0 0 0 1px rgba(240,233,242,.08)"></div><div style="width:68px;height:70px;border-radius:5px;background:transparent;box-shadow:inset 0 0 0 1px rgba(240,233,242,.08)"></div></div><div style="display:flex;gap:14px;height:112px;align-items:flex-start;justify-content:center"><div style="width:84px;height:110px;border-radius:8px;background:#2e2639;box-shadow:0 0 0 1px #d81fb4,0 0 24px #d81fb459;display:flex;align-items:flex-end;justify-content:center;padding-bottom:6px;font:600 9px Inter,sans-serif;letter-spacing:.1em;color:#f7a8e4">LEADER</div><div style="width:62px;height:84px;border-radius:6px;background:rgba(23,18,30,.35);box-shadow:inset 0 0 0 1px rgba(240,233,242,.14);display:flex;align-items:flex-end;justify-content:center;padding-bottom:5px;font:600 9px Inter,sans-serif;letter-spacing:.1em;color:rgba(240,233,242,.45)">STAGE</div></div></div></div><div style="display:flex;gap:12px;height:76px;align-items:stretch"><div style="flex:1;position:relative;border-radius:8px;background:#d81fb40f;box-shadow:inset 0 0 0 1px #d81fb459;display:flex;align-items:center;justify-content:center;gap:8px"><span style="position:absolute;left:16px;top:50%;transform:translateY(-50%);font:600 11px Inter,sans-serif;letter-spacing:.16em;color:rgba(240,233,242,.14)">YOUR DON!!</span><div style="width:46px;height:58px;border-radius:5px;background:#5a1149;box-shadow:0 0 0 1px #b81c98"></div><div style="width:46px;height:58px;border-radius:5px;background:#5a1149;box-shadow:0 0 0 1px #b81c98"></div><div style="width:46px;height:58px;border-radius:5px;background:#5a1149;box-shadow:0 0 0 1px #b81c98"></div><div style="width:46px;height:58px;border-radius:5px;background:#5a1149;box-shadow:0 0 0 1px #b81c98"></div><div style="width:46px;height:58px;border-radius:5px;background:#5a1149;box-shadow:0 0 0 1px #b81c98"></div><div style="width:46px;height:58px;border-radius:5px;background:#272130"></div><div style="width:46px;height:58px;border-radius:5px;background:#272130"></div><span style="position:absolute;right:16px;top:50%;transform:translateY(-50%);font:600 10px ui-monospace,monospace;color:#ea55c8">5 / 7 ACTIVE</span></div><div style="width:70px;height:76px;border-radius:6px;background:#2e2639;box-shadow:0 0 0 1px #473c52;display:flex;align-items:flex-end;justify-content:center;padding-bottom:5px;font:600 9px Inter,sans-serif;letter-spacing:.1em;color:rgba(240,233,242,.45)">DECK 36</div><div style="width:70px;height:76px;border-radius:6px;background:rgba(23,18,30,.35);box-shadow:inset 0 0 0 1px rgba(240,233,242,.14);display:flex;align-items:flex-end;justify-content:center;padding-bottom:5px;font:600 9px Inter,sans-serif;letter-spacing:.1em;color:rgba(240,233,242,.45)">TRASH 2</div></div></div>
+<div style="position:absolute;left:72px;top:776px;width:1000px;height:232px;background:#241d2e;border-radius:14px;box-shadow:0 0 0 1px #473c52;padding:24px 28px;display:flex;flex-direction:column;gap:20px">
+<div><div style="display:flex;justify-content:space-between;margin-bottom:10px;font:12px ui-monospace,monospace;color:rgba(240,233,242,.5)"><span>T1</span><span>T5</span><span>T10</span><span>T15</span><span>T20</span></div>
+<div style="height:12px;border-radius:6px;background:#17121e;box-shadow:inset 0 0 0 1px rgba(240,233,242,.12);position:relative"><div style="position:absolute;left:0;top:0;bottom:0;width:23%;border-radius:6px;background:linear-gradient(90deg,#b81c98,#d81fb4)"></div><div style="position:absolute;left:23%;top:-6px;width:24px;height:24px;border-radius:12px;background:#d81fb4;box-shadow:0 0 16px #d81fb4b3;transform:translateX(-12px)"></div><div style="position:absolute;left:12%;top:-3px;width:2px;height:18px;background:rgba(240,233,242,.25)"></div><div style="position:absolute;left:40%;top:-3px;width:2px;height:18px;background:rgba(240,233,242,.25)"></div><div style="position:absolute;left:62%;top:-3px;width:2px;height:18px;background:rgba(240,233,242,.25)"></div><div style="position:absolute;left:81%;top:-3px;width:2px;height:18px;background:rgba(240,233,242,.25)"></div></div></div>
+<div style="display:flex;align-items:center;gap:10px">
+<button style="width:52px;height:56px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:#f0e9f2;font:500 15px ui-monospace,monospace;cursor:pointer">|&lt;</button><button style="width:52px;height:56px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:#f0e9f2;font:500 15px ui-monospace,monospace;cursor:pointer">&lt;T</button><button style="width:52px;height:56px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:#f0e9f2;font:500 15px ui-monospace,monospace;cursor:pointer">&lt;A</button>
+<button style="width:80px;height:56px;border-radius:8px;border:1px solid #d81fb4;background:#d81fb41f;color:#f7a8e4;cursor:pointer;display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 256 256" fill="currentColor"><path d="M216 48v160a16 16 0 0 1-16 16h-40a16 16 0 0 1-16-16V48a16 16 0 0 1 16-16h40a16 16 0 0 1 16 16M96 32H56a16 16 0 0 0-16 16v160a16 16 0 0 0 16 16h40a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16"></path></svg></button>
+<button style="width:52px;height:56px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:#f0e9f2;font:500 15px ui-monospace,monospace;cursor:pointer">A&gt;</button><button style="width:52px;height:56px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:#f0e9f2;font:500 15px ui-monospace,monospace;cursor:pointer">T&gt;</button><button style="width:52px;height:56px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:#f0e9f2;font:500 15px ui-monospace,monospace;cursor:pointer">&gt;|</button>
+<span style="width:1px;height:36px;background:rgba(240,233,242,.14);margin:0 6px"></span>
+<div class="seg"><span class="seg-opt" style="font-size:14px">0.5×</span><span class="seg-opt" style="font-size:14px;color:#d81fb4;box-shadow:inset 0 0 0 1px #d81fb4">1×</span><span class="seg-opt" style="font-size:14px">2×</span><span class="seg-opt" style="font-size:14px">4×</span></div>
+<div style="flex:1"></div>
+<div style="font-size:13px;color:rgba(240,233,242,.5);text-align:right;line-height:1.5">←/→ event · PgUp/PgDn turn<br>Space plays and pauses</div></div></div>
+<div style="position:absolute;left:1104px;top:104px;width:744px;bottom:72px;background:#241d2e;border-radius:14px;box-shadow:0 0 0 1px #473c52;display:flex;flex-direction:column">
+<div style="height:56px;display:flex;align-items:center;padding:0 20px;box-shadow:inset 0 -1px 0 rgba(240,233,242,.1)"><span style="font:600 12px Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:rgba(240,233,242,.6);flex:1">Event log</span><span style="font:12px ui-monospace,monospace;color:rgba(240,233,242,.45)">follows playhead</span></div>
+<div style="flex:1;padding:16px 20px;display:flex;flex-direction:column;gap:10px;overflow:hidden">
+<div style="display:flex;gap:12px;opacity:.5"><span style="font:600 11px ui-monospace,monospace;color:rgba(240,233,242,.4);width:40px;padding-top:3px">166</span><div style="font-size:15px;line-height:1.5">Monkey D. Luffy <span style="font-family:ui-monospace,monospace;font-size:13px">ST31-004</span> hand to deck</div></div><div style="display:flex;gap:12px;opacity:.5"><span style="font:600 11px ui-monospace,monospace;color:rgba(240,233,242,.4);width:40px;padding-top:3px">167</span><div style="font-size:15px;line-height:1.5">Jewelry Bonney <span style="font-family:ui-monospace,monospace;font-size:13px">EB04-002</span> to hand</div></div><div style="display:flex;gap:12px;opacity:.5"><span style="font:600 11px ui-monospace,monospace;color:rgba(240,233,242,.4);width:40px;padding-top:3px">168</span><div style="font-size:15px;line-height:1.5">Zoro#0002 places 4 cards on the bottom of deck</div></div>
+<div style="display:flex;gap:12px;border-radius:8px;background:#d81fb41f;box-shadow:inset 0 0 0 1px #d81fb4;padding:12px;margin:2px 0"><span style="font:600 11px ui-monospace,monospace;color:#ea55c8;width:40px;padding-top:3px">169</span><div style="font-size:15px;line-height:1.5;color:#f0e9f2">Jewelry Bonney: reveal and draw <span style="font-weight:500">Monkey D. Luffy</span> <span style="font-family:ui-monospace,monospace;font-size:13px;color:rgba(240,233,242,.6)">OP13-118</span></div></div>
+<div style="display:flex;gap:12px"><span style="font:600 11px ui-monospace,monospace;color:rgba(240,233,242,.4);width:40px;padding-top:3px">170</span><div style="font-size:15px;line-height:1.5;color:rgba(240,233,242,.75)">Attach 1 DON!! to leader</div></div><div style="display:flex;gap:12px"><span style="font:600 11px ui-monospace,monospace;color:rgba(240,233,242,.4);width:40px;padding-top:3px">171</span><div style="font-size:15px;line-height:1.5;color:rgba(240,233,242,.75)">Marshall D. Teach <span style="font-family:ui-monospace,monospace;font-size:13px">OP16-119</span> to life</div></div><div style="display:flex;gap:12px"><span style="font:600 11px ui-monospace,monospace;color:rgba(240,233,242,.4);width:40px;padding-top:3px">172</span><div style="font-size:15px;line-height:1.5;color:rgba(240,233,242,.75)">Black Rope Dragon Twister <span style="font-family:ui-monospace,monospace;font-size:13px">EB04-059</span> to life</div></div>
+</div>
+<div style="padding:18px 20px;display:flex;gap:12px;box-shadow:inset 0 1px 0 rgba(240,233,242,.1)"><button style="height:48px;padding:0 20px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:#f0e9f2;font:500 15px Inter,sans-serif;cursor:pointer;flex:1">Jump to hand</button><button style="height:48px;padding:0 20px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:#f0e9f2;font:500 15px Inter,sans-serif;cursor:pointer;flex:1">Download log</button></div></div>
+</div>
+</div>
+
+<div class="dv-opt" id="2i">
+<div class="dv-olabel"><a class="dv-oid" href="#2i">2i</a>Sprite manifest — every 9-slice drawn at target size (markdown twin in <span style="font-family:ui-monospace,monospace">sprite-manifest.md</span>)</div>
+<div class="dv-card" style="width:1400px;padding:56px 64px;background:#17121e">
+<div class="spec" style="margin-bottom:12px">9-slice textures · authored at 1080p size, exported ×2 for 4K</div>
+<h2 style="margin:0 0 8px">Sprite manifest</h2>
+<p style="font-size:14px;color:rgba(240,233,242,.55);margin:0 0 36px;max-width:760px">Slice margins are given as L / T / R / B. Every fill is a flat token color plus, where noted, a 1px inner edge — no gradients baked into the texture, so tinting per-state stays possible in Unity.</p>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:32px 28px">
+
+<div><div style="height:96px;display:flex;align-items:center;justify-content:center;background:#100c16;border-radius:8px;margin-bottom:12px"><div style="width:200px;height:64px;border-radius:14px;background:#241d2e;box-shadow:0 0 0 1px #473c52"></div></div><div style="font:500 15px Inter,sans-serif">panel_surface</div><div style="font:12px/1.7 ui-monospace,monospace;color:rgba(240,233,242,.5)">64×64 · r14 · 18/18/18/18<br>#241d2e + 1px #473c52</div></div>
+
+<div><div style="height:96px;display:flex;align-items:center;justify-content:center;background:#100c16;border-radius:8px;margin-bottom:12px"><div style="width:200px;height:56px;border-radius:8px;border:1px solid #d81fb4"></div></div><div style="font:500 15px Inter,sans-serif">btn_primary_normal</div><div style="font:12px/1.7 ui-monospace,monospace;color:rgba(240,233,242,.5)">48×48 · r8 · 12/12/12/12<br>transparent + 1px #d81fb4</div></div>
+
+<div><div style="height:96px;display:flex;align-items:center;justify-content:center;background:#100c16;border-radius:8px;margin-bottom:12px"><div style="width:200px;height:56px;border-radius:8px;border:1px solid #d81fb4;background:rgba(216,31,180,.12)"></div></div><div style="font:500 15px Inter,sans-serif">btn_primary_hover</div><div style="font:12px/1.7 ui-monospace,monospace;color:rgba(240,233,242,.5)">48×48 · r8 · 12/12/12/12<br>#d81fb4 @ 12% + 1px #d81fb4</div></div>
+
+<div><div style="height:96px;display:flex;align-items:center;justify-content:center;background:#100c16;border-radius:8px;margin-bottom:12px"><div style="width:200px;height:56px;border-radius:8px;border:1px solid #ea55c8;background:rgba(216,31,180,.22)"></div></div><div style="font:500 15px Inter,sans-serif">btn_primary_pressed</div><div style="font:12px/1.7 ui-monospace,monospace;color:rgba(240,233,242,.5)">48×48 · r8 · 12/12/12/12<br>#d81fb4 @ 22% + 1px #ea55c8</div></div>
+
+<div><div style="height:96px;display:flex;align-items:center;justify-content:center;background:#100c16;border-radius:8px;margin-bottom:12px"><div style="width:200px;height:56px;border-radius:8px;border:1px solid rgba(240,233,242,.16)"></div></div><div style="font:500 15px Inter,sans-serif">btn_secondary_normal</div><div style="font:12px/1.7 ui-monospace,monospace;color:rgba(240,233,242,.5)">48×48 · r8 · 12/12/12/12<br>transparent + 1px #f0e9f2 @16%</div></div>
+
+<div><div style="height:96px;display:flex;align-items:center;justify-content:center;background:#100c16;border-radius:8px;margin-bottom:12px"><div style="width:200px;height:56px;border-radius:8px;border:1px solid #dd6f5f"></div></div><div style="font:500 15px Inter,sans-serif">btn_danger_normal</div><div style="font:12px/1.7 ui-monospace,monospace;color:rgba(240,233,242,.5)">48×48 · r8 · 12/12/12/12<br>transparent + 1px #dd6f5f</div></div>
+
+<div><div style="height:96px;display:flex;align-items:center;justify-content:center;background:#100c16;border-radius:8px;margin-bottom:12px"><div style="width:200px;height:48px;border-radius:8px;background:#241d2e;border:1px solid rgba(240,233,242,.16)"></div></div><div style="font:500 15px Inter,sans-serif">input_field</div><div style="font:12px/1.7 ui-monospace,monospace;color:rgba(240,233,242,.5)">40×40 · r8 · 10/10/10/10<br>#241d2e + 1px #f0e9f2 @16%</div></div>
+
+<div><div style="height:96px;display:flex;align-items:center;justify-content:center;background:#100c16;border-radius:8px;margin-bottom:12px"><div style="width:200px;height:48px;border-radius:8px;background:#241d2e;border:1px solid #d81fb4"></div></div><div style="font:500 15px Inter,sans-serif">input_field_focus</div><div style="font:12px/1.7 ui-monospace,monospace;color:rgba(240,233,242,.5)">40×40 · r8 · 10/10/10/10<br>#241d2e + 1px #d81fb4</div></div>
+
+<div><div style="height:96px;display:flex;align-items:center;justify-content:center;background:#100c16;border-radius:8px;margin-bottom:12px"><div style="width:200px;height:72px;border-radius:8px;background:#17121e;box-shadow:inset 0 0 0 1px rgba(240,233,242,.06)"></div></div><div style="font:500 15px Inter,sans-serif">row_default</div><div style="font:12px/1.7 ui-monospace,monospace;color:rgba(240,233,242,.5)">32×32 · r8 · 9/9/9/9<br>#17121e (on panel) / #241d2e (on ground)</div></div>
+
+<div><div style="height:96px;display:flex;align-items:center;justify-content:center;background:#100c16;border-radius:8px;margin-bottom:12px"><div style="width:200px;height:72px;border-radius:8px;background:rgba(216,31,180,.1);box-shadow:inset 0 0 0 1px #d81fb4,inset 3px 0 0 #d81fb4"></div></div><div style="font:500 15px Inter,sans-serif">row_selected</div><div style="font:12px/1.7 ui-monospace,monospace;color:rgba(240,233,242,.5)">32×32 · r8 · 9/9/9/9<br>#d81fb4 @10% + 1px #d81fb4 + 3px left mark</div></div>
+
+<div><div style="height:96px;display:flex;align-items:center;justify-content:center;background:#100c16;border-radius:8px;margin-bottom:12px"><div style="width:52px;height:28px;border-radius:14px;background:rgba(216,31,180,.22);box-shadow:inset 0 0 0 1px #d81fb4;position:relative"><div style="position:absolute;top:3px;left:27px;width:22px;height:22px;border-radius:11px;background:#d81fb4"></div></div></div><div style="font:500 15px Inter,sans-serif">toggle_track_on + toggle_knob</div><div style="font:12px/1.7 ui-monospace,monospace;color:rgba(240,233,242,.5)">track 52×28 r14 · 14/14/14/14<br>knob 22×22 circle, no slicing</div></div>
+
+<div><div style="height:96px;display:flex;align-items:center;justify-content:center;background:#100c16;border-radius:8px;margin-bottom:12px"><div style="width:52px;height:28px;border-radius:14px;background:#272130;box-shadow:inset 0 0 0 1px rgba(240,233,242,.16);position:relative"><div style="position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:11px;background:#8a7c94"></div></div></div><div style="font:500 15px Inter,sans-serif">toggle_track_off</div><div style="font:12px/1.7 ui-monospace,monospace;color:rgba(240,233,242,.5)">52×28 · r14 · 14/14/14/14<br>#272130 + 1px #f0e9f2 @16% · knob #8a7c94</div></div>
+
+<div><div style="height:96px;display:flex;align-items:center;justify-content:center;background:#100c16;border-radius:8px;margin-bottom:12px"><div style="width:12px;height:72px;border-radius:6px;background:#272130;position:relative"><div style="position:absolute;left:0;top:8px;width:12px;height:36px;border-radius:6px;background:#655770"></div></div></div><div style="font:500 15px Inter,sans-serif">scrollbar_track + _thumb</div><div style="font:12px/1.7 ui-monospace,monospace;color:rgba(240,233,242,.5)">12×24 · r6 · 6/6/6/6<br>track #272130 · thumb #655770 (hover #8a7c94)</div></div>
+
+<div><div style="height:96px;display:flex;align-items:center;justify-content:center;background:#100c16;border-radius:8px;margin-bottom:12px"><div style="width:200px;height:44px;border-radius:8px;background:rgba(23,18,30,.35);box-shadow:inset 0 0 0 1px rgba(240,233,242,.1)"></div></div><div style="font:500 15px Inter,sans-serif">zone_slot</div><div style="font:12px/1.7 ui-monospace,monospace;color:rgba(240,233,242,.5)">32×32 · r8 · 9/9/9/9<br>#17121e @35% + 1px #f0e9f2 @10%</div></div>
+
+<div><div style="height:96px;display:flex;align-items:center;justify-content:center;background:#100c16;border-radius:8px;margin-bottom:12px"><div style="width:200px;height:44px;border-radius:8px;background:rgba(216,31,180,.06);box-shadow:inset 0 0 0 1px rgba(216,31,180,.35)"></div></div><div style="font:500 15px Inter,sans-serif">zone_slot_active</div><div style="font:12px/1.7 ui-monospace,monospace;color:rgba(240,233,242,.5)">32×32 · r8 · 9/9/9/9<br>#d81fb4 @6% + 1px #d81fb4 @35%</div></div>
+
+<div><div style="height:96px;display:flex;align-items:center;justify-content:center;background:#100c16;border-radius:8px;margin-bottom:12px"><div style="width:160px;height:44px;border-radius:8px;background:#241d2e;box-shadow:0 0 0 1px #a294ab,0 16px 40px rgba(0,0,0,.65)"></div></div><div style="font:500 15px Inter,sans-serif">tooltip_bg</div><div style="font:12px/1.7 ui-monospace,monospace;color:rgba(240,233,242,.5)">40×40 · r8 · 10/10/10/10<br>#241d2e + 1px #a294ab (shadow in Unity, not baked)</div></div>
+
+<div><div style="height:96px;display:flex;align-items:center;justify-content:center;background:#100c16;border-radius:8px;margin-bottom:12px"><div style="width:200px;height:64px;border-radius:14px;background:#241d2e;box-shadow:0 0 0 1px #a294ab"></div></div><div style="font:500 15px Inter,sans-serif">modal_bg + modal_scrim</div><div style="font:12px/1.7 ui-monospace,monospace;color:rgba(240,233,242,.5)">64×64 · r14 · 18/18/18/18<br>#241d2e + 1px #a294ab · scrim #100c16 @72%</div></div>
+
+<div><div style="height:96px;display:flex;align-items:flex-end;justify-content:center;background:#100c16;border-radius:8px;margin-bottom:12px;padding-bottom:24px"><div style="width:200px;height:3px;background:linear-gradient(to right,transparent,rgba(240,233,242,.16) 40px,rgba(240,233,242,.16) calc(100% - 40px),transparent)"></div></div><div style="font:500 15px Inter,sans-serif">rule_fade</div><div style="font:12px/1.7 ui-monospace,monospace;color:rgba(240,233,242,.5)">256×1 · no slicing (stretch center only)<br>#f0e9f2 @16%, alpha ramp 48px each end</div></div>
+
+<div><div style="height:96px;display:flex;align-items:center;justify-content:center;background:#100c16;border-radius:8px;margin-bottom:12px"><div style="width:120px;height:64px;border-radius:8px;background:radial-gradient(circle at 50% 50%,rgba(216,31,180,.55),transparent 70%)"></div></div><div style="font:500 15px Inter,sans-serif">glow_accent</div><div style="font:12px/1.7 ui-monospace,monospace;color:rgba(240,233,242,.5)">128×128 · radial alpha, no slicing<br>#d81fb4 core @55% → 0 · card and leader highlights</div></div>
+</div>
+</div>
+</div>
+
+</div>
+<p class="dv-next">Try next: “tighten the board’s right rail” · “show the mulligan and attack-target states on <a class="dv-oid" href="#2a">2a</a>” · “swap the deck editor to a two-column layout”</p>
+</section>
+
+<section class="dv-turn" id="t1">
+<div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">Batsu colorway — foundations + main menu</span></div>
+<div class="dv-opts">
+
+<div class="dv-opt" id="1a">
+<div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>Design system sheet — tokens and component specs at 1080p</div>
+<div class="dv-card" style="width:1400px;padding:56px 64px;background:#17121e">
+
+<div style="display:flex;align-items:flex-end;gap:24px;margin-bottom:8px">
+<div>
+<div class="spec" style="margin-bottom:12px">Nocturne structure · Batsu brand colors</div>
+<h1 style="font-size:52px;margin:0">Design system</h1>
+</div>
+<p style="margin:0 0 6px;font-size:14px;color:rgba(240,233,242,.55);max-width:420px">Same system, same geometry — the accent role now carries Batsu’s magenta, with the logo’s cyan as the secondary field. Unity reads them as literal px at 1920×1080 and doubles cleanly to 4K.</p>
+</div>
+<div style="height:1px;background:linear-gradient(to right,transparent,rgba(240,233,242,.16) 48px,rgba(240,233,242,.16) calc(100% - 48px),transparent);margin:32px 0 40px"></div>
+
+<h3 style="margin:0 0 4px">Palette</h3>
+<p style="font-size:13px;color:rgba(240,233,242,.55);margin:0 0 20px">Dark near-neutral ground, one accent voice. The accent is a line and a glow — never a flood.</p>
+<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:20px">
+<div><div style="height:88px;border-radius:8px;background:#0e3b52;box-shadow:0 0 0 1px #1a7fa0"></div><div style="margin-top:8px;font-size:13px">Secondary</div><div style="font:11px ui-monospace,monospace;color:rgba(240,233,242,.5)">#1a7fa0 · cyan — hero fields, glows</div></div>
+<div><div style="height:88px;border-radius:8px;background:#17121e;box-shadow:0 0 0 1px #473c52"></div><div style="margin-top:8px;font-size:13px">Ground</div><div style="font:11px ui-monospace,monospace;color:rgba(240,233,242,.5)">#17121e · screen bg, board surround</div></div>
+<div><div style="height:88px;border-radius:8px;background:#241d2e;box-shadow:0 0 0 1px #473c52"></div><div style="margin-top:8px;font-size:13px">Surface</div><div style="font:11px ui-monospace,monospace;color:rgba(240,233,242,.5)">#241d2e · panels, rows, inputs</div></div>
+<div><div style="height:88px;border-radius:8px;background:#d81fb4"></div><div style="margin-top:8px;font-size:13px">Accent</div><div style="font:11px ui-monospace,monospace;color:rgba(240,233,242,.5)">#d81fb4 · primary action, focus, selection</div></div>
+<div><div style="height:88px;border-radius:8px;background:#dd6f5f"></div><div style="margin-top:8px;font-size:13px">Danger</div><div style="font:11px ui-monospace,monospace;color:rgba(240,233,242,.5)">#dd6f5f · destructive only · L matches accent</div></div>
+</div>
+<div style="display:grid;grid-template-columns:96px 1fr;gap:12px;align-items:center;margin-bottom:12px">
+<div style="font:11px ui-monospace,monospace;color:rgba(240,233,242,.55)">neutral</div>
+<div style="display:grid;grid-template-columns:repeat(9,1fr);gap:6px">
+<div style="height:40px;border-radius:4px;background:#fbf4fb"></div><div style="height:40px;border-radius:4px;background:#efe4f1"></div><div style="height:40px;border-radius:4px;background:#e2d6e6"></div><div style="height:40px;border-radius:4px;background:#c3b4c8"></div><div style="height:40px;border-radius:4px;background:#a294ab"></div><div style="height:40px;border-radius:4px;background:#8a7c94"></div><div style="height:40px;border-radius:4px;background:#655770"></div><div style="height:40px;border-radius:4px;background:#473c52"></div><div style="height:40px;border-radius:4px;background:#272130"></div>
+</div>
+<div style="font:11px ui-monospace,monospace;color:rgba(240,233,242,.55)">accent</div>
+<div style="display:grid;grid-template-columns:repeat(9,1fr);gap:6px">
+<div style="height:40px;border-radius:4px;background:#fdeaf8"></div><div style="height:40px;border-radius:4px;background:#fbd3f1"></div><div style="height:40px;border-radius:4px;background:#f7a8e4"></div><div style="height:40px;border-radius:4px;background:#ea55c8"></div><div style="height:40px;border-radius:4px;background:#c923a5"></div><div style="height:40px;border-radius:4px;background:#b81c98"></div><div style="height:40px;border-radius:4px;background:#8a1571"></div><div style="height:40px;border-radius:4px;background:#5a1149"></div><div style="height:40px;border-radius:4px;background:#3a0b30"></div>
+</div>
+<div></div>
+<div style="font:11px/1.5 ui-monospace,monospace;color:rgba(240,233,242,.45)">100 → 900. Steps 700–900 for tinted fills, hovers and hairlines on this ground · 500 base · 100–300 for text on those tints. Text on ground is #f0e9f2; muted text is the same at 55%.</div>
+</div>
+
+<div style="height:1px;background:linear-gradient(to right,transparent,rgba(240,233,242,.16) 48px,rgba(240,233,242,.16) calc(100% - 48px),transparent);margin:40px 0"></div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:56px">
+<div>
+<h3 style="margin:0 0 4px">Type</h3>
+<p style="font-size:13px;color:rgba(240,233,242,.55);margin:0 0 20px">Inter, weights 400/500/600 — one family, hierarchy from size and space. Convert Inter-Regular / Inter-Medium / Inter-SemiBold to TMP assets; nothing heavier than 600.</p>
+<div style="display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:baseline;gap:16px"><span class="spec" style="width:150px">96 / 500 / -2%</span><span style="font-size:60px;font-weight:500;letter-spacing:-.02em;line-height:1">Screen title</span></div>
+<div style="display:flex;align-items:baseline;gap:16px"><span class="spec" style="width:150px">40 / 500 / -1.5%</span><span style="font-size:32px;font-weight:500">Section heading</span></div>
+<div style="display:flex;align-items:baseline;gap:16px"><span class="spec" style="width:150px">28 / 500</span><span style="font-size:24px;font-weight:500">Menu row · card name</span></div>
+<div style="display:flex;align-items:baseline;gap:16px"><span class="spec" style="width:150px">20 / 500</span><span style="font-size:18px;font-weight:500">Button label</span></div>
+<div style="display:flex;align-items:baseline;gap:16px"><span class="spec" style="width:150px">16 / 400</span><span style="font-size:15px">Body, log lines, captions</span></div>
+<div style="display:flex;align-items:baseline;gap:16px"><span class="spec" style="width:150px">13 / 600 / +8%</span><span style="font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:rgba(240,233,242,.6)">Eyebrow / zone label</span></div>
+<div style="display:flex;align-items:baseline;gap:16px"><span class="spec" style="width:150px">13 / mono</span><span style="font:13px ui-monospace,Menlo,monospace;color:rgba(240,233,242,.6)">OP13-001 · 51/51 · counters</span></div>
+</div>
+<p style="font-size:12px;color:rgba(240,233,242,.45);margin:16px 0 0">Minimum on-screen size 16px at 1080p. Card-set codes and counters take the mono face (JetBrains Mono) so digits align in columns.</p>
+</div>
+<div>
+<h3 style="margin:0 0 4px">Space, radius, elevation</h3>
+<p style="font-size:13px;color:rgba(240,233,242,.55);margin:0 0 20px">A 6px grid at 1080p. Only these steps — no ad-hoc gaps.</p>
+<div style="display:flex;align-items:flex-end;gap:10px;margin-bottom:24px">
+<div style="text-align:center"><div style="width:6px;height:6px;background:#b81c98;border-radius:2px"></div><div class="spec" style="margin-top:6px">6</div></div>
+<div style="text-align:center"><div style="width:12px;height:12px;background:#b81c98;border-radius:2px"></div><div class="spec" style="margin-top:6px">12</div></div>
+<div style="text-align:center"><div style="width:18px;height:18px;background:#b81c98;border-radius:2px"></div><div class="spec" style="margin-top:6px">18</div></div>
+<div style="text-align:center"><div style="width:24px;height:24px;background:#b81c98;border-radius:2px"></div><div class="spec" style="margin-top:6px">24</div></div>
+<div style="text-align:center"><div style="width:36px;height:36px;background:#b81c98;border-radius:2px"></div><div class="spec" style="margin-top:6px">36</div></div>
+<div style="text-align:center"><div style="width:48px;height:48px;background:#b81c98;border-radius:2px"></div><div class="spec" style="margin-top:6px">48</div></div>
+<div style="text-align:center"><div style="width:72px;height:72px;background:#b81c98;border-radius:2px"></div><div class="spec" style="margin-top:6px">72</div></div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px">
+<div><div style="height:64px;background:#241d2e;border-radius:4px;box-shadow:0 0 0 1px #473c52"></div><div class="spec" style="margin-top:8px">radius 4 · chips, swatches</div></div>
+<div><div style="height:64px;background:#241d2e;border-radius:8px;box-shadow:0 0 0 1px #655770,0 6px 18px rgba(0,0,0,.55)"></div><div class="spec" style="margin-top:8px">radius 8 · buttons, rows</div></div>
+<div><div style="height:64px;background:#241d2e;border-radius:14px;box-shadow:0 0 0 1px #a294ab,0 16px 40px rgba(0,0,0,.65)"></div><div class="spec" style="margin-top:8px">radius 14 · panels, modals</div></div>
+</div>
+<div style="font:12px/1.7 ui-monospace,Menlo,monospace;color:rgba(240,233,242,.55)">
+sm &nbsp;0 0 0 1px #473c52<br>
+md &nbsp;0 0 0 1px #655770, 0 6px 18px rgba(0,0,0,.55)<br>
+lg &nbsp;0 0 0 1px #a294ab, 0 16px 40px rgba(0,0,0,.65)<br>
+<span style="color:rgba(240,233,242,.4)">Elevation on a dark ground is a hairline edge plus ambient darkness — never a stack of heavy shadows.</span>
+</div>
+<p style="font-size:12px;color:rgba(240,233,242,.45);margin:16px 0 0">Screen margin 72. Panel padding 24. Gap between sibling controls 12; between groups 36.</p>
+</div>
+</div>
+
+<div style="height:1px;background:linear-gradient(to right,transparent,rgba(240,233,242,.16) 48px,rgba(240,233,242,.16) calc(100% - 48px),transparent);margin:40px 0"></div>
+
+<h3 style="margin:0 0 4px">Components</h3>
+<p style="font-size:13px;color:rgba(240,233,242,.55);margin:0 0 24px">Drawn at 1080p size. Primary actions are an accent outline on transparent, not a fill.</p>
+
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:36px 40px">
+
+<div>
+<div class="spec" style="margin-bottom:12px">Button · 56h · pad 0 28 · r8 · label 20/500</div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;gap:12px"><button style="height:56px;padding:0 28px;border-radius:8px;border:1px solid #d81fb4;background:transparent;color:#d81fb4;font:500 18px Inter,sans-serif;cursor:pointer">Multiplayer</button><span style="font:11px ui-monospace,monospace;color:rgba(240,233,242,.45)">primary · normal</span></div>
+<div style="display:flex;align-items:center;gap:12px"><button style="height:56px;padding:0 28px;border-radius:8px;border:1px solid #d81fb4;background:rgba(216,31,180,.12);color:#ea55c8;font:500 18px Inter,sans-serif;cursor:pointer">Multiplayer</button><span style="font:11px ui-monospace,monospace;color:rgba(240,233,242,.45)">hover · fill 12%</span></div>
+<div style="display:flex;align-items:center;gap:12px"><button style="height:56px;padding:0 28px;border-radius:8px;border:1px solid #ea55c8;background:rgba(216,31,180,.22);color:#f7a8e4;font:500 18px Inter,sans-serif;cursor:pointer">Multiplayer</button><span style="font:11px ui-monospace,monospace;color:rgba(240,233,242,.45)">pressed · fill 22%</span></div>
+<div style="display:flex;align-items:center;gap:12px"><button style="height:56px;padding:0 28px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:#f0e9f2;font:500 18px Inter,sans-serif;cursor:pointer">Settings</button><span style="font:11px ui-monospace,monospace;color:rgba(240,233,242,.45)">secondary</span></div>
+<div style="display:flex;align-items:center;gap:12px"><button style="height:56px;padding:0 28px;border-radius:8px;border:1px solid #a294ab;background:transparent;color:#e2d6e6;font:500 18px Inter,sans-serif;cursor:pointer">Clear deck</button><span style="font:11px ui-monospace,monospace;color:rgba(240,233,242,.45)">destructive → confirm modal</span></div>
+<div style="display:flex;align-items:center;gap:12px"><button disabled style="height:56px;padding:0 28px;border-radius:8px;border:1px solid #d81fb4;background:transparent;color:#d81fb4;font:500 18px Inter,sans-serif;opacity:.45">Start</button><span style="font:11px ui-monospace,monospace;color:rgba(240,233,242,.45)">disabled · 45%</span></div>
+<div style="display:flex;align-items:center;gap:12px">
+<button style="width:48px;height:48px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:#f0e9f2;cursor:pointer"><svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M155.51 24.81a8 8 0 0 0-8.42.88L77.25 80H32a16 16 0 0 0-16 16v64a16 16 0 0 0 16 16h45.25l69.84 54.31A8 8 0 0 0 160 224V32a8 8 0 0 0-4.49-7.19M32 96h40v64H32Z"></path></svg></button>
+<span style="font:11px ui-monospace,monospace;color:rgba(240,233,242,.45)">icon · 48×48 · Phosphor 20</span>
+</div>
+</div>
+</div>
+
+<div>
+<div class="spec" style="margin-bottom:12px">Panel · r14 · pad 24 · elev md</div>
+<div style="background:#241d2e;border-radius:14px;padding:24px;box-shadow:0 0 0 1px #655770,0 6px 18px rgba(0,0,0,.55)">
+<div style="font:600 12px Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:rgba(240,233,242,.6);margin-bottom:12px">Combat log</div>
+<div style="font:15px/1.6 Inter,sans-serif;color:rgba(240,233,242,.85)">You draw 1 DON!!<br><span style="color:rgba(240,233,242,.5)">Opponent leader — Portgas D. Ace <span style="font-family:ui-monospace,monospace;font-size:13px">[OP16-001]</span></span></div>
+</div>
+<div class="spec" style="margin:24px 0 12px">List row · 72h · r8 · gap 6</div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="height:72px;border-radius:8px;background:#241d2e;display:flex;align-items:center;padding:0 18px;gap:14px"><div style="width:40px;height:56px;border-radius:4px;background:#473c52"></div><div style="flex:1"><div style="font:500 18px Inter,sans-serif">Luffy#0001</div><div style="font:13px ui-monospace,monospace;color:rgba(240,233,242,.5)">2026-08-08 · game 1</div></div><span class="tag tag-accent">WIN</span></div>
+<div style="height:72px;border-radius:8px;background:#241d2e;display:flex;align-items:center;padding:0 18px;gap:14px;box-shadow:inset 0 0 0 1px #d81fb4,inset 3px 0 0 #d81fb4"><div style="width:40px;height:56px;border-radius:4px;background:#473c52"></div><div style="flex:1"><div style="font:500 18px Inter,sans-serif">Zoro#0002</div><div style="font:13px ui-monospace,monospace;color:rgba(240,233,242,.5)">selected · 1px accent + 3px mark</div></div><span class="tag tag-neutral">LOSS</span></div>
+</div>
+</div>
+
+<div>
+<div class="spec" style="margin-bottom:12px">Toggle · track 52×28 · knob 22 · r14</div>
+<div style="display:flex;flex-direction:column;gap:14px;margin-bottom:24px">
+<div style="display:flex;align-items:center;gap:14px"><div style="width:52px;height:28px;border-radius:14px;background:rgba(216,31,180,.22);box-shadow:inset 0 0 0 1px #d81fb4;position:relative"><div style="position:absolute;top:3px;left:27px;width:22px;height:22px;border-radius:11px;background:#d81fb4"></div></div><span style="font-size:15px">On</span></div>
+<div style="display:flex;align-items:center;gap:14px"><div style="width:52px;height:28px;border-radius:14px;background:#272130;box-shadow:inset 0 0 0 1px rgba(240,233,242,.16);position:relative"><div style="position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:11px;background:#8a7c94"></div></div><span style="font-size:15px;color:rgba(240,233,242,.6)">Off</span></div>
+</div>
+<div class="spec" style="margin-bottom:12px">Input / dropdown · 48h · r8</div>
+<div style="display:flex;flex-direction:column;gap:12px;margin-bottom:24px">
+<div style="height:48px;border-radius:8px;background:#241d2e;border:1px solid rgba(240,233,242,.16);display:flex;align-items:center;padding:0 14px;gap:10px;color:rgba(240,233,242,.5);font-size:15px"><svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor"><path d="m229.66 218.34-50.07-50.06a88.11 88.11 0 1 0-11.31 11.31l50.06 50.07a8 8 0 0 0 11.32-11.32M40 112a72 72 0 1 1 72 72 72.08 72.08 0 0 1-72-72"></path></svg>Search cards…</div>
+<div style="height:48px;border-radius:8px;background:#241d2e;border:1px solid #d81fb4;display:flex;align-items:center;padding:0 14px;justify-content:space-between;font-size:15px">G Shanks Take 1<svg width="16" height="16" viewBox="0 0 256 256" fill="#d81fb4"><path d="M213.66 101.66l-80 80a8 8 0 0 1-11.32 0l-80-80A8 8 0 0 1 53.66 90.34L128 164.69l74.34-74.35a8 8 0 0 1 11.32 11.32"></path></svg></div>
+</div>
+<div class="spec" style="margin-bottom:12px">Tabs · 44h · 2px accent underline</div>
+<div style="display:flex;gap:24px;border-bottom:1px solid rgba(240,233,242,.12);margin-bottom:24px">
+<div style="height:44px;display:flex;align-items:center;font:500 16px Inter,sans-serif;color:#d81fb4;box-shadow:inset 0 -2px 0 #d81fb4">Deck</div>
+<div style="height:44px;display:flex;align-items:center;font:500 16px Inter,sans-serif;color:rgba(240,233,242,.55)">Browse</div>
+<div style="height:44px;display:flex;align-items:center;font:500 16px Inter,sans-serif;color:rgba(240,233,242,.55)">Alt arts</div>
+</div>
+<div class="spec" style="margin-bottom:12px">Tooltip · r8 · pad 12 16 · elev lg</div>
+<div style="display:inline-block;background:#241d2e;border-radius:8px;padding:12px 16px;box-shadow:0 0 0 1px #a294ab,0 16px 40px rgba(0,0,0,.65);font-size:14px;max-width:280px">Automatically skip the block step when you have no blockers.</div>
+</div>
+</div>
+
+<p style="font-size:12px;color:rgba(240,233,242,.45);margin:32px 0 0;max-width:900px">Every interactive element gets the same three states: hover = accent fill 12%, pressed = accent fill 22% with the border stepping to #ea55c8, keyboard/gamepad focus = 2px #d81fb4 outline at 2px offset. Disabled is 45% opacity, never a different color.</p>
+</div>
+</div>
+
+<div class="dv-opt" id="1b">
+<div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a>Main menu — “Log” · flush-left ledger of destinations</div>
+<div class="dv-card" style="width:1920px;height:1080px;position:relative;background:#17121e;overflow:hidden;font-family:Inter,sans-serif;color:#f0e9f2">
+<div style="position:absolute;inset:0;background:radial-gradient(1100px 800px at 78% 18%,rgba(26,127,160,.5),transparent 70%),radial-gradient(700px 600px at 8% 100%,rgba(216,31,180,.14),transparent 70%)"></div>
+<div style="position:absolute;inset:0;background:linear-gradient(90deg,#17121e 22%,rgba(23,18,30,.2) 60%,rgba(23,18,30,.75))"></div>
+
+<div style="position:absolute;left:1080px;top:96px;width:744px;height:744px;border-radius:14px;border:1px dashed rgba(240,233,242,.22);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:rgba(240,233,242,.4)">
+<svg width="40" height="40" viewBox="0 0 256 256" fill="currentColor"><path d="M216 40H40a16 16 0 0 0-16 16v144a16 16 0 0 0 16 16h176a16 16 0 0 0 16-16V56a16 16 0 0 0-16-16m0 16v102.75l-26.07-26.06a16 16 0 0 0-22.63 0l-20 20-44-44a16 16 0 0 0-22.62 0L40 149.37V56ZM40 172l52-52 80 80H40Zm176 28h-21.37l-36-36 20-20L216 181.38V200ZM144 100a12 12 0 1 1 12 12 12 12 0 0 1-12-12"></path></svg>
+<div style="font-size:15px">Key art · 744×744, shot on black</div>
+<div style="font:12px ui-monospace,monospace">rendered through .lighten — dark values fall away</div>
+</div>
+
+<div style="position:absolute;left:120px;top:132px;width:820px">
+<div style="font:600 13px Inter,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#ea55c8;margin-bottom:24px">One Piece Card Game · Simulator</div>
+<div style="font-size:96px;font-weight:500;letter-spacing:-.02em;line-height:.95;margin-bottom:18px">OPTCGSim</div>
+<div style="display:flex;align-items:center;gap:18px;font-size:16px;color:rgba(240,233,242,.55)">
+<span>Welcome back, <span style="color:#f0e9f2">Luffy#0001</span></span>
+<span style="width:44px;height:1px;background:linear-gradient(90deg,rgba(240,233,242,.3),transparent)"></span>
+<span style="font-family:ui-monospace,monospace;font-size:13px">1.42a.34 · LogPose 2.1</span>
+</div>
+</div>
+
+<div style="position:absolute;left:120px;top:414px;width:760px;display:flex;flex-direction:column;gap:6px">
+<div class="mm-row" style="height:96px;border-radius:8px;box-shadow:inset 0 0 0 1px #d81fb4;background:rgba(216,31,180,.1);display:flex;align-items:center;padding:0 28px;gap:24px;cursor:pointer">
+<div style="font:600 13px ui-monospace,monospace;color:#d81fb4;width:28px">01</div>
+<div style="flex:1"><div style="font-size:28px;font-weight:500;color:#f7a8e4">Multiplayer</div><div style="font-size:15px;color:rgba(240,233,242,.6)">Standard · OP17 · Unlimited · Private lobbies</div></div>
+<div style="display:flex;align-items:center;gap:10px;font-size:14px;color:rgba(240,233,242,.6)"><span style="width:8px;height:8px;border-radius:4px;background:#d81fb4;box-shadow:0 0 12px #d81fb4"></span>1 284 online</div>
+<svg class="mm-chev" width="24" height="24" viewBox="0 0 256 256" fill="#d81fb4" style="transition:.15s"><path d="m181.66 133.66-80 80a8 8 0 0 1-11.32-11.32L164.69 128 90.34 53.66a8 8 0 0 1 11.32-11.32l80 80a8 8 0 0 1 0 11.32"></path></svg>
+</div>
+<div class="mm-row" style="height:84px;border-radius:8px;background:#241d2e;display:flex;align-items:center;padding:0 28px;gap:24px;cursor:pointer">
+<div style="font:600 13px ui-monospace,monospace;color:rgba(240,233,242,.45);width:28px">02</div>
+<div style="flex:1"><div style="font-size:24px;font-weight:500">Solo play</div><div style="font-size:15px;color:rgba(240,233,242,.55)">Goldfish both sides · load a saved state</div></div>
+<svg class="mm-chev" width="22" height="22" viewBox="0 0 256 256" fill="rgba(240,233,242,.5)" style="opacity:.5;transition:.15s"><path d="m181.66 133.66-80 80a8 8 0 0 1-11.32-11.32L164.69 128 90.34 53.66a8 8 0 0 1 11.32-11.32l80 80a8 8 0 0 1 0 11.32"></path></svg>
+</div>
+<div class="mm-row" style="height:84px;border-radius:8px;background:#241d2e;display:flex;align-items:center;padding:0 28px;gap:24px;cursor:pointer">
+<div style="font:600 13px ui-monospace,monospace;color:rgba(240,233,242,.45);width:28px">03</div>
+<div style="flex:1"><div style="font-size:24px;font-weight:500">Deck editor</div><div style="font-size:15px;color:rgba(240,233,242,.55)">14 decks · last edited G Shanks Take 1</div></div>
+<svg class="mm-chev" width="22" height="22" viewBox="0 0 256 256" fill="rgba(240,233,242,.5)" style="opacity:.5;transition:.15s"><path d="m181.66 133.66-80 80a8 8 0 0 1-11.32-11.32L164.69 128 90.34 53.66a8 8 0 0 1 11.32-11.32l80 80a8 8 0 0 1 0 11.32"></path></svg>
+</div>
+<div class="mm-row" style="height:84px;border-radius:8px;background:#241d2e;display:flex;align-items:center;padding:0 28px;gap:24px;cursor:pointer">
+<div style="font:600 13px ui-monospace,monospace;color:rgba(240,233,242,.45);width:28px">04</div>
+<div style="flex:1"><div style="font-size:24px;font-weight:500">Match history <span class="tag tag-outline" style="margin-left:10px;vertical-align:middle">LogPose</span></div><div style="font-size:15px;color:rgba(240,233,242,.55)">6 games · 3W 3L · replays available</div></div>
+<svg class="mm-chev" width="22" height="22" viewBox="0 0 256 256" fill="rgba(240,233,242,.5)" style="opacity:.5;transition:.15s"><path d="m181.66 133.66-80 80a8 8 0 0 1-11.32-11.32L164.69 128 90.34 53.66a8 8 0 0 1 11.32-11.32l80 80a8 8 0 0 1 0 11.32"></path></svg>
+</div>
+</div>
+
+<div style="position:absolute;left:120px;bottom:88px;display:flex;align-items:center;gap:12px">
+<button style="height:48px;padding:0 22px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:#f0e9f2;font:500 16px Inter,sans-serif;display:inline-flex;align-items:center;gap:10px;cursor:pointer"><svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor"><path d="M128 24a104 104 0 1 0 104 104A104.11 104.11 0 0 0 128 24m0 192a88 88 0 1 1 88-88 88.1 88.1 0 0 1-88 88m40-68a12 12 0 1 1-12-12 12 12 0 0 1 12 12m-56 0a12 12 0 1 1-12-12 12 12 0 0 1 12 12"></path></svg>Settings</button>
+<button style="width:48px;height:48px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:#f0e9f2;cursor:pointer"><svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M155.51 24.81a8 8 0 0 0-8.42.88L77.25 80H32a16 16 0 0 0-16 16v64a16 16 0 0 0 16 16h45.25l69.84 54.31A8 8 0 0 0 160 224V32a8 8 0 0 0-4.49-7.19M32 96h40v64H32Z"></path></svg></button>
+<button style="width:48px;height:48px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:rgba(240,233,242,.45);cursor:pointer"><svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M212 32a12 12 0 0 0-12 12v107.68l-56-31.11V44a12 12 0 0 0-17.83-10.47l-96 53.33a12 12 0 0 0 0 21l96 53.33A12 12 0 0 0 144 152v-4.43l56 31.11V212a12 12 0 0 0 24 0V44a12 12 0 0 0-12-12"></path></svg></button>
+<span style="width:1px;height:32px;background:rgba(240,233,242,.14);margin:0 6px"></span>
+<button style="height:48px;padding:0 22px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:rgba(240,233,242,.7);font:500 16px Inter,sans-serif;cursor:pointer">Open OPBounty</button>
+<button style="height:48px;padding:0 22px;border-radius:8px;border:1px solid #a294ab;background:transparent;color:#e2d6e6;font:500 16px Inter,sans-serif;cursor:pointer">Quit</button>
+</div>
+
+<div style="position:absolute;right:120px;bottom:88px;width:744px;display:flex;gap:12px">
+<div style="flex:1;background:#241d2e;border-radius:8px;padding:18px 20px;box-shadow:0 0 0 1px #473c52">
+<div style="font:600 12px Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#ea55c8;margin-bottom:8px">Patch 1.42a</div>
+<div style="font-size:15px;color:rgba(240,233,242,.75);line-height:1.5">OP17 legal list live · save-state loading out of beta</div>
+</div>
+<div style="width:220px;background:#241d2e;border-radius:8px;padding:18px 20px;box-shadow:0 0 0 1px #473c52">
+<div style="font:600 12px Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:rgba(240,233,242,.5);margin-bottom:8px">Season record</div>
+<div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:32px;font-weight:500">3</span><span style="font-size:15px;color:rgba(240,233,242,.5)">W</span><span style="font-size:32px;font-weight:500;margin-left:6px">3</span><span style="font-size:15px;color:rgba(240,233,242,.5)">L</span></div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="1c">
+<div class="dv-olabel"><a class="dv-oid" href="#1c">1c</a>Main menu — “Chart” · three destination cards over a lit field</div>
+<div class="dv-card" style="width:1920px;height:1080px;position:relative;background:#17121e;overflow:hidden;font-family:Inter,sans-serif;color:#f0e9f2">
+<div style="position:absolute;inset:0;height:520px;background:linear-gradient(160deg,#0e3b52,#17121e 78%)"></div>
+<div style="position:absolute;inset:0;background:radial-gradient(900px 520px at 50% -6%,rgba(20,96,127,.85),transparent 70%)"></div>
+
+<div style="position:absolute;left:72px;right:72px;top:0;height:96px;display:flex;align-items:center;gap:28px">
+<div style="font-size:20px;font-weight:500;letter-spacing:-.01em">OPTCGSim</div>
+<span class="tag tag-outline">LogPose 2.1</span>
+<div style="flex:1"></div>
+<div style="display:flex;align-items:center;gap:10px;font-size:15px;color:rgba(240,233,242,.7)"><span style="width:8px;height:8px;border-radius:4px;background:#d81fb4;box-shadow:0 0 12px #d81fb4"></span>1 284 online</div>
+<span style="width:1px;height:28px;background:rgba(240,233,242,.14)"></span>
+<div style="display:flex;align-items:center;gap:12px"><div style="width:36px;height:36px;border-radius:8px;background:#473c52"></div><div><div style="font-size:15px;font-weight:500">Luffy#0001</div><div style="font:12px ui-monospace,monospace;color:rgba(240,233,242,.5)">3W · 3L</div></div></div>
+<button style="width:48px;height:48px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:#f0e9f2;cursor:pointer"><svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M128 24a104 104 0 1 0 104 104A104.11 104.11 0 0 0 128 24m0 192a88 88 0 1 1 88-88 88.1 88.1 0 0 1-88 88m40-68a12 12 0 1 1-12-12 12 12 0 0 1 12 12m-56 0a12 12 0 1 1-12-12 12 12 0 0 1 12 12"></path></svg></button>
+</div>
+
+<div style="position:absolute;left:72px;top:150px;width:900px">
+<div style="font:600 13px Inter,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#ea55c8;margin-bottom:20px">Set sail</div>
+<div style="font-size:72px;font-weight:500;letter-spacing:-.02em;line-height:1">Where to today?</div>
+</div>
+
+<div style="position:absolute;left:72px;right:72px;top:376px;display:flex;gap:24px">
+<div style="flex:1.35;height:392px;border-radius:14px;background:linear-gradient(180deg,rgba(216,31,180,.16),rgba(36,29,46,.92));box-shadow:inset 0 0 0 1px #d81fb4,0 16px 40px rgba(0,0,0,.5);padding:32px;display:flex;flex-direction:column">
+<div style="font:600 12px Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#ea55c8">Play now</div>
+<div style="font-size:40px;font-weight:500;margin:12px 0 8px">Multiplayer</div>
+<div style="font-size:16px;color:rgba(240,233,242,.7);max-width:420px">Queue Standard or OP17, jump into Unlimited, or host a private lobby.</div>
+<div style="flex:1"></div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px">
+<span class="tag tag-neutral">Standard</span><span class="tag tag-neutral">OP17</span><span class="tag tag-neutral">Extra Regulation</span><span class="tag tag-neutral">Unlimited</span><span class="tag tag-neutral">Korean</span><span class="tag tag-neutral">Private</span>
+</div>
+<div style="display:flex;align-items:center;gap:12px">
+<button style="height:56px;padding:0 28px;border-radius:8px;border:1px solid #d81fb4;background:rgba(216,31,180,.12);color:#ea55c8;font:500 18px Inter,sans-serif;cursor:pointer">Queue Standard</button>
+<button style="height:56px;padding:0 28px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:#f0e9f2;font:500 18px Inter,sans-serif;cursor:pointer">All formats</button>
+</div>
+</div>
+<div style="flex:1;height:392px;border-radius:14px;background:#241d2e;box-shadow:0 0 0 1px #473c52;padding:32px;display:flex;flex-direction:column">
+<div style="font:600 12px Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:rgba(240,233,242,.5)">Build</div>
+<div style="font-size:32px;font-weight:500;margin:12px 0 8px">Deck editor</div>
+<div style="font-size:16px;color:rgba(240,233,242,.7)">14 decks saved</div>
+<div style="flex:1;margin:24px 0;border-radius:8px;border:1px dashed rgba(240,233,242,.2);display:flex;align-items:center;justify-content:center;font-size:14px;color:rgba(240,233,242,.4);text-align:center;padding:12px">Leader thumbnails of<br>recent decks (game content)</div>
+<button style="height:48px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:#f0e9f2;font:500 16px Inter,sans-serif;cursor:pointer">Open G Shanks Take 1</button>
+</div>
+<div style="flex:1;height:392px;border-radius:14px;background:#241d2e;box-shadow:0 0 0 1px #473c52;padding:32px;display:flex;flex-direction:column">
+<div style="font:600 12px Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:rgba(240,233,242,.5)">Practice</div>
+<div style="font-size:32px;font-weight:500;margin:12px 0 8px">Solo play</div>
+<div style="font-size:16px;color:rgba(240,233,242,.7)">Pilot both sides, or resume a saved state</div>
+<div style="flex:1"></div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="height:48px;border-radius:8px;background:#17121e;border:1px solid rgba(240,233,242,.16);display:flex;align-items:center;justify-content:space-between;padding:0 14px;font-size:15px">RG Luffy<svg width="16" height="16" viewBox="0 0 256 256" fill="rgba(240,233,242,.6)"><path d="M213.66 101.66l-80 80a8 8 0 0 1-11.32 0l-80-80A8 8 0 0 1 53.66 90.34L128 164.69l74.34-74.35a8 8 0 0 1 11.32 11.32"></path></svg></div>
+<div style="height:48px;border-radius:8px;background:#17121e;border:1px solid rgba(240,233,242,.16);display:flex;align-items:center;justify-content:space-between;padding:0 14px;font-size:15px">Bro ioeven know ace<svg width="16" height="16" viewBox="0 0 256 256" fill="rgba(240,233,242,.6)"><path d="M213.66 101.66l-80 80a8 8 0 0 1-11.32 0l-80-80A8 8 0 0 1 53.66 90.34L128 164.69l74.34-74.35a8 8 0 0 1 11.32 11.32"></path></svg></div>
+<button style="height:48px;border-radius:8px;border:1px solid #d81fb4;background:transparent;color:#d81fb4;font:500 16px Inter,sans-serif;cursor:pointer">Start match</button>
+</div>
+</div>
+</div>
+
+<div style="position:absolute;left:72px;right:72px;bottom:72px;display:flex;align-items:center;gap:12px">
+<div style="display:flex;gap:6px;flex:1">
+<div style="height:72px;flex:1;border-radius:8px;background:rgba(36,29,46,.7);box-shadow:0 0 0 1px #473c52;display:flex;align-items:center;padding:0 20px;gap:14px;cursor:pointer"><svg width="20" height="20" viewBox="0 0 256 256" fill="#d81fb4"><path d="M128 24a104 104 0 1 0 104 104A104.11 104.11 0 0 0 128 24m0 192a88 88 0 1 1 88-88 88.1 88.1 0 0 1-88 88m64-88a8 8 0 0 1-8 8h-56a8 8 0 0 1-8-8V72a8 8 0 0 1 16 0v48h48a8 8 0 0 1 8 8"></path></svg><div><div style="font-size:17px;font-weight:500">Match history</div><div style="font-size:13px;color:rgba(240,233,242,.5)">6 games · replays</div></div></div>
+<div style="height:72px;flex:1;border-radius:8px;background:rgba(36,29,46,.7);box-shadow:0 0 0 1px #473c52;display:flex;align-items:center;padding:0 20px;gap:14px;cursor:pointer"><svg width="20" height="20" viewBox="0 0 256 256" fill="#d81fb4"><path d="M232 64v128a16 16 0 0 1-16 16H40a16 16 0 0 1-16-16V64a16 16 0 0 1 16-16h176a16 16 0 0 1 16 16m-16 0H40v128h176Z"></path></svg><div><div style="font-size:17px;font-weight:500">Alt arts</div><div style="font-size:13px;color:rgba(240,233,242,.5)">5 cards customised</div></div></div>
+<div style="height:72px;flex:1;border-radius:8px;background:rgba(36,29,46,.7);box-shadow:0 0 0 1px #473c52;display:flex;align-items:center;padding:0 20px;gap:14px;cursor:pointer"><svg width="20" height="20" viewBox="0 0 256 256" fill="#d81fb4"><path d="M240 128a15.74 15.74 0 0 1-7.6 13.51L88.32 229.65a15.91 15.91 0 0 1-16.2.3A15.74 15.74 0 0 1 64 216.13V39.87a15.74 15.74 0 0 1 8.12-13.82 15.91 15.91 0 0 1 16.2.3l144.08 88.14A15.74 15.74 0 0 1 240 128"></path></svg><div><div style="font-size:17px;font-weight:500">Replays</div><div style="font-size:13px;color:rgba(240,233,242,.5)">Step through any logged game</div></div></div>
+</div>
+<span style="width:1px;height:40px;background:rgba(240,233,242,.14);margin:0 12px"></span>
+<button style="height:48px;padding:0 22px;border-radius:8px;border:1px solid rgba(240,233,242,.16);background:transparent;color:rgba(240,233,242,.7);font:500 16px Inter,sans-serif;cursor:pointer">Open OPBounty</button>
+<button style="height:48px;padding:0 22px;border-radius:8px;border:1px solid #a294ab;background:transparent;color:#e2d6e6;font:500 16px Inter,sans-serif;cursor:pointer">Quit</button>
+<span style="font:12px ui-monospace,monospace;color:rgba(240,233,242,.4);margin-left:12px">1.42a.34</span>
+</div>
+</div>
+</div>
+
+</div>
+<p class="dv-next">Try next: “go with <a class="dv-oid" href="#1b">1b</a> and do the board next” · “merge <a class="dv-oid" href="#1c">1c</a>’s top bar into <a class="dv-oid" href="#1b">1b</a>” · “warm the palette up before I approve”</p>
+</section>
+
+</x-dc>
+</body>
+</html>

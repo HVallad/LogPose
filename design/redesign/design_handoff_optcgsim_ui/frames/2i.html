@@ -1,0 +1,67 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../_ds/nocturne-f41e4d5b-5acc-4880-bf72-938580608e84/styles.css"><style>body{margin:0;background:#0f111c}
+body{margin:0;background:#0f111c}
+.dv-turn{padding:40px 44px 32px;border-bottom:1px solid rgba(233,233,237,.08);scroll-margin-top:16px}
+.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 20px}
+.dv-tid{font:600 10px ui-monospace,Menlo,monospace;padding:3px 7px;background:#e9e9ed;color:#161826;border-radius:4px;text-decoration:none}
+.dv-tname{font:500 13px/1.2 Inter,system-ui,sans-serif;color:#e9e9ed}
+.dv-opts{display:flex;flex-wrap:wrap;gap:36px;align-items:flex-start}
+.dv-opt{flex:none;display:flex;flex-direction:column;gap:9px;scroll-margin-top:16px}
+.dv-oid{font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(233,233,237,.12);color:#e9e9ed;border-radius:5px;text-decoration:none}
+.dv-olabel{display:flex;align-items:baseline;gap:8px;font:400 11px/1.3 Inter,system-ui,sans-serif;color:rgba(233,233,237,.55)}
+.dv-card{max-width:100%;background:#161826;border:1px solid rgba(233,233,237,.1);border-radius:8px;box-shadow:0 16px 40px rgba(0,0,0,.65);overflow:hidden}
+.dv-opt:target .dv-oid{background:#9184d9;color:#161826}
+.dv-next{margin:22px 0 0;font:12px/1.5 Inter,system-ui,sans-serif;color:rgba(233,233,237,.5)}
+a{color:#9184d9}a:hover{color:#b5abfc}
+.spec{font:600 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.06em;color:#9184d9;text-transform:uppercase}
+.mm-row:hover{background:linear-gradient(90deg,rgba(145,132,217,.14),transparent 70%)}
+.mm-row:hover .mm-chev{opacity:1;transform:translateX(4px)}
+</style></head><body><div class="dv-card" style="width:1400px;padding:56px 64px;background:#161826">
+<div class="spec" style="margin-bottom:12px">9-slice textures · authored at 1080p size, exported ×2 for 4K</div>
+<h2 style="margin:0 0 8px">Sprite manifest</h2>
+<p style="font-size:14px;color:rgba(233,233,237,.55);margin:0 0 36px;max-width:760px">Slice margins are given as L / T / R / B. Every fill is a flat token color plus, where noted, a 1px inner edge — no gradients baked into the texture, so tinting per-state stays possible in Unity.</p>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:32px 28px">
+
+<div><div style="height:96px;display:flex;align-items:center;justify-content:center;background:#0f111c;border-radius:8px;margin-bottom:12px"><div style="width:200px;height:64px;border-radius:14px;background:#232532;box-shadow:0 0 0 1px #3f424d"></div></div><div style="font:500 15px Inter,sans-serif">panel_surface</div><div style="font:12px/1.7 ui-monospace,monospace;color:rgba(233,233,237,.5)">64×64 · r14 · 18/18/18/18<br>#232532 + 1px #3f424d</div></div>
+
+<div><div style="height:96px;display:flex;align-items:center;justify-content:center;background:#0f111c;border-radius:8px;margin-bottom:12px"><div style="width:200px;height:56px;border-radius:8px;border:1px solid #9184d9"></div></div><div style="font:500 15px Inter,sans-serif">btn_primary_normal</div><div style="font:12px/1.7 ui-monospace,monospace;color:rgba(233,233,237,.5)">48×48 · r8 · 12/12/12/12<br>transparent + 1px #9184d9</div></div>
+
+<div><div style="height:96px;display:flex;align-items:center;justify-content:center;background:#0f111c;border-radius:8px;margin-bottom:12px"><div style="width:200px;height:56px;border-radius:8px;border:1px solid #9184d9;background:rgba(145,132,217,.12)"></div></div><div style="font:500 15px Inter,sans-serif">btn_primary_hover</div><div style="font:12px/1.7 ui-monospace,monospace;color:rgba(233,233,237,.5)">48×48 · r8 · 12/12/12/12<br>#9184d9 @ 12% + 1px #9184d9</div></div>
+
+<div><div style="height:96px;display:flex;align-items:center;justify-content:center;background:#0f111c;border-radius:8px;margin-bottom:12px"><div style="width:200px;height:56px;border-radius:8px;border:1px solid #b5abfc;background:rgba(145,132,217,.22)"></div></div><div style="font:500 15px Inter,sans-serif">btn_primary_pressed</div><div style="font:12px/1.7 ui-monospace,monospace;color:rgba(233,233,237,.5)">48×48 · r8 · 12/12/12/12<br>#9184d9 @ 22% + 1px #b5abfc</div></div>
+
+<div><div style="height:96px;display:flex;align-items:center;justify-content:center;background:#0f111c;border-radius:8px;margin-bottom:12px"><div style="width:200px;height:56px;border-radius:8px;border:1px solid rgba(233,233,237,.16)"></div></div><div style="font:500 15px Inter,sans-serif">btn_secondary_normal</div><div style="font:12px/1.7 ui-monospace,monospace;color:rgba(233,233,237,.5)">48×48 · r8 · 12/12/12/12<br>transparent + 1px #e9e9ed @16%</div></div>
+
+<div><div style="height:96px;display:flex;align-items:center;justify-content:center;background:#0f111c;border-radius:8px;margin-bottom:12px"><div style="width:200px;height:56px;border-radius:8px;border:1px solid #dd6f5f"></div></div><div style="font:500 15px Inter,sans-serif">btn_danger_normal</div><div style="font:12px/1.7 ui-monospace,monospace;color:rgba(233,233,237,.5)">48×48 · r8 · 12/12/12/12<br>transparent + 1px #dd6f5f</div></div>
+
+<div><div style="height:96px;display:flex;align-items:center;justify-content:center;background:#0f111c;border-radius:8px;margin-bottom:12px"><div style="width:200px;height:48px;border-radius:8px;background:#232532;border:1px solid rgba(233,233,237,.16)"></div></div><div style="font:500 15px Inter,sans-serif">input_field</div><div style="font:12px/1.7 ui-monospace,monospace;color:rgba(233,233,237,.5)">40×40 · r8 · 10/10/10/10<br>#232532 + 1px #e9e9ed @16%</div></div>
+
+<div><div style="height:96px;display:flex;align-items:center;justify-content:center;background:#0f111c;border-radius:8px;margin-bottom:12px"><div style="width:200px;height:48px;border-radius:8px;background:#232532;border:1px solid #9184d9"></div></div><div style="font:500 15px Inter,sans-serif">input_field_focus</div><div style="font:12px/1.7 ui-monospace,monospace;color:rgba(233,233,237,.5)">40×40 · r8 · 10/10/10/10<br>#232532 + 1px #9184d9</div></div>
+
+<div><div style="height:96px;display:flex;align-items:center;justify-content:center;background:#0f111c;border-radius:8px;margin-bottom:12px"><div style="width:200px;height:72px;border-radius:8px;background:#161826;box-shadow:inset 0 0 0 1px rgba(233,233,237,.06)"></div></div><div style="font:500 15px Inter,sans-serif">row_default</div><div style="font:12px/1.7 ui-monospace,monospace;color:rgba(233,233,237,.5)">32×32 · r8 · 9/9/9/9<br>#161826 (on panel) / #232532 (on ground)</div></div>
+
+<div><div style="height:96px;display:flex;align-items:center;justify-content:center;background:#0f111c;border-radius:8px;margin-bottom:12px"><div style="width:200px;height:72px;border-radius:8px;background:rgba(145,132,217,.1);box-shadow:inset 0 0 0 1px #9184d9,inset 3px 0 0 #9184d9"></div></div><div style="font:500 15px Inter,sans-serif">row_selected</div><div style="font:12px/1.7 ui-monospace,monospace;color:rgba(233,233,237,.5)">32×32 · r8 · 9/9/9/9<br>#9184d9 @10% + 1px #9184d9 + 3px left mark</div></div>
+
+<div><div style="height:96px;display:flex;align-items:center;justify-content:center;background:#0f111c;border-radius:8px;margin-bottom:12px"><div style="width:52px;height:28px;border-radius:14px;background:rgba(145,132,217,.22);box-shadow:inset 0 0 0 1px #9184d9;position:relative"><div style="position:absolute;top:3px;left:27px;width:22px;height:22px;border-radius:11px;background:#9184d9"></div></div></div><div style="font:500 15px Inter,sans-serif">toggle_track_on + toggle_knob</div><div style="font:12px/1.7 ui-monospace,monospace;color:rgba(233,233,237,.5)">track 52×28 r14 · 14/14/14/14<br>knob 22×22 circle, no slicing</div></div>
+
+<div><div style="height:96px;display:flex;align-items:center;justify-content:center;background:#0f111c;border-radius:8px;margin-bottom:12px"><div style="width:52px;height:28px;border-radius:14px;background:#292b31;box-shadow:inset 0 0 0 1px rgba(233,233,237,.16);position:relative"><div style="position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:11px;background:#75798c"></div></div></div><div style="font:500 15px Inter,sans-serif">toggle_track_off</div><div style="font:12px/1.7 ui-monospace,monospace;color:rgba(233,233,237,.5)">52×28 · r14 · 14/14/14/14<br>#292b31 + 1px #e9e9ed @16% · knob #75798c</div></div>
+
+<div><div style="height:96px;display:flex;align-items:center;justify-content:center;background:#0f111c;border-radius:8px;margin-bottom:12px"><div style="width:12px;height:72px;border-radius:6px;background:#292b31;position:relative"><div style="position:absolute;left:0;top:8px;width:12px;height:36px;border-radius:6px;background:#595d6c"></div></div></div><div style="font:500 15px Inter,sans-serif">scrollbar_track + _thumb</div><div style="font:12px/1.7 ui-monospace,monospace;color:rgba(233,233,237,.5)">12×24 · r6 · 6/6/6/6<br>track #292b31 · thumb #595d6c (hover #75798c)</div></div>
+
+<div><div style="height:96px;display:flex;align-items:center;justify-content:center;background:#0f111c;border-radius:8px;margin-bottom:12px"><div style="width:200px;height:44px;border-radius:8px;background:rgba(22,24,38,.35);box-shadow:inset 0 0 0 1px rgba(233,233,237,.1)"></div></div><div style="font:500 15px Inter,sans-serif">zone_slot</div><div style="font:12px/1.7 ui-monospace,monospace;color:rgba(233,233,237,.5)">32×32 · r8 · 9/9/9/9<br>#161826 @35% + 1px #e9e9ed @10%</div></div>
+
+<div><div style="height:96px;display:flex;align-items:center;justify-content:center;background:#0f111c;border-radius:8px;margin-bottom:12px"><div style="width:200px;height:44px;border-radius:8px;background:rgba(145,132,217,.06);box-shadow:inset 0 0 0 1px rgba(145,132,217,.35)"></div></div><div style="font:500 15px Inter,sans-serif">zone_slot_active</div><div style="font:12px/1.7 ui-monospace,monospace;color:rgba(233,233,237,.5)">32×32 · r8 · 9/9/9/9<br>#9184d9 @6% + 1px #9184d9 @35%</div></div>
+
+<div><div style="height:96px;display:flex;align-items:center;justify-content:center;background:#0f111c;border-radius:8px;margin-bottom:12px"><div style="width:160px;height:44px;border-radius:8px;background:#232532;box-shadow:0 0 0 1px #9397ab,0 16px 40px rgba(0,0,0,.65)"></div></div><div style="font:500 15px Inter,sans-serif">tooltip_bg</div><div style="font:12px/1.7 ui-monospace,monospace;color:rgba(233,233,237,.5)">40×40 · r8 · 10/10/10/10<br>#232532 + 1px #9397ab (shadow in Unity, not baked)</div></div>
+
+<div><div style="height:96px;display:flex;align-items:center;justify-content:center;background:#0f111c;border-radius:8px;margin-bottom:12px"><div style="width:200px;height:64px;border-radius:14px;background:#232532;box-shadow:0 0 0 1px #9397ab"></div></div><div style="font:500 15px Inter,sans-serif">modal_bg + modal_scrim</div><div style="font:12px/1.7 ui-monospace,monospace;color:rgba(233,233,237,.5)">64×64 · r14 · 18/18/18/18<br>#232532 + 1px #9397ab · scrim #0f111c @72%</div></div>
+
+<div><div style="height:96px;display:flex;align-items:flex-end;justify-content:center;background:#0f111c;border-radius:8px;margin-bottom:12px;padding-bottom:24px"><div style="width:200px;height:3px;background:linear-gradient(to right,transparent,rgba(233,233,237,.16) 40px,rgba(233,233,237,.16) calc(100% - 40px),transparent)"></div></div><div style="font:500 15px Inter,sans-serif">rule_fade</div><div style="font:12px/1.7 ui-monospace,monospace;color:rgba(233,233,237,.5)">256×1 · no slicing (stretch center only)<br>#e9e9ed @16%, alpha ramp 48px each end</div></div>
+
+<div><div style="height:96px;display:flex;align-items:center;justify-content:center;background:#0f111c;border-radius:8px;margin-bottom:12px"><div style="width:120px;height:64px;border-radius:8px;background:radial-gradient(circle at 50% 50%,rgba(145,132,217,.55),transparent 70%)"></div></div><div style="font:500 15px Inter,sans-serif">glow_accent</div><div style="font:12px/1.7 ui-monospace,monospace;color:rgba(233,233,237,.5)">128×128 · radial alpha, no slicing<br>#9184d9 core @55% → 0 · card and leader highlights</div></div>
+</div>
+</div>
+</div>
+
+</div>
+<p class="dv-next">Try next: “tighten the board’s right rail” · “show the mulligan and attack-target states on <a class="dv-oid" href="#2a">2a</a>” · “swap the deck editor to a two-column layout”</p>
+</body></html>
