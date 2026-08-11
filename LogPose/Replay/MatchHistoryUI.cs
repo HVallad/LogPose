@@ -196,95 +196,140 @@ namespace LogPose.Replay
             _page = null;
         }
 
+        private static string _filter = "All";   // All / Wins / Losses
+
+        private static List<Entry> Filtered()
+        {
+            if (_entries == null)
+                return new List<Entry>();
+            if (_filter == "Wins")
+                return _entries.Where(e => e.Outcome == "WIN").ToList();
+            if (_filter == "Losses")
+                return _entries.Where(e => e.Outcome == "LOSS").ToList();
+            return _entries;
+        }
+
+        // Frame 2f: scrim over the dimmed menu, 1160-wide surface modal, ground rows with
+        // leader thumbs, outcome pill and a Watch replay button, segmented result filter.
         private static void BuildPage(HostJoinScript hjs)
         {
             ClosePage();
-            GameObject donor = hjs.go_SoloVSelf;
-            Canvas canvas = donor.GetComponentInParent<Canvas>();
-            if (canvas == null)
-                return;
+            UI.Theme.Ensure();
 
-            _page = new GameObject("LogPoseMatchHistoryPage", typeof(RectTransform));
-            _page.transform.SetParent(canvas.transform, false);
-            RectTransform prt = _page.GetComponent<RectTransform>();
-            prt.anchorMin = Vector2.zero;
-            prt.anchorMax = Vector2.one;
-            prt.offsetMin = Vector2.zero;
-            prt.offsetMax = Vector2.zero;
-            Image dim = _page.AddComponent<Image>();
-            dim.color = new Color(0f, 0f, 0f, 0.55f);
+            _page = new GameObject("LogPoseMatchHistoryPage", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+            Canvas canvas = _page.GetComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = 60;
+            CanvasScaler scaler = _page.GetComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1920f, 1080f);
+            scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
+            scaler.matchWidthOrHeight = 0f;
 
-            GameObject panel = new GameObject("Panel", typeof(RectTransform));
-            panel.transform.SetParent(_page.transform, false);
-            RectTransform rt = panel.GetComponent<RectTransform>();
-            rt.sizeDelta = new Vector2(960f, 1000f);
-            Image bg = panel.AddComponent<Image>();
-            Image donorImg = donor.GetComponent<Image>();
-            if (donorImg != null)
+            GameObject scrim = UI.W.Go("Scrim", _page.transform);
+            UI.W.Fill(scrim);
+            Image dim = scrim.AddComponent<Image>();
+            dim.color = UI.Theme.WithA(new Color(0.059f, 0.067f, 0.11f), 0.72f);
+            Button scrimBtn = scrim.AddComponent<Button>();
+            scrimBtn.transition = Selectable.Transition.None;
+            scrimBtn.onClick.AddListener(ClosePage);
+
+            Image panel = UI.W.Panel(_page.transform, "Modal", 380f, 64f, 1160f, 888f, 14f,
+                UI.Theme.Surface, UI.Theme.EdgeModal);
+            Transform pt = panel.transform;
+
+            UI.W.Label(pt, "LOGPOSE", 32f, 26f, 300f, 18f, 12f, UI.Theme.Accent400, 600,
+                TMPro.TextAlignmentOptions.TopLeft, false, 0.1f);
+            UI.W.Label(pt, "Match history", 32f, 46f, 400f, 40f, 28f, UI.Theme.Text, 500);
+
+            float segX = 700f;
+            foreach (string f in new[] { "All", "Wins", "Losses" })
             {
-                bg.sprite = donorImg.sprite;
-                bg.type = donorImg.type;
+                string captured = f;
+                bool on = _filter == f;
+                Button sb = UI.W.Btn(pt, f, segX, 40f, 96f, 40f,
+                    on ? UI.BtnKind.Primary : UI.BtnKind.Secondary,
+                    () => { _filter = captured; _pageIdx = 0; BuildPage(hjs); }, 14f);
+                if (!on)
+                {
+                    Image si = sb.GetComponent<Image>();
+                    si.sprite = UI.UISprites.RoundedRect(48, 48, 8f, Color.clear, Color.clear, 0f, 12f);
+                }
+                segX += 102f;
             }
-            bg.color = new Color(0.93f, 0.87f, 0.72f, 0.98f);
+            UI.W.Btn(pt, "×", 1080f, 26f, 48f, 48f, UI.BtnKind.Secondary, ClosePage, 20f);
 
-            MakeLabel(donor, panel, "Match History", new Vector2(0f, 450f), new Vector2(600f, 70f), 42f);
-
+            List<Entry> list = Filtered();
             int start = _pageIdx * RowsPerPage;
-            if (_entries == null || _entries.Count == 0)
+            if (list.Count == 0)
             {
-                MakeLabel(donor, panel, "No recorded matches yet.\nPlay some games and come back!",
-                    new Vector2(0f, 0f), new Vector2(700f, 200f), 30f);
+                UI.W.Label(pt, _entries == null || _entries.Count == 0
+                        ? "No recorded matches yet.\nPlay some games and come back!"
+                        : "No " + _filter.ToLowerInvariant() + " on record.",
+                    0f, 380f, 1160f, 100f, 20f, UI.Theme.TextMuted, 400, TMPro.TextAlignmentOptions.Center);
             }
-            for (int i = start; i < Math.Min(start + RowsPerPage, _entries.Count); i++)
+            for (int i = start; i < Math.Min(start + RowsPerPage, list.Count); i++)
             {
-                Entry e = _entries[i];
-                float y = 350f - (i - start) * 108f;
-                GameObject row = UnityEngine.Object.Instantiate(donor, panel.transform);
-                row.name = "Row" + i;
-                row.SetActive(true);
-                Button rb = row.GetComponent<Button>();
-                if (rb == null)
-                    rb = row.AddComponent<Button>();
-                rb.onClick = new Button.ButtonClickedEvent();
+                Entry e = list[i];
+                float y = 126f + (i - start) * 106f;
+                GameObject row = UI.W.Go("Row" + i, pt);
+                UI.W.TL(row, 32f, y, 1096f, 96f);
+                Image rbg = row.AddComponent<Image>();
+                rbg.sprite = UI.UISprites.RoundedRect(32, 32, 8f, UI.Theme.Ground, Color.clear, 0f, 9f);
+                rbg.type = Image.Type.Sliced;
+                Button rb = row.AddComponent<Button>();
+                rb.targetGraphic = rbg;
+                rb.transition = Selectable.Transition.SpriteSwap;
+                rb.spriteState = new UnityEngine.UI.SpriteState
+                {
+                    highlightedSprite = UI.UISprites.RoundedRect(32, 32, 8f, UI.Theme.WithA(UI.Theme.Accent, 0.08f), Color.clear, 0f, 9f),
+                    pressedSprite = UI.UISprites.RoundedRect(32, 32, 8f, UI.Theme.WithA(UI.Theme.Accent, 0.16f), UI.Theme.Accent, 1f, 9f)
+                };
                 Entry captured = e;
                 rb.onClick.AddListener(() => Watch(captured, hjs));
-                RectTransform rrt = row.GetComponent<RectTransform>();
-                rrt.anchorMin = rrt.anchorMax = new Vector2(0.5f, 0.5f);
-                rrt.pivot = new Vector2(0.5f, 0.5f);
-                rrt.anchoredPosition = new Vector2(0f, y);
-                rrt.sizeDelta = new Vector2(880f, 98f);
-                TMP_Text rowText = row.GetComponentInChildren<TMP_Text>(true);
-                if (rowText != null)
-                {
-                    string oc = e.Outcome == "WIN" ? "<color=#1E7A1E><b>WIN</b></color>"
-                        : e.Outcome == "LOSS" ? "<color=#9B1B1B><b>LOSS</b></color>"
-                        : e.Outcome;
-                    rowText.text = e.UserName + "  vs  " + e.EnemyName + "    " + oc +
-                        "\n<size=60%>" + e.Label + "</size>";
-                    rowText.fontSize = 27f;
-                    // Inset the text so the leader thumbnails don't cover it.
-                    RectTransform trt = rowText.rectTransform;
-                    trt.offsetMin = new Vector2(90f, trt.offsetMin.y);
-                    trt.offsetMax = new Vector2(-90f, trt.offsetMax.y);
-                }
-                MakeThumb(row, e.UserLeader, new Vector2(-380f, 0f));
-                MakeThumb(row, e.EnemyLeader, new Vector2(380f, 0f));
+
+                MakeThumb(row, e.UserLeader, 16f);
+                string vs = e.UserName + " <alpha=#66>vs<alpha=#FF> " + e.EnemyName;
+                UI.W.Label(row.transform, vs, 92f, 18f, 560f, 30f, 20f, UI.Theme.Text, 500);
+                UI.W.Label(row.transform, e.Label, 92f, 54f, 560f, 22f, 13f, UI.Theme.TextMuted, 400, TMPro.TextAlignmentOptions.TopLeft, true);
+
+                bool win = e.Outcome == "WIN";
+                bool loss = e.Outcome == "LOSS";
+                GameObject pill = UI.W.Go("Pill", row.transform);
+                UI.W.TL(pill, 700f, 33f, 76f, 30f);
+                Image pi = pill.AddComponent<Image>();
+                pi.sprite = UI.UISprites.RoundedRect(24, 24, 6f, win ? UI.Theme.DonActiveFill : UI.Theme.Edge, Color.clear, 0f, 7f);
+                pi.type = Image.Type.Sliced;
+                pi.raycastTarget = false;
+                TMPro.TextMeshProUGUI pl = UI.W.Label(pill.transform, e.Outcome, 0f, 0f, 76f, 30f, 12f,
+                    win ? UI.Theme.Accent300 : loss ? UI.Theme.Text : UI.Theme.TextMuted, 600, TMPro.TextAlignmentOptions.Center);
+                UI.W.Fill(pl.gameObject);
+
+                UI.W.Btn(row.transform, "Watch replay", 812f, 26f, 172f, 44f, UI.BtnKind.Secondary,
+                    () => Watch(captured, hjs), 14f);
+                MakeThumb(row, e.EnemyLeader, 1096f - 72f);
             }
 
-            int pages = _entries == null ? 1 : Math.Max(1, (_entries.Count + RowsPerPage - 1) / RowsPerPage);
-            MakeSmallButton(donor, panel, "< Prev", new Vector2(-260f, -445f), () =>
+            int wins = _entries == null ? 0 : _entries.Count(x => x.Outcome == "WIN");
+            int losses = _entries == null ? 0 : _entries.Count(x => x.Outcome == "LOSS");
+            int total = _entries == null ? 0 : _entries.Count;
+            UI.W.Label(pt, total + " games · " + wins + "W · " + losses + "L",
+                32f, 838f, 400f, 24f, 14f, UI.Theme.TextMuted, 400);
+
+            int pages = Math.Max(1, (list.Count + RowsPerPage - 1) / RowsPerPage);
+            UI.W.Btn(pt, "Previous", 700f, 828f, 120f, 44f, UI.BtnKind.Secondary, () =>
             {
                 if (_pageIdx > 0) { _pageIdx--; BuildPage(hjs); }
-            });
-            MakeLabel(donor, panel, "Page " + (_pageIdx + 1) + "/" + pages, new Vector2(0f, -445f), new Vector2(240f, 55f), 26f);
-            MakeSmallButton(donor, panel, "Next >", new Vector2(260f, -445f), () =>
+            }, 14f);
+            UI.W.Label(pt, "Page " + (_pageIdx + 1) + " / " + pages, 830f, 838f, 130f, 24f, 14f,
+                UI.Theme.TextMuted, 400, TMPro.TextAlignmentOptions.Center);
+            UI.W.Btn(pt, "Next", 970f, 828f, 120f, 44f, UI.BtnKind.Secondary, () =>
             {
-                if ((_pageIdx + 1) * RowsPerPage < _entries.Count) { _pageIdx++; BuildPage(hjs); }
-            });
-            MakeSmallButton(donor, panel, "Close", new Vector2(430f, 450f), ClosePage);
+                if ((_pageIdx + 1) * RowsPerPage < list.Count) { _pageIdx++; BuildPage(hjs); }
+            }, 14f);
         }
 
-        private static void MakeThumb(GameObject row, string leaderId, Vector2 pos)
+        private static void MakeThumb(GameObject row, string leaderId, float x)
         {
             if (string.IsNullOrEmpty(leaderId) || CardDatabaseScript.Instance == null)
                 return;
@@ -293,15 +338,11 @@ namespace LogPose.Replay
             catch { }
             if (s == null)
                 return;
-            GameObject img = new GameObject("Thumb", typeof(RectTransform));
-            img.transform.SetParent(row.transform, false);
+            GameObject img = UI.W.Go("Thumb", row.transform);
+            UI.W.TL(img, x, 9f, 56f, 78f);
             Image im = img.AddComponent<Image>();
             im.sprite = s;
             im.raycastTarget = false;
-            RectTransform rt = img.GetComponent<RectTransform>();
-            rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
-            rt.anchoredPosition = pos;
-            rt.sizeDelta = new Vector2(62f, 86f);
         }
 
         private static void MakeLabel(GameObject donor, GameObject parent, string text, Vector2 pos, Vector2 size, float fontSize)
@@ -320,29 +361,6 @@ namespace LogPose.Replay
             rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
             rt.anchoredPosition = pos;
             rt.sizeDelta = size;
-        }
-
-        private static void MakeSmallButton(GameObject donor, GameObject parent, string label, Vector2 pos, Action onClick)
-        {
-            GameObject btn = UnityEngine.Object.Instantiate(donor, parent.transform);
-            btn.name = "LogPoseBtn_" + label;
-            btn.SetActive(true);
-            Button b = btn.GetComponent<Button>();
-            if (b == null)
-                b = btn.AddComponent<Button>();
-            b.onClick = new Button.ButtonClickedEvent();
-            b.onClick.AddListener(() => onClick());
-            TMP_Text tmp = btn.GetComponentInChildren<TMP_Text>(true);
-            if (tmp != null)
-            {
-                tmp.text = label;
-                tmp.fontSize = 26f;
-            }
-            RectTransform rt = btn.GetComponent<RectTransform>();
-            rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
-            rt.pivot = new Vector2(0.5f, 0.5f);
-            rt.anchoredPosition = pos;
-            rt.sizeDelta = new Vector2(170f, 60f);
         }
 
         private static GameObject _loadingCover;

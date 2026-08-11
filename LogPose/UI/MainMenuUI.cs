@@ -46,7 +46,8 @@ namespace LogPose.UI
             if (_hjs.go_SoloVSelf == null)
                 return;
 
-            bool menuShown = _hjs.go_SoloVSelf.activeInHierarchy && !Replay.MatchHistoryUI.PageOpen;
+            // Stay visible under the match-history modal — 2f dims the menu behind a scrim.
+            bool menuShown = _hjs.go_SoloVSelf.activeInHierarchy;
             if (menuShown && _root == null)
             {
                 try { Build(); }
@@ -332,8 +333,6 @@ namespace LogPose.UI
 
         private static void OpenMatchHistory()
         {
-            if (_root != null)
-                _root.SetActive(false);
             Replay.MatchHistoryUI.Open(_hjs);
         }
 

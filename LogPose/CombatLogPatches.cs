@@ -14,6 +14,29 @@ namespace LogPose
         private static readonly Regex TmpTags = new Regex("<[^<>]{1,64}?>", RegexOptions.Compiled);
         private static readonly Regex InvisibleChars = new Regex("[\u200B\u200C\u200D\u2060\uFEFF]", RegexOptions.Compiled);
 
+        // 1.42b only autosaves on real game endings (win/concede/disconnect) — leaving via
+        // Back to Main mid-game records nothing, which silently drops those games from match
+        // history. Restore the old behaviour: save on the way out when the game had content.
+        [HarmonyPrefix, HarmonyPatch(typeof(GameplayLogicScript), nameof(GameplayLogicScript.ReturnToMain))]
+        private static void ReturnToMain_Prefix(GameplayLogicScript __instance)
+        {
+            try
+            {
+                if (Replay.ReplayBridge.InReplay || __instance.bHasGameEnded)
+                    return;
+                if (__instance.gsv_CurrentGame == null || __instance.gsv_CurrentGame.iTurnNumber < 1)
+                    return;
+                if (__instance.currentCombatLog == null || __instance.currentCombatLog.Count < 12)
+                    return;
+                __instance.SaveMyLogLines();
+                Plugin.Log.LogInfo("Autosaved abandoned game on Back to Main (1.42b skips these).");
+            }
+            catch (Exception e)
+            {
+                Plugin.Log.LogWarning("Back-to-Main autosave failed: " + e.Message);
+            }
+        }
+
         // The vanilla autosave writes markup-laden lines interleaved with RZ1 replay lines using
         // the platform default encoding (mojibake for names with zero-width characters). Write a
         // clean human log and a separate replay stream next to it, both UTF-8.

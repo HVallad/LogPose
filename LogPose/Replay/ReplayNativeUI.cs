@@ -268,119 +268,162 @@ namespace LogPose.Replay
             }
         }
 
+        private static Image _railFill;
+        private static RectTransform _playhead;
+        private static RectTransform _rail;
+        private static bool _ticksBuilt;
+        private static int _eventCount;
+
+        // Frame 2h: REPLAY-tagged header, turn ruler with a draggable accent playhead and
+        // per-turn ticks, transport cluster, speed keys and the keyboard hints — drawn with
+        // the design system instead of cloned parchment.
         private static void Build(GameplayLogicScript gls)
         {
+            UI.Theme.Ensure();
+            _ticksBuilt = false;
             _root = new GameObject("LogPoseReplayPanel", typeof(RectTransform));
             _root.transform.SetParent(gls.cn_Canvas.transform, false);
             RectTransform rt = _root.GetComponent<RectTransform>();
             rt.anchorMin = new Vector2(1f, 0.5f);
             rt.anchorMax = new Vector2(1f, 0.5f);
             rt.pivot = new Vector2(1f, 0.5f);
-            rt.anchoredPosition = new Vector2(-25f, -270f);
-            rt.sizeDelta = new Vector2(400f, 230f);
+            rt.anchoredPosition = new Vector2(-25f, -255f);
+            rt.sizeDelta = new Vector2(430f, 268f);
 
-            Image donorImg = gls.go_ChoiceButton1.GetComponent<Image>();
             Image bg = _root.AddComponent<Image>();
-            if (donorImg != null)
-            {
-                bg.sprite = donorImg.sprite;
-                bg.type = donorImg.type;
-            }
-            bg.color = new Color(0.92f, 0.86f, 0.72f, 0.97f);
+            bg.sprite = UI.UISprites.RoundedRect(64, 64, 14f, UI.Theme.Surface, UI.Theme.Edge, 1f, 18f);
+            bg.type = Image.Type.Sliced;
 
-            _info = MakeLabel(gls, "Replay", new Vector2(0f, 85f), new Vector2(380f, 60f), 24f);
+            // Header: outline tag + matchup / counters.
+            UI.W.Tag(_root.transform, "REPLAY", 16f, 14f, false, outline: true);
+            _info = UI.W.Label(_root.transform, "", 108f, 12f, 310f, 40f, 13f, UI.Theme.Text, 500,
+                TextAlignmentOptions.TopLeft, true);
 
-            float y1 = 25f;
-            float w = 56f, h = 52f;
-            MakeButton(gls, "|<", new Vector2(-165f, y1), new Vector2(w, h), () => ReplayUI.SeekTo(0));
-            MakeButton(gls, "<T", new Vector2(-99f, y1), new Vector2(w, h), () => ReplayUI.JumpTurn(-1));
-            MakeButton(gls, "<A", new Vector2(-33f, y1), new Vector2(w, h), () => ReplayUI.JumpAction(-1));
-            MakeButton(gls, "A>", new Vector2(33f, y1), new Vector2(w, h), () => ReplayUI.JumpAction(1));
-            MakeButton(gls, "T>", new Vector2(99f, y1), new Vector2(w, h), () => ReplayUI.JumpTurn(1));
-            MakeButton(gls, ">|", new Vector2(165f, y1), new Vector2(w, h), () => ReplayUI.SeekToEnd());
+            // Turn ruler: track + fill + playhead (draggable) + turn ticks added on first Refresh.
+            GameObject rail = UI.W.Go("Rail", _root.transform);
+            _rail = UI.W.TL(rail, 16f, 64f, 398f, 12f);
+            Image track = rail.AddComponent<Image>();
+            track.sprite = UI.UISprites.RoundedRect(24, 24, 6f, UI.Theme.SurfaceRaised, Color.clear, 0f, 7f);
+            track.type = Image.Type.Sliced;
 
-            float y2 = -35f;
-            GameObject play = MakeButton(gls, "Play", new Vector2(-120f, y2), new Vector2(110f, h), () => ReplayUI.TogglePlay());
+            GameObject fill = UI.W.Go("Fill", rail.transform);
+            RectTransform frt = fill.GetComponent<RectTransform>();
+            frt.anchorMin = new Vector2(0f, 0f);
+            frt.anchorMax = new Vector2(0f, 1f);
+            frt.pivot = new Vector2(0f, 0.5f);
+            frt.anchoredPosition = Vector2.zero;
+            frt.sizeDelta = new Vector2(0f, 0f);
+            _railFill = fill.AddComponent<Image>();
+            _railFill.sprite = UI.UISprites.RoundedRect(24, 24, 6f, UI.Theme.WithA(UI.Theme.Accent, 0.28f), Color.clear, 0f, 7f);
+            _railFill.type = Image.Type.Sliced;
+            _railFill.raycastTarget = false;
+
+            GameObject head = UI.W.Go("Playhead", rail.transform);
+            _playhead = head.GetComponent<RectTransform>();
+            _playhead.anchorMin = _playhead.anchorMax = new Vector2(0f, 0.5f);
+            _playhead.pivot = new Vector2(0.5f, 0.5f);
+            _playhead.sizeDelta = new Vector2(20f, 20f);
+            Image headImg = head.AddComponent<Image>();
+            headImg.sprite = UI.UISprites.Glow(UI.Theme.Accent, 1f);
+            headImg.raycastTarget = false;
+
+            var trigger = rail.AddComponent<UnityEngine.EventSystems.EventTrigger>();
+            AddDrag(trigger, UnityEngine.EventSystems.EventTriggerType.PointerDown);
+            AddDrag(trigger, UnityEngine.EventSystems.EventTriggerType.Drag);
+
+            // Transport cluster.
+            float y1 = 96f, w = 50f, h = 46f, x = 16f;
+            TransportBtn(gls, "|<", ref x, y1, w, h, () => ReplayUI.SeekTo(0));
+            TransportBtn(gls, "<T", ref x, y1, w, h, () => ReplayUI.JumpTurn(-1));
+            TransportBtn(gls, "<A", ref x, y1, w, h, () => ReplayUI.JumpAction(-1));
+            Button play = UI.W.Btn(_root.transform, "Play", x, y1, 74f, h, UI.BtnKind.Primary, () => ReplayUI.TogglePlay(), 15f);
             _playLabel = play.GetComponentInChildren<TMP_Text>(true);
-            MakeButton(gls, "Spd -", new Vector2(-15f, y2), new Vector2(85f, h), () => ReplayUI.ChangeSpeed(-2f));
-            MakeButton(gls, "Spd +", new Vector2(78f, y2), new Vector2(85f, h), () => ReplayUI.ChangeSpeed(2f));
-            MakeButton(gls, "Exit", new Vector2(160f, y2), new Vector2(65f, h), () => ReplayUI.ExitReplay());
+            x += 80f;
+            TransportBtn(gls, "A>", ref x, y1, w, h, () => ReplayUI.JumpAction(1));
+            TransportBtn(gls, "T>", ref x, y1, w, h, () => ReplayUI.JumpTurn(1));
+            TransportBtn(gls, ">|", ref x, y1, w, h, () => ReplayUI.SeekToEnd());
 
-            MakeLabel(gls, "A: action (↑/↓)   T: turn (PgUp/PgDn)   ←/→: event", new Vector2(0f, -90f), new Vector2(390f, 30f), 16f);
+            // Speed + exit.
+            float y2 = 152f;
+            UI.W.Btn(_root.transform, "Spd −", 16f, y2, 88f, 42f, UI.BtnKind.Secondary, () => ReplayUI.ChangeSpeed(-2f), 14f);
+            UI.W.Btn(_root.transform, "Spd +", 112f, y2, 88f, 42f, UI.BtnKind.Secondary, () => ReplayUI.ChangeSpeed(2f), 14f);
+            Button exit = UI.W.Btn(_root.transform, "Exit replay", 286f, y2, 128f, 42f, UI.BtnKind.Danger, () => ReplayUI.ExitReplay(), 14f);
+
+            UI.W.Label(_root.transform, "A: action (↑/↓) · T: turn (PgUp/PgDn) · ←/→: event · Home/End",
+                16f, 208f, 398f, 40f, 12f, UI.Theme.TextMuted, 400, TextAlignmentOptions.TopLeft);
         }
 
-        private static GameObject MakeButton(GameplayLogicScript gls, string label, Vector2 pos, Vector2 size, UnityEngine.Events.UnityAction onClick)
+        private static void TransportBtn(GameplayLogicScript gls, string label, ref float x, float y, float w, float h,
+            UnityEngine.Events.UnityAction onClick)
         {
-            GameObject btn = UnityEngine.Object.Instantiate(gls.go_ChoiceButton1, _root.transform);
-            btn.name = "LogPoseBtn_" + label;
-            btn.SetActive(true);
-            Button b = btn.GetComponent<Button>();
-            if (b == null)
-                b = btn.AddComponent<Button>();
-            b.onClick = new Button.ButtonClickedEvent();
-            b.onClick.AddListener(onClick);
-            b.interactable = true;
-            TMP_Text tmp = btn.GetComponentInChildren<TMP_Text>(true);
-            if (tmp != null)
-            {
-                tmp.text = label;
-                tmp.fontSize = Mathf.Min(tmp.fontSize, 26f);
-            }
-            RectTransform rt = btn.GetComponent<RectTransform>();
-            rt.anchorMin = new Vector2(0.5f, 0.5f);
-            rt.anchorMax = new Vector2(0.5f, 0.5f);
-            rt.pivot = new Vector2(0.5f, 0.5f);
-            rt.anchoredPosition = pos;
-            rt.sizeDelta = size;
-            btn.transform.localScale = Vector3.one;
-            return btn;
+            UI.W.Btn(_root.transform, label, x, y, w, h, UI.BtnKind.Secondary, () => onClick(), 15f);
+            x += w + 6f;
         }
 
-        private static TMP_Text MakeLabel(GameplayLogicScript gls, string text, Vector2 pos, Vector2 size, float fontSize)
+        private static void AddDrag(UnityEngine.EventSystems.EventTrigger trigger,
+            UnityEngine.EventSystems.EventTriggerType type)
         {
-            TMP_Text donor = gls.go_ChoiceButton1.GetComponentInChildren<TMP_Text>(true);
-            GameObject lbl;
-            TMP_Text tmp;
-            if (donor != null)
+            var entry = new UnityEngine.EventSystems.EventTrigger.Entry { eventID = type };
+            entry.callback.AddListener(data =>
             {
-                lbl = UnityEngine.Object.Instantiate(donor.gameObject, _root.transform);
-                foreach (Transform child in lbl.transform)
-                    UnityEngine.Object.Destroy(child.gameObject);
-                tmp = lbl.GetComponent<TMP_Text>();
-            }
-            else
+                if (_rail == null || _eventCount <= 0)
+                    return;
+                var ped = (UnityEngine.EventSystems.PointerEventData)data;
+                Vector2 local;
+                if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(_rail, ped.position,
+                        ped.pressEventCamera, out local))
+                    return;
+                float frac = Mathf.Clamp01(local.x / _rail.rect.width);
+                ReplayUI.SeekTo(Mathf.RoundToInt(frac * _eventCount));
+            });
+            trigger.triggers.Add(entry);
+        }
+
+        private static void BuildTicks(ReplaySession session)
+        {
+            _ticksBuilt = true;
+            if (session.File.TurnMarks == null || session.EventCount <= 0)
+                return;
+            foreach (int mark in session.File.TurnMarks)
             {
-                lbl = new GameObject("LogPoseLabel", typeof(RectTransform));
-                lbl.transform.SetParent(_root.transform, false);
-                tmp = lbl.AddComponent<TextMeshProUGUI>();
+                float frac = Mathf.Clamp01(mark / (float)session.EventCount);
+                GameObject tick = UI.W.Go("Tick", _rail.transform);
+                RectTransform trt = tick.GetComponent<RectTransform>();
+                trt.anchorMin = new Vector2(frac, 0f);
+                trt.anchorMax = new Vector2(frac, 1f);
+                trt.pivot = new Vector2(0.5f, 0.5f);
+                trt.anchoredPosition = Vector2.zero;
+                trt.sizeDelta = new Vector2(2f, -4f);
+                Image ti = tick.AddComponent<Image>();
+                ti.color = UI.Theme.WithA(UI.Theme.Text, 0.25f);
+                ti.raycastTarget = false;
             }
-            lbl.name = "LogPoseLabel";
-            lbl.SetActive(true);
-            tmp.text = text;
-            tmp.fontSize = fontSize;
-            tmp.color = new Color(0.13f, 0.09f, 0.05f);
-            tmp.alignment = TextAlignmentOptions.Center;
-            tmp.enableWordWrapping = true;
-            RectTransform rt = lbl.GetComponent<RectTransform>();
-            rt.anchorMin = new Vector2(0.5f, 0.5f);
-            rt.anchorMax = new Vector2(0.5f, 0.5f);
-            rt.pivot = new Vector2(0.5f, 0.5f);
-            rt.anchoredPosition = pos;
-            rt.sizeDelta = size;
-            lbl.transform.localScale = Vector3.one;
-            return tmp;
+            if (_playhead != null)
+                _playhead.SetAsLastSibling();
         }
 
         public static void Refresh(ReplaySession session, int pos, bool playing)
         {
             if (_root == null || session == null)
                 return;
+            _eventCount = session.EventCount;
+            if (!_ticksBuilt)
+                BuildTicks(session);
             if (_info != null)
                 _info.text = session.File.Player1 + " vs " + session.File.Player2 + "\n" +
-                    "Turn " + session.TurnAt(pos) + "/" + (session.File.TurnMarks.Count + 1) +
-                    "   ·   Event " + pos + "/" + session.EventCount;
+                    "TURN " + session.TurnAt(pos) + " / " + (session.File.TurnMarks.Count + 1) +
+                    " · EVENT " + pos + " / " + session.EventCount;
             if (_playLabel != null)
                 _playLabel.text = playing ? "Pause" : "Play";
+            if (_rail != null && _eventCount > 0)
+            {
+                float frac = Mathf.Clamp01(pos / (float)_eventCount);
+                float w = _rail.rect.width;
+                if (_railFill != null)
+                    _railFill.rectTransform.sizeDelta = new Vector2(frac * w, 0f);
+                if (_playhead != null)
+                    _playhead.anchoredPosition = new Vector2(frac * w, 0f);
+            }
         }
 
         public static void Hide()
