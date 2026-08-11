@@ -11,11 +11,13 @@ namespace LogPose
     {
         public const string GUID = "com.hunter.logpose";
         public const string NAME = "LogPose";
-        public const string VERSION = "1.0.14";
+        public const string VERSION = "1.0.15";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;
         private static bool _sceneJustLoaded;
+
+        internal static void OnScreenSwitched() => _sceneJustLoaded = true;
 
         internal static ConfigEntry<bool> CfgEmitMissingReplayLines;
         internal static ConfigEntry<bool> CfgWriteCleanLog;
@@ -76,6 +78,28 @@ namespace LogPose
             harmony.PatchAll(typeof(TimerPatches));
             harmony.PatchAll(typeof(UI.BoardLayoutPatches));
             harmony.PatchAll(typeof(UI.DeckEditorUI));
+
+            // Canvas switches inside the menu scene fire no scene-load event, so hook
+            // every screen-switch method — the restyle pass runs the same frame the
+            // new screen appears instead of on the next poll tick.
+            try
+            {
+                var canvasSwitch = new HarmonyMethod(typeof(Plugin), nameof(OnScreenSwitched));
+                foreach (var m in typeof(HostJoinScript).GetMethods(
+                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+                {
+                    if (m.DeclaringType != typeof(HostJoinScript) || m.GetParameters().Length != 0)
+                        continue;
+                    if (!(m.Name.StartsWith("Show") || m.Name == "SinglePlayer"
+                        || m.Name == "BackToMain" || m.Name == "SoloSelf" || m.Name == "LoadMain"))
+                        continue;
+                    try { harmony.Patch(m, postfix: canvasSwitch); } catch { }
+                }
+            }
+            catch (System.Exception e)
+            {
+                Log.LogWarning("Screen-switch hooks failed: " + e.Message);
+            }
 
             UpdateCheck.Init();
             SafetyNet.Run();
