@@ -237,15 +237,32 @@ namespace LogPose.UI
             MoveEdge(cn, "DeleteButton", railX, -488f, 210f, 36f, 0f);
             SetText(cn, "DeleteButton", "Delete selected deck file", 12f);
 
-            // Center browser.
-            Move(cn, "Card Selector Scrollview", -90f, -44f, 980f, 920f);
-            Move(cn, "NoCardsIndicator", -90f, -44f, 0f, 0f);
-            if (_ed.tf_CardSelectorScrollview != null)
+            // Center browser: stretches between the two side columns so any aspect
+            // ratio keeps it clear of them; the grid's column count follows its width.
+            Transform sel = cn.Find("Card Selector Scrollview");
+            if (sel != null)
             {
-                GridLayoutGroup grid = _ed.tf_CardSelectorScrollview.GetComponent<GridLayoutGroup>();
-                if (grid != null && grid.constraintCount != 9)
-                    grid.constraintCount = 9;
+                RectTransform srt = (RectTransform)sel;
+                if (srt.anchorMin.x != 0f || srt.anchorMax.x != 1f)
+                {
+                    srt.anchorMin = new Vector2(0f, 0.5f);
+                    srt.anchorMax = new Vector2(1f, 0.5f);
+                    srt.pivot = new Vector2(0.5f, 0.5f);
+                }
+                srt.offsetMin = new Vector2(376f, -504f);
+                srt.offsetMax = new Vector2(-562f, 416f);
+                if (_ed.tf_CardSelectorScrollview != null)
+                {
+                    GridLayoutGroup grid = _ed.tf_CardSelectorScrollview.GetComponent<GridLayoutGroup>();
+                    if (grid != null)
+                    {
+                        int cols = Mathf.Max(3, Mathf.FloorToInt((srt.rect.width - 12f) / 101f));
+                        if (grid.constraintCount != cols)
+                            grid.constraintCount = cols;
+                    }
+                }
             }
+            Move(cn, "NoCardsIndicator", -90f, -44f, 0f, 0f);
 
             // Right deck panel: vanilla deck grid tucked under the leader/curve header.
             // Stack steps at zero make every copy of a card sit exactly on the first one —

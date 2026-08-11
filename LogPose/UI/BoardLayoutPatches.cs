@@ -16,8 +16,11 @@ namespace LogPose.UI
     // (tools/Generate-FieldMats.py shares these numbers).
     internal static class BoardLayoutPatches
     {
-        // Whole-field x shift: mat panel centered in the 72..1072 band the mockup gives it.
-        internal const float FieldShift = -388f;
+        // Whole-field x shift. The canvas width varies with aspect ratio, so BoardHUD
+        // recomputes this each poll from the real canvas rect: the field keeps its
+        // designed left-of-center home on wide screens and slides left on narrow ones
+        // so the right rail still fits. -388 = the 1920-wide design value.
+        internal static float FieldShift = -388f;
 
         internal static void Rezone(GameplayLogicScript gls)
         {
@@ -41,15 +44,14 @@ namespace LogPose.UI
                 Z(p.deploy, -200f, 90f * ys, 120f);
                 Z(p.discard, 305f, 408f * ys, 0.5f);
                 Z(p.stage, opp ? -167f : 167f, 250f * ys);
-                // The reveal row and hand baseline are screen furniture, not mat zones:
-                // pin them to the vanilla non-flipped spots so Flip Field can't drag them
-                // under the right rail (donEquipped stays vanilla — it's a relative offset).
+                // The reveal row tracks the field so it can't slide off narrow screens
+                // (donEquipped stays vanilla — it's a relative offset).
                 if (p.topDeck != null)
-                { p.topDeck.x = -875f; p.topDeck.y = -275f; p.topDeck.step = 100f; p.topDeck.step2 = 50f; p.topDeck.width = 400f; }
+                { p.topDeck.x = FieldShift - 487f; p.topDeck.y = -275f; p.topDeck.step = 100f; p.topDeck.step2 = 50f; p.topDeck.width = 400f; }
                 if (p.topDeckSquish != null)
-                { p.topDeckSquish.x = -840f; p.topDeckSquish.y = -275f; p.topDeckSquish.step = 100f; p.topDeckSquish.step2 = 50f; p.topDeckSquish.width = 350f; }
+                { p.topDeckSquish.x = FieldShift - 452f; p.topDeckSquish.y = -275f; p.topDeckSquish.step = 100f; p.topDeckSquish.step2 = 50f; p.topDeckSquish.width = 350f; }
                 if (p.hand != null)
-                { p.hand.x = -875f; p.hand.y = 430f * ys; p.hand.step = 100f; p.hand.width = 400f; }
+                { p.hand.x = FieldShift - 487f; p.hand.y = 430f * ys; p.hand.step = 100f; p.hand.width = 400f; }
             }
         }
 
