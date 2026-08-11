@@ -283,12 +283,14 @@ namespace LogPose.Replay
             _ticksBuilt = false;
             _root = new GameObject("LogPoseReplayPanel", typeof(RectTransform));
             _root.transform.SetParent(gls.cn_Canvas.transform, false);
+            // The rail's action area (the End Turn stack in a live game) is free during
+            // replays — the transport takes its place, full rail width per frame 2h.
             RectTransform rt = _root.GetComponent<RectTransform>();
-            rt.anchorMin = new Vector2(1f, 0.5f);
-            rt.anchorMax = new Vector2(1f, 0.5f);
-            rt.pivot = new Vector2(1f, 0.5f);
-            rt.anchoredPosition = new Vector2(-25f, -255f);
-            rt.sizeDelta = new Vector2(430f, 268f);
+            rt.anchorMin = new Vector2(0.5f, 0.5f);
+            rt.anchorMax = new Vector2(0.5f, 0.5f);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.anchoredPosition = new Vector2(516f, -200f);
+            rt.sizeDelta = new Vector2(744f, 240f);
 
             Image bg = _root.AddComponent<Image>();
             bg.sprite = UI.UISprites.RoundedRect(64, 64, 14f, UI.Theme.Surface, UI.Theme.Edge, 1f, 18f);
@@ -296,12 +298,12 @@ namespace LogPose.Replay
 
             // Header: outline tag + matchup / counters.
             UI.W.Tag(_root.transform, "REPLAY", 16f, 14f, false, outline: true);
-            _info = UI.W.Label(_root.transform, "", 108f, 12f, 310f, 40f, 13f, UI.Theme.Text, 500,
+            _info = UI.W.Label(_root.transform, "", 116f, 12f, 480f, 40f, 13f, UI.Theme.Text, 500,
                 TextAlignmentOptions.TopLeft, true);
 
             // Turn ruler: track + fill + playhead (draggable) + turn ticks added on first Refresh.
             GameObject rail = UI.W.Go("Rail", _root.transform);
-            _rail = UI.W.TL(rail, 16f, 64f, 398f, 12f);
+            _rail = UI.W.TL(rail, 20f, 60f, 704f, 12f);
             Image track = rail.AddComponent<Image>();
             track.sprite = UI.UISprites.RoundedRect(24, 24, 6f, UI.Theme.SurfaceRaised, Color.clear, 0f, 7f);
             track.type = Image.Type.Sliced;
@@ -331,8 +333,8 @@ namespace LogPose.Replay
             AddDrag(trigger, UnityEngine.EventSystems.EventTriggerType.PointerDown);
             AddDrag(trigger, UnityEngine.EventSystems.EventTriggerType.Drag);
 
-            // Transport cluster.
-            float y1 = 96f, w = 50f, h = 46f, x = 16f;
+            // Transport cluster (row 1) with the speed keys on its right.
+            float y1 = 88f, w = 50f, h = 46f, x = 20f;
             TransportBtn(gls, "|<", ref x, y1, w, h, () => ReplayUI.SeekTo(0));
             TransportBtn(gls, "<T", ref x, y1, w, h, () => ReplayUI.JumpTurn(-1));
             TransportBtn(gls, "<A", ref x, y1, w, h, () => ReplayUI.JumpAction(-1));
@@ -342,15 +344,13 @@ namespace LogPose.Replay
             TransportBtn(gls, "A>", ref x, y1, w, h, () => ReplayUI.JumpAction(1));
             TransportBtn(gls, "T>", ref x, y1, w, h, () => ReplayUI.JumpTurn(1));
             TransportBtn(gls, ">|", ref x, y1, w, h, () => ReplayUI.SeekToEnd());
+            UI.W.Btn(_root.transform, "Spd −", 552f, y1, 82f, h, UI.BtnKind.Secondary, () => ReplayUI.ChangeSpeed(-2f), 14f);
+            UI.W.Btn(_root.transform, "Spd +", 642f, y1, 82f, h, UI.BtnKind.Secondary, () => ReplayUI.ChangeSpeed(2f), 14f);
 
-            // Speed + exit.
-            float y2 = 152f;
-            UI.W.Btn(_root.transform, "Spd −", 16f, y2, 88f, 42f, UI.BtnKind.Secondary, () => ReplayUI.ChangeSpeed(-2f), 14f);
-            UI.W.Btn(_root.transform, "Spd +", 112f, y2, 88f, 42f, UI.BtnKind.Secondary, () => ReplayUI.ChangeSpeed(2f), 14f);
-            Button exit = UI.W.Btn(_root.transform, "Exit replay", 286f, y2, 128f, 42f, UI.BtnKind.Danger, () => ReplayUI.ExitReplay(), 14f);
-
+            // Row 2: keyboard hints left, exit right.
             UI.W.Label(_root.transform, "A: action (↑/↓) · T: turn (PgUp/PgDn) · ←/→: event · Home/End",
-                16f, 208f, 398f, 40f, 12f, UI.Theme.TextMuted, 400, TextAlignmentOptions.TopLeft);
+                20f, 158f, 500f, 40f, 12f, UI.Theme.TextMuted, 400, TextAlignmentOptions.TopLeft);
+            UI.W.Btn(_root.transform, "Exit replay", 588f, 150f, 136f, 44f, UI.BtnKind.Danger, () => ReplayUI.ExitReplay(), 14f);
         }
 
         private static void TransportBtn(GameplayLogicScript gls, string label, ref float x, float y, float w, float h,

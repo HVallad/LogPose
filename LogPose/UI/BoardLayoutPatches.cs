@@ -4,14 +4,77 @@ using UnityEngine;
 
 namespace LogPose.UI
 {
-    // Frame 2a's hand: the player's cards fan in a centered arc instead of a flat row.
-    // The game recomputes hand layout through RefreshHandPositions on every change, so the
-    // fan is applied as a postfix over whatever it laid out — the row's own center and
-    // baseline are reused, which keeps the fan working in games AND replays without
-    // hard-coding screen coordinates. Cards leaving the hand get their rotation reset by
-    // the zone refreshes the game already runs.
+    // Frame 2a's field structure, imposed through the game's own layout machinery.
+    //
+    // All board geometry lives in sc_Locations.playerLocations[seat + (flip?2:0)] and cards
+    // tween toward CardLogicScript.MoveTo targets in Canvas/Deck/PlayerN local space (the
+    // canvas is 1920x1080 with a center origin; both card parents sit at (0,0)). Rewriting
+    // that table re-zones the whole field: the deck pile joins trash in the outer band, the
+    // leader row keeps only leader+stage, the life column tucks inside the mat's left edge
+    // for BOTH sides (the mockup mirrors vertically; vanilla point-mirrors), and everything
+    // slides left so the right rail owns x 1104..1848. The mat art is regenerated to match
+    // (tools/Generate-FieldMats.py shares these numbers).
     internal static class BoardLayoutPatches
     {
+        // Whole-field x shift: mat panel centered in the 72..1072 band the mockup gives it.
+        internal const float FieldShift = -388f;
+
+        internal static void Rezone(GameplayLogicScript gls)
+        {
+            if (!Plugin.CfgUiReskin.Value || gls == null || gls.sc_Locations == null)
+                return;
+            var seats = gls.sc_Locations.playerLocations;
+            if (seats == null)
+                return;
+            for (int s = 0; s < seats.Count; s++)
+            {
+                LocationPlayer p = seats[s];
+                if (p == null)
+                    continue;
+                bool opp = (s % 2) == 1;
+                float ys = opp ? 1f : -1f;
+                Z(p.deck, 195f, 408f * ys, 0.75f);
+                Z(p.donDeck, -300f, 408f * ys, 2f);
+                Z(p.leader, opp ? -48f : 48f, 250f * ys);
+                Z(p.life, -300f, 238f * ys, opp ? -25f : 25f);
+                Z(p.donCost, -190f, 408f * ys, 30f);
+                Z(p.deploy, -200f, 90f * ys, 120f);
+                Z(p.discard, 305f, 408f * ys, 0.5f);
+                Z(p.stage, opp ? -167f : 167f, 250f * ys);
+                // The reveal row and hand baseline are screen furniture, not mat zones:
+                // pin them to the vanilla non-flipped spots so Flip Field can't drag them
+                // under the right rail (donEquipped stays vanilla — it's a relative offset).
+                if (p.topDeck != null)
+                { p.topDeck.x = -875f; p.topDeck.y = -275f; p.topDeck.step = 100f; p.topDeck.step2 = 50f; p.topDeck.width = 400f; }
+                if (p.topDeckSquish != null)
+                { p.topDeckSquish.x = -840f; p.topDeckSquish.y = -275f; p.topDeckSquish.step = 100f; p.topDeckSquish.step2 = 50f; p.topDeckSquish.width = 350f; }
+                if (p.hand != null)
+                { p.hand.x = -875f; p.hand.y = 430f * ys; p.hand.step = 100f; p.hand.width = 400f; }
+            }
+        }
+
+        private static void Z(LocationSet l, float x, float y, float step = float.NaN)
+        {
+            if (l == null)
+                return;
+            l.x = x + FieldShift;
+            l.y = y;
+            if (!float.IsNaN(step))
+                l.step = step;
+        }
+
+        [HarmonyPostfix, HarmonyPatch(typeof(GameplayLogicScript), "SetupBoardObjects")]
+        private static void SetupBoardObjects_Postfix(GameplayLogicScript __instance)
+        {
+            Rezone(__instance);
+            BoardHUD.ImposeChrome(__instance);   // vanilla just rewrote every position
+        }
+
+        // Frame 2a's hand presentation, written through MoveTo after each vanilla layout
+        // pass (raw transform writes get pulled back by the tween; rotations persist).
+        // Player 0: centered fan under the mat. Player 1: a compact face-down cluster
+        // docked beside their leader — except in Solo v Self, where that hand is actively
+        // played and keeps the vanilla row (replays still dock it).
         [HarmonyPostfix, HarmonyPatch(typeof(GameplayLogicScript), "RefreshHandPositions")]
         private static void RefreshHandPositions_Postfix(GameplayLogicScript __instance)
         {
@@ -21,32 +84,58 @@ namespace LogPose.UI
             {
                 if (__instance.Lps_Players == null || __instance.Lps_Players.Count == 0)
                     return;
-                List<GameObject> hand = __instance.Lps_Players[0].Lgo_MyHand;
-                if (hand == null || hand.Count == 0)
-                    return;
-
-                int n = hand.Count;
-                // The game moves cards by tweening toward MoveTo targets, so the fan must
-                // be written through MoveTo as well (a raw transform write is pulled back
-                // to the vanilla target next frame). The mat's center sits at local x = 0
-                // in the card parent's space; hand.y comes from the game's location table.
-                LocationSet loc = __instance.sc_Locations
-                    .playerLocations[__instance.bFlipField ? 2 : 0].hand;
-                float m = (n - 1) * 0.5f;
-                float dx = Mathf.Min(110f, 760f / Mathf.Max(n, 1));
-                for (int i = 0; i < n; i++)
-                {
-                    if (hand[i] == null)
-                        return;
-                    CardLogicScript cls = hand[i].GetComponent<CardLogicScript>();
-                    if (cls == null)
-                        return;
-                    float k = i - m;
-                    cls.MoveTo(new Vector3(k * dx, loc.y - 18f - Mathf.Abs(k) * 11f));
-                    hand[i].transform.localRotation = Quaternion.Euler(0f, 0f, -k * 3.5f);
-                }
+                FanPlayerHand(__instance);
+                bool dock = __instance.e_GameStyle != GameStyle.SoloVSelf || Replay.ReplayBridge.InReplay;
+                if (dock && __instance.Lps_Players.Count > 1)
+                    DockOpponentHand(__instance);
             }
             catch { }
+        }
+
+        private static void FanPlayerHand(GameplayLogicScript gls)
+        {
+            List<GameObject> hand = gls.Lps_Players[0].Lgo_MyHand;
+            if (hand == null || hand.Count == 0)
+                return;
+            int n = hand.Count;
+            LocationSet loc = gls.sc_Locations.playerLocations[gls.bFlipField ? 2 : 0].hand;
+            float baseY = -430f;
+            if (loc != null && loc.y < 0f)
+                baseY = loc.y;
+            float m = (n - 1) * 0.5f;
+            float dx = Mathf.Min(110f, 760f / Mathf.Max(n, 1));
+            for (int i = 0; i < n; i++)
+            {
+                if (hand[i] == null)
+                    return;
+                CardLogicScript cls = hand[i].GetComponent<CardLogicScript>();
+                if (cls == null)
+                    return;
+                float k = i - m;
+                cls.MoveTo(new Vector3(FieldShift + k * dx, baseY - 18f - Mathf.Abs(k) * 11f));
+                hand[i].transform.localRotation = Quaternion.Euler(0f, 0f, -k * 3.5f);
+            }
+        }
+
+        private static void DockOpponentHand(GameplayLogicScript gls)
+        {
+            List<GameObject> hand = gls.Lps_Players[1].Lgo_MyHand;
+            if (hand == null || hand.Count == 0)
+                return;
+            int n = hand.Count;
+            float m = (n - 1) * 0.5f;
+            float dx = Mathf.Min(30f, 150f / Mathf.Max(n - 1, 1));
+            for (int i = 0; i < n; i++)
+            {
+                if (hand[i] == null)
+                    return;
+                CardLogicScript cls = hand[i].GetComponent<CardLogicScript>();
+                if (cls == null)
+                    return;
+                float k = i - m;
+                cls.MoveTo(new Vector3(FieldShift + 185f + k * dx, 252f - Mathf.Abs(k) * 3f));
+                hand[i].transform.localRotation = Quaternion.Euler(0f, 0f, -k * 3f);
+            }
         }
     }
 }

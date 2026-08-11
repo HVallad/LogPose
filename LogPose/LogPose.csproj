@@ -15,8 +15,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Assets\mat-nocturne.png" />
-    <EmbeddedResource Include="Assets\mat-batsu.png" />
+    <EmbeddedResource Include="Assets\mat-*.png" />
   </ItemGroup>
 
   <ItemGroup>

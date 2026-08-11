@@ -15,6 +15,8 @@ namespace LogPose.UI
         {
             if (Input.GetKeyDown(KeyCode.F10))
                 DumpWorld();
+            if (Input.GetKeyDown(KeyCode.F11))
+                DumpLocations();
             if (!Input.GetKeyDown(KeyCode.F9))
                 return;
             try
@@ -53,6 +55,74 @@ namespace LogPose.UI
             {
                 Plugin.Log.LogWarning("UI dump failed: " + e.Message);
             }
+        }
+
+        // F11: the board's layout numbers — every LocationSet in sc_Locations plus the
+        // transforms of the containers cards live under. This is the ground truth the
+        // field re-zoning is computed from.
+        private static void DumpLocations()
+        {
+            try
+            {
+                StringBuilder sb = new StringBuilder();
+                GameplayLogicScript gls = Object.FindFirstObjectByType<GameplayLogicScript>();
+                if (gls == null || gls.sc_Locations == null)
+                {
+                    Plugin.Log.LogWarning("Locations dump: no GameplayLogicScript/sc_Locations");
+                    return;
+                }
+                for (int i = 0; i < gls.sc_Locations.playerLocations.Count; i++)
+                {
+                    LocationPlayer p = gls.sc_Locations.playerLocations[i];
+                    sb.AppendLine("=== playerLocations[" + i + "] ===");
+                    Set(sb, "deck", p.deck); Set(sb, "donDeck", p.donDeck);
+                    Set(sb, "leader", p.leader); Set(sb, "hand", p.hand);
+                    Set(sb, "life", p.life); Set(sb, "donCost", p.donCost);
+                    Set(sb, "deploy", p.deploy); Set(sb, "donEquipped", p.donEquipped);
+                    Set(sb, "discard", p.discard); Set(sb, "stage", p.stage);
+                    Set(sb, "topDeck", p.topDeck); Set(sb, "topDeckSquish", p.topDeckSquish);
+                }
+                sb.AppendLine("bFlipField=" + gls.bFlipField + " gameStyle=" + gls.e_GameStyle);
+                Canvas cn = gls.cn_Canvas;
+                if (cn != null)
+                {
+                    foreach (Transform t in cn.GetComponentsInChildren<Transform>(true))
+                    {
+                        string n = t.name;
+                        if (n != "Deck" && n != "Player0" && n != "Player1" && n != "SideField"
+                            && n != "Player" && n != "Opponent" && n != "PlayerPlaymat" && n != "OpponentPlaymat"
+                            && n != "LogScrollView" && n != "CardPreview" && n != "GuideText"
+                            && n != "ChoiceButton1" && n != "ChoiceButton2" && n != "ChoiceButton3" && n != "ChoiceButton4"
+                            && n != "DownloadLog" && n != "ReportBug" && n != "CancelMatch" && n != "SaveState"
+                            && n != "SaveStateButtons" && n != "Volume" && n != "Music" && n != "BG"
+                            && n != "ActionActor" && !n.Contains("HandCount") && !n.Contains("ReturnToMain"))
+                            continue;
+                        RectTransform rt = t as RectTransform;
+                        sb.AppendLine("T " + Path(t)
+                            + " | anch=" + (rt != null ? rt.anchoredPosition.ToString("F1") : "-")
+                            + " local=" + t.localPosition.ToString("F1")
+                            + " | size=" + (rt != null ? rt.rect.width.ToString("F0") + "x" + rt.rect.height.ToString("F0") : "-")
+                            + " | scale=" + t.localScale.ToString("F2")
+                            + " rotZ=" + t.localEulerAngles.z.ToString("F0")
+                            + " | sib=" + t.GetSiblingIndex()
+                            + " active=" + t.gameObject.activeInHierarchy);
+                    }
+                }
+                string file = System.IO.Path.Combine(BepInEx.Paths.BepInExRootPath, "logpose-locdump.txt");
+                File.WriteAllText(file, sb.ToString());
+                Plugin.Log.LogInfo("Locations dump written: " + file);
+            }
+            catch (System.Exception e)
+            {
+                Plugin.Log.LogWarning("Locations dump failed: " + e.Message);
+            }
+        }
+
+        private static void Set(StringBuilder sb, string name, LocationSet s)
+        {
+            if (s == null) { sb.AppendLine("  " + name + ": null"); return; }
+            sb.AppendLine("  " + name + ": x=" + s.x + " y=" + s.y + " step=" + s.step
+                + " step2=" + s.step2 + " width=" + s.width);
         }
 
         // F10: world-space renderers (the board field is scene geometry, not uGUI).
