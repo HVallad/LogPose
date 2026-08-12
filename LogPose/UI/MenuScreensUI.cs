@@ -298,19 +298,34 @@ namespace LogPose.UI
             catch { }
         }
 
-        // ------------------------------------------- unified multiplayer browser ------
+        // ------------------------------------------- 4a lobby browser ------------------
         //
-        // The lobby browser (public formats AND the private lobby) lives on the MAIN
-        // canvas — vanilla reaches it per format, each entry method re-querying Unity
-        // Lobby Services and filtering client-side by Mode. One page now carries:
-        // format chips (live switching via the public MultiPlayerX() entry points),
-        // the lobby list, and a create-lobby rail; the private chip swaps the page
-        // into the code-join / ruleset variant.
+        // The redesigned browser (multiplayer-lobby.md, frame 4a): format tabs with an
+        // accent underline + open count, a search/filter row, the lobby list with
+        // left-anchored leader thumbs and SELECT-THEN-JOIN rows (a TaskOnClick prefix
+        // turns the first click into a selection; the row's Join button re-invokes it
+        // armed), a deck panel + create panel rail, and the sponsor tiles as a bottom
+        // strip. Geometry is computed from the live canvas width each poll.
 
         private static RectTransform _browserChrome;
         private static readonly List<UnityEngine.UI.Button> _chips = new List<UnityEngine.UI.Button>();
         private static readonly string[] ChipLabels =
             { "Standard", "OP17", "Extra Regulation", "Unlimited", "Korean", "Private" };
+
+        private static Image _tabLine, _deckPanel, _createPanel, _railThumb;
+        private static TextMeshProUGUI _bEyebrow, _openCount, _deckKick, _createKick,
+            _quickCap, _baseLbl, _incLbl, _railMeta;
+        private static readonly List<UnityEngine.UI.Button> _segs = new List<UnityEngine.UI.Button>();
+        private static readonly string[] SegLabels = { "All", "Timed", "Untimed" };
+        private static TMP_InputField _search;
+        private static string _searchText = "";
+        private static int _segment;
+        private static string _railCap;
+        private static UnityEngine.UI.Button _joinBtn;
+        private static string _selectedId;
+        private static object _selectedLobby;
+        private static GameLobbies _lobbies;
+        private static bool _joinArmed;
 
         private static bool BrowserActive()
         {
@@ -318,6 +333,58 @@ namespace LogPose.UI
                 && (_hjs.go_SoloStart == null || !_hjs.go_SoloStart.activeInHierarchy)
                 && ((_hjs.go_HostGame != null && _hjs.go_HostGame.activeSelf)
                  || (_hjs.go_JoinGame != null && _hjs.go_JoinGame.activeSelf));
+        }
+
+        // First click on a lobby row SELECTS it; only the armed Join click passes
+        // through to the vanilla join. Kills the live build's join-on-misclick.
+        [HarmonyLib.HarmonyPrefix]
+        [HarmonyLib.HarmonyPatch(typeof(GameLobbies), "TaskOnClick")]
+        private static bool TaskOnClick_Prefix(GameLobbies __instance, Unity.Services.Lobbies.Models.Lobby lobby)
+        {
+            if (!Plugin.CfgUiReskin.Value)
+                return true;
+            if (_joinArmed)
+            {
+                _joinArmed = false;
+                return true;
+            }
+            _lobbies = __instance;
+            _selectedLobby = lobby;
+            _selectedId = "lobby" + lobby.Id;
+            Plugin.OnScreenSwitched();
+            return false;
+        }
+
+        private static void JoinSelected()
+        {
+            if (_lobbies == null || _selectedLobby == null)
+                return;
+            _joinArmed = true;
+            try { _lobbies.TaskOnClick((Unity.Services.Lobbies.Models.Lobby)_selectedLobby); }
+            catch { _joinArmed = false; }
+        }
+
+        private static Sprite _tabClear, _tabHover;
+
+        private static void TabStyle(UnityEngine.UI.Button b, bool active)
+        {
+            if (_tabClear == null)
+            {
+                _tabClear = UISprites.RoundedRect(24, 24, 6f, Color.clear, Color.clear, 0f, 7f);
+                _tabHover = UISprites.RoundedRect(24, 24, 6f, Theme.WithA(Theme.Text, 0.05f), Color.clear, 0f, 7f);
+            }
+            Image img = b.GetComponent<Image>();
+            if (img != null && img.sprite != _tabClear)
+            { img.sprite = _tabClear; img.type = Image.Type.Sliced; }
+            b.spriteState = new UnityEngine.UI.SpriteState
+            { highlightedSprite = _tabHover, pressedSprite = _tabHover, selectedSprite = _tabClear, disabledSprite = _tabClear };
+            TMP_Text t = b.GetComponentInChildren<TMP_Text>(true);
+            if (t != null)
+            {
+                Color want = active ? Theme.Accent300 : Theme.WithA(Theme.Text, 0.55f);
+                if (t.color != want)
+                    t.color = want;
+            }
         }
 
         private static void ImposeBrowser()
@@ -329,6 +396,14 @@ namespace LogPose.UI
                 return;
             bool priv = _hjs.go_JoinGame != null && _hjs.go_JoinGame.activeSelf;
             Transform cn = _hjs.go_DeckSelector.transform.parent;
+            RectTransform cnrt = cn as RectTransform;
+            float Wc = cnrt != null ? cnrt.rect.width : 1920f;
+            float xL = -Wc * 0.5f + 72f, xR = Wc * 0.5f - 72f;
+            float railCx = xR - 256f;
+            float leftR = xR - 568f;
+            float leftCx = (xL + leftR) * 0.5f;
+            float leftW = leftR - xL;
+            float rowW = leftW - 40f;
 
             if (_browserChrome == null)
             {
@@ -339,173 +414,422 @@ namespace LogPose.UI
                 root.transform.SetSiblingIndex(1);
                 Transform t = root.transform;
 
-                CLabel(t, "M U L T I P L A Y E R", 0f, 505f, 400f, 20f, 12f, Theme.Accent300, 600);
+                _bEyebrow = CLabel(t, "M U L T I P L A Y E R", 0f, 505f, 320f, 18f, 11f,
+                    Theme.Accent300, 600, TextAlignmentOptions.MidlineLeft);
 
-                // Format chips: LogPose buttons driving the vanilla entry methods, so a
-                // click re-runs SetMulti + FindLobbies with the new client-side filter.
                 _chips.Clear();
                 for (int i = 0; i < 6; i++)
                 {
                     int idx = i;
-                    UnityEngine.UI.Button b = W.Btn(t, ChipLabels[i], 0f, 0f, 150f, 44f,
+                    UnityEngine.UI.Button b = W.Btn(t, ChipLabels[i], 0f, 0f, 128f, 44f,
                         BtnKind.Secondary, () => ChipClick(idx), 13f);
-                    C(b.GetComponent<RectTransform>(), -390f + i * 156f, 395f, 150f, 44f);
                     _chips.Add(b);
                 }
+                GameObject ul = W.Go("TabLine", t);
+                _tabLine = ul.AddComponent<Image>();
+                _tabLine.sprite = UISprites.RoundedRect(16, 4, 1f, Theme.Accent, Color.clear, 0f, 1f);
+                _tabLine.type = Image.Type.Sliced;
+                _tabLine.raycastTarget = false;
+                _openCount = CLabel(t, "", 0f, 0f, 160f, 20f, 12f,
+                    Theme.WithA(Theme.Text, 0.45f), 400, TextAlignmentOptions.MidlineRight, true);
 
-                CLabel(t, "Y O U R   D E C K", 420f, 348f, 300f, 20f, 11f,
-                    Theme.WithA(Theme.Text, 0.55f), 600);
-                Panel(t, "CreatePanel", 420f, -60f, 400f, 420f);
-                CLabel(t, "C R E A T E   L O B B Y", 420f, 128f, 340f, 20f, 11f, Theme.Accent300, 600);
+                _segs.Clear();
+                for (int i = 0; i < 3; i++)
+                {
+                    int idx = i;
+                    _segs.Add(W.Btn(t, SegLabels[i], 0f, 0f, 86f, 44f, BtnKind.Secondary,
+                        () => { _segment = idx; Plugin.OnScreenSwitched(); }, 13f));
+                }
+
+                _deckPanel = Panel(t, "DeckPanel", 0f, 0f, 512f, 250f);
+                _deckKick = CLabel(t, "Y O U R   D E C K", 0f, 0f, 300f, 18f, 11f,
+                    Theme.WithA(Theme.Text, 0.55f), 600, TextAlignmentOptions.MidlineLeft);
+                _railThumb = Thumb(t, "RailThumb", 0f, 0f);
+                _railMeta = CLabel(t, "", 0f, 0f, 320f, 18f, 11f, Theme.TextMuted, 400,
+                    TextAlignmentOptions.Center, true);
+                _quickCap = CLabel(t, "Drops you into the oldest open lobby", 0f, 0f, 420f, 18f,
+                    12f, Theme.WithA(Theme.Text, 0.45f), 400);
+                _createPanel = Panel(t, "CreatePanel", 0f, 0f, 512f, 545f);
+                _createKick = CLabel(t, "C R E A T E   A   L O B B Y", 0f, 0f, 340f, 18f, 11f,
+                    Theme.Accent300, 600, TextAlignmentOptions.MidlineLeft);
+                _baseLbl = CLabel(t, "BASE TIME", 0f, 0f, 130f, 18f, 10f,
+                    Theme.WithA(Theme.Text, 0.5f), 600, TextAlignmentOptions.MidlineLeft);
+                _incLbl = CLabel(t, "INCREMENT", 0f, 0f, 130f, 18f, 10f,
+                    Theme.WithA(Theme.Text, 0.5f), 600, TextAlignmentOptions.MidlineLeft);
+                _railCap = null;
             }
 
-            // Header: the vanilla format label becomes the page title.
+            // Search field: a clone of the vanilla description input.
+            if (_search == null && _hjs.go_LobbyDescription != null)
+            {
+                GameObject sgo = Object.Instantiate(_hjs.go_LobbyDescription, _browserChrome.transform);
+                sgo.name = "LogPoseSearch";
+                sgo.SetActive(true);
+                _search = sgo.GetComponent<TMP_InputField>();
+                if (_search != null)
+                {
+                    _search.onValueChanged.RemoveAllListeners();
+                    _search.onEndEdit.RemoveAllListeners();
+                    _search.text = "";
+                    _search.onValueChanged.AddListener(v => { _searchText = v ?? ""; });
+                    TMP_Text ph = _search.placeholder as TMP_Text;
+                    if (ph != null)
+                        ph.text = "Search host or leader…";
+                }
+            }
+
+            // ---- per-poll layout ----
+            // Chrome children can't edge-anchor (the container's rect is zero-size, so
+            // its "edges" all sit at the canvas center) — compute from xL instead.
+            C(_bEyebrow.rectTransform, xL + 358f, 505f);
             GameObject header = _hjs.go_LobbyHeader;
             if (header != null)
             {
-                C(RT(header), 0f, 455f, 700f, 50f);
+                Edge(RT(header), 0f, 480f, 481f, 420f, 30f);
                 TMP_Text ht = header.GetComponent<TMP_Text>();
                 if (ht != null)
                 {
                     ht.enableAutoSizing = false;
-                    ht.fontSize = 34f;
-                    ht.alignment = TextAlignmentOptions.Center;
+                    ht.fontSize = 21f;
+                    ht.alignment = TextAlignmentOptions.MidlineLeft;
                     if (ht.raycastTarget)
                         ht.raycastTarget = false;
                 }
             }
-
-            // The vanilla status label ("Query Lobbies…") raycasts by default and its
-            // old rect sat right over the create-lobby button, eating its clicks —
-            // restyle it as a status line under the list instead.
-            Transform guide = cn.Find("GuideText");
-            if (guide != null)
-            {
-                C(guide as RectTransform, -190f, -450f, 700f, 40f);
-                TMP_Text gt = guide.GetComponent<TMP_Text>();
-                if (gt != null)
-                {
-                    if (gt.raycastTarget)
-                        gt.raycastTarget = false;
-                    gt.enableAutoSizing = false;
-                    gt.fontSize = 14f;
-                    gt.alignment = TextAlignmentOptions.Center;
-                }
-            }
-
-            // Active chip = primary. eMultiStyle: Western, Nationals, Eastern,
-            // Unlimited, Korean map to chips 0..4; Private is chip 5.
-            if (_chips.Count == 6 && _hjs.gls_GameplayLogic != null)
-            {
-                int active = ActiveChip(_hjs.gls_GameplayLogic.eMultiStyle.ToString(), priv);
-                for (int i = 0; i < 6; i++)
-                    if (_chips[i] != null)
-                        BoardHUD.StyleAsButton(_chips[i].gameObject, 150f, 44f, 13f,
-                            i == active ? BtnKind.Primary : BtnKind.Secondary);
-            }
-
             GameObject back = _hjs.go_BackButton;
             if (back != null && back.activeSelf)
             {
-                Edge(RT(back), 0f, 150f, 468f, 190f, 48f);
+                Edge(RT(back), 0f, 167f, 494f, 190f, 48f);
                 BoardHUD.StyleAsButton(back, 190f, 48f, 14f, BtnKind.Secondary);
                 Relabel(back, "←  Main menu", 14f);
             }
+            Transform vol = cn.Find("Volume");
+            Transform mus = cn.Find("Music");
+            if (vol != null) Edge(vol as RectTransform, 1f, -104f, 494f, 48f, 48f);
+            if (mus != null) Edge(mus as RectTransform, 1f, -160f, 494f, 48f, 48f);
 
-            // Deck picker rail (both modes).
-            C(RT(_hjs.go_DeckSelector), 420f, 300f, 340f, 56f);
-            CaptionSize(_hjs.go_DeckSelector);
-            if (_hjs.go_PlayerDeckText != null && _hjs.go_PlayerDeckText.activeSelf)
-                _hjs.go_PlayerDeckText.SetActive(false);   // replaced by the kicker
-            GameObject reason = _hjs.go_DeckValidateReason;
-            if (reason != null)
+            // Format tabs + underline + open count.
+            int active = _hjs.gls_GameplayLogic != null
+                ? ActiveChip(_hjs.gls_GameplayLogic.eMultiStyle.ToString(), priv) : -1;
+            for (int i = 0; i < _chips.Count; i++)
             {
-                C(RT(reason), 420f, 250f, 380f, 44f);
-                TMP_Text rt2 = reason.GetComponent<TMP_Text>();
-                if (rt2 != null)
-                { rt2.enableAutoSizing = false; rt2.fontSize = 15f; rt2.alignment = TextAlignmentOptions.Center; }
+                if (_chips[i] == null)
+                    continue;
+                C(_chips[i].GetComponent<RectTransform>(), xL + 64f + i * 134f, 406f, 128f, 44f);
+                TabStyle(_chips[i], i == active);
             }
-
-            // Left column: ads + utilities, scaled down so the list keeps its lane.
-            StackLeft(_hjs.go_Sponsor, -680f, 250f);
-            StackLeft(_hjs.go_Sponsor2, -680f, 140f);
-            StackLeft(_hjs.go_OPBounty, -680f, 30f);
-            StackLeft(_hjs.go_MatchHistory, -680f, -70f);
-            StackLeft(_hjs.go_SponsorButton1, -770f, -160f);
-            StackLeft(_hjs.go_SponsorButton2, -680f, -160f);
-            StackLeft(_hjs.go_SponsorButton3, -590f, -160f);
-
-            if (!priv)
+            if (_tabLine != null)
             {
-                // Lobby list is the centerpiece.
-                GameObject list = _hjs.go_LobbyBG;
-                if (list != null)
+                bool showLine = active >= 0;
+                if (_tabLine.gameObject.activeSelf != showLine)
+                    _tabLine.gameObject.SetActive(showLine);
+                if (showLine)
+                    C(_tabLine.rectTransform, xL + 64f + active * 134f, 384f, 116f, 2f);
+            }
+            C(_openCount.rectTransform, leftR - 90f, 406f, 160f, 20f);
+
+            // Filter row (public only).
+            bool pubMode = !priv;
+            if (_search != null && _search.gameObject.activeSelf != pubMode)
+                _search.gameObject.SetActive(pubMode);
+            for (int i = 0; i < _segs.Count; i++)
+                if (_segs[i] != null && _segs[i].gameObject.activeSelf != pubMode)
+                    _segs[i].gameObject.SetActive(pubMode);
+            if (_openCount.gameObject.activeSelf != pubMode)
+                _openCount.gameObject.SetActive(pubMode);
+            if (pubMode)
+            {
+                float segX = leftR - 386f;
+                if (_search != null)
                 {
-                    C(RT(list), -190f, -95f, 660f, 640f);
-                    if (list.transform.childCount > 0)
-                    {
-                        RectTransform gl = list.transform.GetChild(0) as RectTransform;
-                        if (gl != null && gl.sizeDelta != new Vector2(600f, 600f))
-                        { gl.sizeDelta = new Vector2(600f, 600f); gl.anchoredPosition = new Vector2(0f, -8f); }
-                    }
+                    float sw = leftW - 500f;
+                    C(RT(_search.gameObject), xL + sw * 0.5f, 332f, sw, 46f);
+                }
+                for (int i = 0; i < _segs.Count; i++)
+                {
+                    C(_segs[i].GetComponent<RectTransform>(), segX + i * 92f, 332f, 86f, 44f);
+                    BoardHUD.StyleAsButton(_segs[i].gameObject, 86f, 44f, 13f,
+                        _segment == i ? BtnKind.Primary : BtnKind.Secondary);
                 }
                 GameObject refresh = _hjs.go_RefreshLobbies;
                 if (refresh != null)
                 {
-                    C(RT(refresh), 420f, -300f, 360f, 48f);
-                    BoardHUD.StyleAsButton(refresh, 360f, 48f, 14f, BtnKind.Secondary);
-                    Relabel(refresh, "Refresh list", 14f);
+                    C(RT(refresh), leftR - 52f, 332f, 96f, 44f);
+                    BoardHUD.StyleAsButton(refresh, 96f, 44f, 13f, BtnKind.Secondary);
+                    Relabel(refresh, "Refresh", 13f);
                 }
-                GameObject quick = _hjs.go_QuickJoin;
-                if (quick != null)
+            }
+
+            // The status label lands between the list and the sponsor strip.
+            Transform guide = cn.Find("GuideText");
+            if (guide != null)
+            {
+                C(guide as RectTransform, leftCx, -362f, 700f, 34f);
+                TMP_Text gt = guide.GetComponent<TMP_Text>();
+                if (gt != null)
                 {
-                    C(RT(quick), 420f, 190f, 360f, 56f);
-                    BoardHUD.StyleAsButton(quick, 360f, 56f, 17f, BtnKind.Primary);
-                    Relabel(quick, "Quick join", 17f);
+                    if (gt.raycastTarget) gt.raycastTarget = false;
+                    gt.enableAutoSizing = false;
+                    gt.fontSize = 13f;
+                    gt.alignment = TextAlignmentOptions.Center;
                 }
-                // Create-lobby panel contents.
-                if (_hjs.go_LobbyDescription != null)
-                    C(RT(_hjs.go_LobbyDescription), 420f, 80f, 360f, 52f);
-                C(RT(_hjs.go_ShareLeaderInfo), 445f, 25f, 0f, 0f);
-                C(RT(_hjs.go_IsTimerLobby), 445f, -25f, 0f, 0f);
+            }
+
+            // Deck rail (both modes).
+            C(_deckPanel.rectTransform, railCx, 285f, 512f, 250f);
+            C(_deckKick.rectTransform, railCx - 96f, 384f, 300f, 18f);
+            C(_railThumb.transform.parent as RectTransform, railCx - 186f, 296f, 76f, 106f);
+            C(RT(_hjs.go_DeckSelector), railCx + 42f, 312f, 320f, 48f);
+            CaptionSize(_hjs.go_DeckSelector);
+            C(_railMeta.rectTransform, railCx + 42f, 274f, 320f, 18f);
+            if (_hjs.go_PlayerDeckText != null && _hjs.go_PlayerDeckText.activeSelf)
+                _hjs.go_PlayerDeckText.SetActive(false);
+            GameObject reason = _hjs.go_DeckValidateReason;
+            if (reason != null)
+            {
+                C(RT(reason), railCx + 42f, 244f, 330f, 26f);
+                TMP_Text rt2 = reason.GetComponent<TMP_Text>();
+                if (rt2 != null)
+                { rt2.enableAutoSizing = false; rt2.fontSize = 13f; rt2.alignment = TextAlignmentOptions.Center; }
+            }
+            RefreshSeat(_hjs.go_DeckSelector, _railThumb, _railMeta, ref _railCap);
+            GameObject quick = _hjs.go_QuickJoin;
+            if (quick != null && quick.activeSelf)
+            {
+                C(RT(quick), railCx, 202f, 464f, 58f);
+                BoardHUD.StyleAsButton(quick, 464f, 58f, 17f, BtnKind.Primary);
+                Relabel(quick, "Quick join", 17f);
+            }
+            C(_quickCap.rectTransform, railCx, 165f, 440f, 18f);
+
+            // Create panel.
+            C(_createPanel.rectTransform, railCx, -125f, 512f, 545f);
+            C(_createKick.rectTransform, railCx - 76f, 118f, 340f, 18f);
+            if (_hjs.go_LobbyDescription != null && _hjs.go_LobbyDescription.activeSelf)
+                C(RT(_hjs.go_LobbyDescription), railCx, 72f, 464f, 48f);
+            if (_hjs.go_ShareLeaderInfo != null && _hjs.go_ShareLeaderInfo.activeSelf)
+            {
+                C(RT(_hjs.go_ShareLeaderInfo), railCx + 30f, 22f, 0f, 0f);
+                RelabelToggle(_hjs.go_ShareLeaderInfo, "Show my leader in the list");
+            }
+            C(RT(_hjs.go_IsTimerLobby), railCx + 30f, -24f, 0f, 0f);
+            RelabelToggle(_hjs.go_IsTimerLobby, "Timed lobby");
+            // The stepper follows the Timed toggle at (+30,-90); label its two rows.
+            C(_baseLbl.rectTransform, railCx - 218f, -86f, 130f, 18f);
+            C(_incLbl.rectTransform, railCx - 218f, -140f, 130f, 18f);
+
+            if (!priv)
+            {
+                GameObject list = _hjs.go_LobbyBG;
+                if (list != null)
+                {
+                    C(RT(list), leftCx, -30f, leftW, 620f);
+                    if (list.transform.childCount > 0)
+                    {
+                        RectTransform gl = list.transform.GetChild(0) as RectTransform;
+                        if (gl != null && gl.sizeDelta != new Vector2(leftW - 24f, 584f))
+                        { gl.sizeDelta = new Vector2(leftW - 24f, 584f); gl.anchoredPosition = new Vector2(0f, -6f); }
+                    }
+                }
                 GameObject host = _hjs.go_HostGame;
                 if (host != null)
                 {
-                    C(RT(host), 420f, -215f, 360f, 60f);
-                    BoardHUD.StyleAsButton(host, 360f, 60f, 17f, BtnKind.Primary);
-                    Relabel(host, "Create lobby", 17f);
+                    C(RT(host), railCx, -330f, 464f, 56f);
+                    BoardHUD.StyleAsButton(host, 464f, 56f, 16f, BtnKind.Secondary);
+                    Relabel(host, "Create lobby", 16f);
                 }
+                RowPass(rowW);
             }
             else
             {
-                // Private branch: ruleset toggles compress into a second chip row that
-                // stays clear of the deck rail; hosting moves into the create panel and
-                // the code-join pair owns the left half.
-                float tx = -440f;
+                float tx = leftCx - 310f;
                 foreach (GameObject tog in new[] { _hjs.go_WesternToggle, _hjs.go_NationalsToggle,
                     _hjs.go_EasternToggle, _hjs.go_UnlimitedToggle, _hjs.go_KoreanToggle, _hjs.go_PrivateToggle })
                 {
                     if (tog != null && tog.activeSelf)
                     {
-                        C(RT(tog), tx, 320f, 116f, 44f);
+                        C(RT(tog), tx, 330f, 116f, 44f);
                         RulesetChip(tog);
                         tx += 124f;
                     }
                 }
-                C(RT(_hjs.go_IsTimerLobby), 445f, 25f, 0f, 0f);
                 GameObject hostP = _hjs.go_HostGamePrivateUnlimited;
                 if (hostP != null)
                 {
-                    C(RT(hostP), 420f, -215f, 360f, 60f);
-                    BoardHUD.StyleAsButton(hostP, 360f, 60f, 15f, BtnKind.Primary);
+                    C(RT(hostP), railCx, -330f, 464f, 58f);
+                    BoardHUD.StyleAsButton(hostP, 464f, 58f, 15f, BtnKind.Primary);
                 }
                 if (_hjs.go_IPAddress != null)
-                    C(RT(_hjs.go_IPAddress), -190f, 60f, 360f, 52f);
+                    C(RT(_hjs.go_IPAddress), leftCx, 60f, 360f, 52f);
                 GameObject join = _hjs.go_JoinGame;
                 if (join != null)
                 {
-                    C(RT(join), -190f, -10f, 360f, 56f);
+                    C(RT(join), leftCx, -10f, 360f, 56f);
                     BoardHUD.StyleAsButton(join, 360f, 56f, 16f, BtnKind.Secondary);
+                }
+            }
+
+            // Community strip: uniform sponsor tiles along the bottom of the left lane.
+            float tileStep = leftW / 4f;
+            StackLeft(_hjs.go_Sponsor, leftCx - 1.5f * tileStep, -438f);
+            StackLeft(_hjs.go_Sponsor2, leftCx - 0.5f * tileStep, -438f);
+            StackLeft(_hjs.go_OPBounty, leftCx + 0.5f * tileStep, -438f);
+            StackLeft(_hjs.go_MatchHistory, leftCx + 1.5f * tileStep, -438f);
+            StackLeft(_hjs.go_SponsorButton1, xL + 24f, -505f);
+            StackLeft(_hjs.go_SponsorButton2, xL + 68f, -505f);
+            StackLeft(_hjs.go_SponsorButton3, xL + 112f, -505f);
+        }
+
+        // Filter + restyle every lobby row, maintain the selection and its Join button.
+        private static void RowPass(float rowW)
+        {
+            GameObject listBG = _hjs.go_LobbyBG;
+            if (listBG == null || listBG.transform.childCount == 0)
+                return;
+            GameLobbies gl = listBG.transform.GetChild(0).GetComponent<GameLobbies>();
+            if (gl == null)
+                return;
+            // The serialized `content` field is unassigned at runtime — walk the
+            // scroll view instead.
+            Transform content = gl.content != null ? (Transform)gl.content
+                : (gl.scrollViewContent != null ? gl.scrollViewContent.transform
+                : gl.transform.Find("Viewport/Content"));
+            if (content == null)
+                return;
+            _lobbies = gl;
+            string q = (_searchText ?? "").Trim().ToLowerInvariant();
+            int visible = 0;
+            Transform selRow = null;
+            for (int i = 0; i < content.childCount; i++)
+            {
+                Transform row = content.GetChild(i);
+                if (!row.name.StartsWith("lobby"))
+                    continue;
+                TextMeshProUGUI[] txts = row.GetComponentsInChildren<TextMeshProUGUI>(true);
+                bool timed = txts.Length > 1 && !string.IsNullOrEmpty(txts[1].text);
+                string label = txts.Length > 0 ? (txts[0].text ?? "") : "";
+                bool show = (_segment == 0 || (_segment == 1) == timed)
+                    && (q.Length == 0 || label.ToLowerInvariant().Contains(q));
+                if (row.gameObject.activeSelf != show)
+                    row.gameObject.SetActive(show);
+                if (!show)
+                    continue;
+                visible++;
+                // Each row carries a HorizontalLayoutGroup (children laid out in
+                // SIBLING ORDER with flex widths) - anchor writes get overwritten every
+                // layout pass, so restructure by reordering + LayoutElement instead.
+                Transform lead = row.Find("LeaderTemplate");
+                if (lead != null)
+                {
+                    if (lead.GetSiblingIndex() != 0)
+                        lead.SetSiblingIndex(0);
+                    LayoutElement le = lead.GetComponent<LayoutElement>();
+                    if (le != null && le.preferredWidth != 44f)
+                    { le.flexibleWidth = 0f; le.minWidth = 44f; le.preferredWidth = 44f; }
+                }
+                if (txts.Length > 0)
+                {
+                    Transform t0t = txts[0].transform;
+                    if (t0t.parent == row && t0t.GetSiblingIndex() != 1)
+                        t0t.SetSiblingIndex(1);
+                    txts[0].alignment = TextAlignmentOptions.MidlineLeft;
+                    if (txts[0].enableAutoSizing) txts[0].enableAutoSizing = false;
+                    if (txts[0].fontSize != 19f) txts[0].fontSize = 19f;
+                    if (txts[0].raycastTarget) txts[0].raycastTarget = false;
+                }
+                if (txts.Length > 1)
+                {
+                    txts[1].alignment = TextAlignmentOptions.Midline;
+                    if (txts[1].enableAutoSizing) txts[1].enableAutoSizing = false;
+                    if (txts[1].fontSize != 14f) txts[1].fontSize = 14f;
+                    if (txts[1].raycastTarget) txts[1].raycastTarget = false;
+                    LayoutElement le1 = txts[1].GetComponent<LayoutElement>();
+                    if (le1 != null && le1.preferredWidth != 240f)
+                    { le1.flexibleWidth = 0f; le1.preferredWidth = 240f; }
+                }
+                LayoutElement rle = row.GetComponent<LayoutElement>();
+                if (rle == null)
+                    rle = row.gameObject.AddComponent<LayoutElement>();
+                if (rle.minHeight != 80f)
+                    rle.minHeight = 80f;
+                bool isSel = row.name == _selectedId;
+                Image rimg = row.GetComponent<Image>();
+                // Vanilla stamps WHITE on legal rows and red/green on illegal ones —
+                // only tint the legal ones so the validity signal survives.
+                if (rimg != null && rimg.color.g > 0.85f && rimg.color.r > 0.85f)
+                    rimg.color = isSel ? new Color(0.72f, 0.66f, 1f, 0.75f) : new Color(1f, 1f, 1f, 0.42f);
+                if (isSel)
+                    selRow = row;
+            }
+            if (_openCount != null)
+            {
+                string want = visible + " open";
+                if (_openCount.text != want)
+                    _openCount.text = want;
+            }
+            if (selRow != null)
+            {
+                if (_joinBtn == null)
+                    _joinBtn = W.Btn(_browserChrome.transform, "Join", 0f, 0f, 104f, 44f,
+                        BtnKind.Primary, JoinSelected, 15f);
+                Transform jt = _joinBtn.transform;
+                if (jt.parent != selRow)
+                    jt.SetParent(selRow, false);
+                RectTransform jrt = jt as RectTransform;
+                jrt.anchorMin = jrt.anchorMax = new Vector2(1f, 0.5f);
+                jrt.pivot = new Vector2(0.5f, 0.5f);
+                jrt.anchoredPosition = new Vector2(-66f, 0f);
+                jrt.sizeDelta = new Vector2(104f, 44f);
+                if (!_joinBtn.gameObject.activeSelf)
+                    _joinBtn.gameObject.SetActive(true);
+            }
+            else if (_joinBtn != null && _joinBtn.gameObject.activeSelf)
+            {
+                _joinBtn.transform.SetParent(_browserChrome.transform, false);
+                _joinBtn.gameObject.SetActive(false);
+            }
+        }
+
+        // Vanilla checkbox toggles: spec checkbox sizing + spec wording.
+        private static void RelabelToggle(GameObject tog, string text)
+        {
+            if (tog == null)
+                return;
+            TMP_Text txt = tog.GetComponentInChildren<TMP_Text>(true);
+            if (txt != null)
+            {
+                if (txt.text != text) txt.text = text;
+                if (txt.enableAutoSizing) txt.enableAutoSizing = false;
+                if (txt.fontSize != 14f) txt.fontSize = 14f;
+                txt.alignment = TextAlignmentOptions.MidlineLeft;
+            }
+            if (_chipBox == null)
+            {
+                _chipBox = UISprites.RoundedRect(32, 32, 8f, Theme.WithA(Theme.Text, 0.04f),
+                    Theme.WithA(Theme.Text, 0.22f), 1f, 10f);
+                _chipFill = UISprites.RoundedRect(32, 32, 8f, Theme.WithA(Theme.Accent, 0.16f),
+                    Theme.Accent, 1f, 10f);
+            }
+            UnityEngine.UI.Toggle tg = tog.GetComponentInChildren<UnityEngine.UI.Toggle>(true);
+            Transform bg = tg != null ? tg.transform.Find("Background") : null;
+            if (bg != null)
+            {
+                RectTransform brt = bg as RectTransform;
+                brt.sizeDelta = new Vector2(26f, 26f);
+                Image bi = bg.GetComponent<Image>();
+                if (bi != null && bi.sprite != _chipBox)
+                { bi.sprite = _chipBox; bi.type = Image.Type.Sliced; bi.color = Color.white; }
+                Transform chk = bg.Find("Checkmark");
+                if (chk != null)
+                {
+                    RectTransform crt = chk as RectTransform;
+                    crt.anchorMin = Vector2.zero;
+                    crt.anchorMax = Vector2.one;
+                    crt.anchoredPosition = Vector2.zero;
+                    crt.sizeDelta = Vector2.zero;
+                    Image ci = chk.GetComponent<Image>();
+                    if (ci != null && ci.sprite != _chipFill)
+                    { ci.sprite = _chipFill; ci.type = Image.Type.Sliced; ci.color = Color.white; }
                 }
             }
         }
