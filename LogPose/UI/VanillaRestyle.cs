@@ -46,13 +46,44 @@ namespace LogPose.UI
             }
             TMP_Text tmp = g as TMP_Text;
             if (tmp != null)
+            {
                 RestyleText(tmp);
+                return;
+            }
+            // Vanilla toggle labels are LEGACY Text at #323232 — invisible on the dark
+            // theme (all eleven settings toggles, the private-lobby checkboxes). The
+            // TMP-only pass missed them: same gap that hid the editor chips in 1.0.9.
+            Text legacy = g as Text;
+            if (legacy != null)
+            {
+                Color c = legacy.color;
+                if (c.a > 0.5f && c.r < 0.45f && c.g < 0.45f && c.b < 0.45f)
+                    legacy.color = Theme.Text;
+            }
         }
 
         private static void RestyleImage(Image img)
         {
             string sprite = img.sprite != null ? img.sprite.name : null;
             string name = img.gameObject.name;
+
+            // Dropdown popups: the prefab Template (and any live "Dropdown List" clone)
+            // ships as a WHITE panel with near-white item rows — unreadable once the
+            // item labels are retinted light. Styling the inactive Template means every
+            // popup opens dark from the first frame (clones copy the styled state).
+            if (name == "Template" || name == "Dropdown List")
+            {
+                img.sprite = UISprites.RoundedRect(48, 48, 8f, Theme.Surface, Theme.EdgeModal, 1f, 12f);
+                img.type = Image.Type.Sliced;
+                img.color = Color.white;
+                return;
+            }
+            if (name == "Item Background")
+            {
+                img.sprite = null;
+                img.color = Theme.WithA(Theme.Text, 0.05f);
+                return;
+            }
 
             // The wood table background -> flat ground.
             if (name == "BG" && img.rectTransform.rect.width > 1200f)
