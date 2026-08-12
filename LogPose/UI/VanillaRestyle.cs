@@ -32,8 +32,31 @@ namespace LogPose.UI
                         Restyle(g);
                     }
                 }
+                // Scrollbar ColorBlocks re-stamp their parchment tint onto the themed
+                // handle sprite (the brown thumb) — sweep every active scrollbar until
+                // its tint is white. Not one-shot: the one-shot visit can hit these
+                // while their hierarchy is inactive.
+                foreach (Scrollbar sb in Object.FindObjectsByType<Scrollbar>(FindObjectsSortMode.None))
+                    FixScrollbarTint(sb);
             }
             catch { }
+        }
+
+        private static void FixScrollbarTint(Scrollbar sb)
+        {
+            if (sb == null)
+                return;
+            if (sb.colors.normalColor != Color.white)
+            {
+                ColorBlock cb = sb.colors;
+                cb.normalColor = Color.white;
+                cb.highlightedColor = new Color(0.9f, 0.88f, 1f, 1f);
+                cb.pressedColor = new Color(0.8f, 0.77f, 1f, 1f);
+                cb.selectedColor = Color.white;
+                sb.colors = cb;
+                if (sb.targetGraphic != null)
+                    sb.targetGraphic.CrossFadeColor(Color.white, 0f, true, true);
+            }
         }
 
         private static void Restyle(Graphic g)
@@ -99,16 +122,12 @@ namespace LogPose.UI
                 img.sprite = UISprites.RoundedRect(16, 16, 4f, Theme.WithA(Theme.Accent, 0.5f), Color.clear, 0f, 5f);
                 img.type = Image.Type.Sliced;
                 img.color = Color.white;
-                Scrollbar sb = img.GetComponentInParent<Scrollbar>();
-                if (sb != null && sb.targetGraphic == img)
-                {
-                    ColorBlock cb = sb.colors;
-                    cb.normalColor = Color.white;
-                    cb.highlightedColor = new Color(0.9f, 0.88f, 1f, 1f);
-                    cb.pressedColor = new Color(0.8f, 0.77f, 1f, 1f);
-                    cb.selectedColor = Color.white;
-                    sb.colors = cb;
-                }
+                // NOTE: the parameterless GetComponentInParent misses INACTIVE parents —
+                // the lobby scrollbar is inactive at boot when this one-shot visit runs,
+                // so the ColorBlock is also fixed by the per-poll sweep in Update.
+                Scrollbar sb = img.GetComponentInParent<Scrollbar>(true);
+                if (sb != null)
+                    FixScrollbarTint(sb);
                 return;
             }
 
