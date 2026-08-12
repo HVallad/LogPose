@@ -32,7 +32,7 @@ namespace LogPose.UI
                     return;
                 Theme.Ensure();
                 ImposeSolo();
-                ImposePrivateRestore();
+                ImposeBrowser();
                 ImposeModeSelect();
                 ImposeSettings();
             }
@@ -298,17 +298,88 @@ namespace LogPose.UI
             catch { }
         }
 
-        // The private lobby lives on the MAIN canvas and borrows the solo screen's deck
-        // selector and back button. When it's the owner (selector visible while the solo
-        // screen is not), pin the selector back to its vanilla spot and keep the shared
-        // back button in the design's top-left corner.
-        private static void ImposePrivateRestore()
+        // ------------------------------------------- unified multiplayer browser ------
+        //
+        // The lobby browser (public formats AND the private lobby) lives on the MAIN
+        // canvas — vanilla reaches it per format, each entry method re-querying Unity
+        // Lobby Services and filtering client-side by Mode. One page now carries:
+        // format chips (live switching via the public MultiPlayerX() entry points),
+        // the lobby list, and a create-lobby rail; the private chip swaps the page
+        // into the code-join / ruleset variant.
+
+        private static RectTransform _browserChrome;
+        private static readonly List<UnityEngine.UI.Button> _chips = new List<UnityEngine.UI.Button>();
+        private static readonly string[] ChipLabels =
+            { "Standard", "OP17", "Extra Regulation", "Unlimited", "Korean", "Private" };
+
+        private static bool BrowserActive()
         {
-            if (_hjs.go_DeckSelector == null || !_hjs.go_DeckSelector.activeSelf)
+            return _hjs.go_DeckSelector != null && _hjs.go_DeckSelector.activeSelf
+                && (_hjs.go_SoloStart == null || !_hjs.go_SoloStart.activeInHierarchy)
+                && ((_hjs.go_HostGame != null && _hjs.go_HostGame.activeSelf)
+                 || (_hjs.go_JoinGame != null && _hjs.go_JoinGame.activeSelf));
+        }
+
+        private static void ImposeBrowser()
+        {
+            bool on = BrowserActive();
+            if (_browserChrome != null && _browserChrome.gameObject.activeSelf != on)
+                _browserChrome.gameObject.SetActive(on);
+            if (!on)
                 return;
-            if (_hjs.go_SoloStart != null && _hjs.go_SoloStart.activeInHierarchy)
-                return;
-            C(RT(_hjs.go_DeckSelector), -600f, 300f, 320f, 60f);
+            bool priv = _hjs.go_JoinGame != null && _hjs.go_JoinGame.activeSelf;
+            Transform cn = _hjs.go_DeckSelector.transform.parent;
+
+            if (_browserChrome == null)
+            {
+                GameObject root = W.Go("LogPoseBrowserUI", cn);
+                _browserChrome = root.GetComponent<RectTransform>();
+                _browserChrome.sizeDelta = Vector2.zero;
+                C(_browserChrome, 0f, 0f);
+                root.transform.SetSiblingIndex(1);
+                Transform t = root.transform;
+
+                CLabel(t, "M U L T I P L A Y E R", 0f, 505f, 400f, 20f, 12f, Theme.Accent300, 600);
+
+                // Format chips: LogPose buttons driving the vanilla entry methods, so a
+                // click re-runs SetMulti + FindLobbies with the new client-side filter.
+                _chips.Clear();
+                for (int i = 0; i < 6; i++)
+                {
+                    int idx = i;
+                    UnityEngine.UI.Button b = W.Btn(t, ChipLabels[i], 0f, 0f, 150f, 44f,
+                        BtnKind.Secondary, () => ChipClick(idx), 13f);
+                    C(b.GetComponent<RectTransform>(), -390f + i * 156f, 395f, 150f, 44f);
+                    _chips.Add(b);
+                }
+
+                CLabel(t, "Y O U R   D E C K", 420f, 348f, 300f, 20f, 11f,
+                    Theme.WithA(Theme.Text, 0.55f), 600);
+                Panel(t, "CreatePanel", 420f, -60f, 400f, 420f);
+                CLabel(t, "C R E A T E   L O B B Y", 420f, 128f, 340f, 20f, 11f, Theme.Accent300, 600);
+            }
+
+            // Header: the vanilla format label becomes the page title.
+            GameObject header = _hjs.go_LobbyHeader;
+            if (header != null)
+            {
+                C(RT(header), 0f, 455f, 700f, 50f);
+                TMP_Text ht = header.GetComponent<TMP_Text>();
+                if (ht != null)
+                { ht.enableAutoSizing = false; ht.fontSize = 34f; ht.alignment = TextAlignmentOptions.Center; }
+            }
+
+            // Active chip = primary. eMultiStyle: Western, Nationals, Eastern,
+            // Unlimited, Korean map to chips 0..4; Private is chip 5.
+            if (_chips.Count == 6 && _hjs.gls_GameplayLogic != null)
+            {
+                int active = ActiveChip(_hjs.gls_GameplayLogic.eMultiStyle.ToString(), priv);
+                for (int i = 0; i < 6; i++)
+                    if (_chips[i] != null)
+                        BoardHUD.StyleAsButton(_chips[i].gameObject, 150f, 44f, 13f,
+                            i == active ? BtnKind.Primary : BtnKind.Secondary);
+            }
+
             GameObject back = _hjs.go_BackButton;
             if (back != null && back.activeSelf)
             {
@@ -316,6 +387,144 @@ namespace LogPose.UI
                 BoardHUD.StyleAsButton(back, 190f, 48f, 14f, BtnKind.Secondary);
                 Relabel(back, "←  Main menu", 14f);
             }
+
+            // Deck picker rail (both modes).
+            C(RT(_hjs.go_DeckSelector), 420f, 300f, 340f, 56f);
+            CaptionSize(_hjs.go_DeckSelector);
+            if (_hjs.go_PlayerDeckText != null && _hjs.go_PlayerDeckText.activeSelf)
+                _hjs.go_PlayerDeckText.SetActive(false);   // replaced by the kicker
+            GameObject reason = _hjs.go_DeckValidateReason;
+            if (reason != null)
+            {
+                C(RT(reason), 420f, 250f, 380f, 44f);
+                TMP_Text rt2 = reason.GetComponent<TMP_Text>();
+                if (rt2 != null)
+                { rt2.enableAutoSizing = false; rt2.fontSize = 15f; rt2.alignment = TextAlignmentOptions.Center; }
+            }
+
+            // Left column: ads + utilities, scaled down so the list keeps its lane.
+            StackLeft(_hjs.go_Sponsor, -680f, 250f);
+            StackLeft(_hjs.go_Sponsor2, -680f, 140f);
+            StackLeft(_hjs.go_OPBounty, -680f, 30f);
+            StackLeft(_hjs.go_MatchHistory, -680f, -70f);
+            StackLeft(_hjs.go_SponsorButton1, -770f, -160f);
+            StackLeft(_hjs.go_SponsorButton2, -680f, -160f);
+            StackLeft(_hjs.go_SponsorButton3, -590f, -160f);
+
+            if (!priv)
+            {
+                // Lobby list is the centerpiece.
+                GameObject list = _hjs.go_LobbyBG;
+                if (list != null)
+                {
+                    C(RT(list), -190f, -95f, 660f, 640f);
+                    if (list.transform.childCount > 0)
+                    {
+                        RectTransform gl = list.transform.GetChild(0) as RectTransform;
+                        if (gl != null && gl.sizeDelta != new Vector2(600f, 600f))
+                        { gl.sizeDelta = new Vector2(600f, 600f); gl.anchoredPosition = new Vector2(0f, -8f); }
+                    }
+                }
+                GameObject refresh = _hjs.go_RefreshLobbies;
+                if (refresh != null)
+                {
+                    C(RT(refresh), 420f, -300f, 360f, 48f);
+                    BoardHUD.StyleAsButton(refresh, 360f, 48f, 14f, BtnKind.Secondary);
+                    Relabel(refresh, "Refresh list", 14f);
+                }
+                GameObject quick = _hjs.go_QuickJoin;
+                if (quick != null)
+                {
+                    C(RT(quick), 420f, 190f, 360f, 56f);
+                    BoardHUD.StyleAsButton(quick, 360f, 56f, 17f, BtnKind.Primary);
+                    Relabel(quick, "Quick join", 17f);
+                }
+                // Create-lobby panel contents.
+                if (_hjs.go_LobbyDescription != null)
+                    C(RT(_hjs.go_LobbyDescription), 420f, 80f, 360f, 52f);
+                C(RT(_hjs.go_ShareLeaderInfo), 445f, 25f, 0f, 0f);
+                C(RT(_hjs.go_IsTimerLobby), 445f, -25f, 0f, 0f);
+                GameObject host = _hjs.go_HostGame;
+                if (host != null)
+                {
+                    C(RT(host), 420f, -215f, 360f, 60f);
+                    BoardHUD.StyleAsButton(host, 360f, 60f, 17f, BtnKind.Primary);
+                    Relabel(host, "Create lobby", 17f);
+                }
+            }
+            else
+            {
+                // Private branch: ruleset toggles compress into a second chip row that
+                // stays clear of the deck rail; hosting moves into the create panel and
+                // the code-join pair owns the left half.
+                float tx = -440f;
+                foreach (GameObject tog in new[] { _hjs.go_WesternToggle, _hjs.go_NationalsToggle,
+                    _hjs.go_EasternToggle, _hjs.go_UnlimitedToggle, _hjs.go_KoreanToggle, _hjs.go_PrivateToggle })
+                {
+                    if (tog != null && tog.activeSelf)
+                    {
+                        C(RT(tog), tx, 320f, 116f, 44f);
+                        Relabel(tog, null, 13f);
+                        tx += 124f;
+                    }
+                }
+                C(RT(_hjs.go_IsTimerLobby), 445f, 25f, 0f, 0f);
+                GameObject hostP = _hjs.go_HostGamePrivateUnlimited;
+                if (hostP != null)
+                {
+                    C(RT(hostP), 420f, -215f, 360f, 60f);
+                    BoardHUD.StyleAsButton(hostP, 360f, 60f, 15f, BtnKind.Primary);
+                }
+                if (_hjs.go_IPAddress != null)
+                    C(RT(_hjs.go_IPAddress), -190f, 60f, 360f, 52f);
+                GameObject join = _hjs.go_JoinGame;
+                if (join != null)
+                {
+                    C(RT(join), -190f, -10f, 360f, 56f);
+                    BoardHUD.StyleAsButton(join, 360f, 56f, 16f, BtnKind.Secondary);
+                }
+            }
+        }
+
+        private static void ChipClick(int idx)
+        {
+            if (_hjs == null)
+                return;
+            switch (idx)
+            {
+                case 0: _hjs.MultiPlayerWestern(); break;
+                case 1: _hjs.MultiPlayerNationals(); break;
+                case 2: _hjs.MultiPlayerEastern(); break;
+                case 3: _hjs.MultiPlayerUnlimited(); break;
+                case 4: _hjs.MultiPlayerKorean(); break;
+                case 5: _hjs.MultiPlayer(); break;
+            }
+            Plugin.OnScreenSwitched();
+        }
+
+        private static int ActiveChip(string style, bool priv)
+        {
+            if (priv)
+                return 5;
+            switch (style)
+            {
+                case "Western": return 0;
+                case "Nationals": return 1;
+                case "Eastern": return 2;
+                case "Unlimited": return 3;
+                case "Korean": return 4;
+                default: return -1;
+            }
+        }
+
+        private static void StackLeft(GameObject go, float x, float y)
+        {
+            if (go == null || !go.activeSelf)
+                return;
+            RectTransform rt = RT(go);
+            C(rt, x, y, 0f, 0f);
+            if (rt != null && rt.localScale.x != 0.8f)
+                rt.localScale = new Vector3(0.8f, 0.8f, 1f);
         }
 
         // -------------------------------------------------------- 2d format select ----

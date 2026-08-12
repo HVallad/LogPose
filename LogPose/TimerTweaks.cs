@@ -190,6 +190,14 @@ namespace LogPose
             {
                 if (!_root.activeSelf)
                     _root.SetActive(true);
+                // The browser imposer moves the Timed Lobby toggle per poll — follow it.
+                RectTransform art = anchor.GetComponent<RectTransform>();
+                RectTransform rt = _root.GetComponent<RectTransform>();
+                Vector2 want = art.anchoredPosition + new Vector2(30f, -90f);
+                if (rt.anchorMin != art.anchorMin)
+                { rt.anchorMin = art.anchorMin; rt.anchorMax = art.anchorMax; rt.pivot = art.pivot; }
+                if (rt.anchoredPosition != want)
+                    rt.anchoredPosition = want;
                 RefreshLabel();
             }
         }
@@ -251,9 +259,8 @@ namespace LogPose
             rt.anchorMin = art.anchorMin;
             rt.anchorMax = art.anchorMax;
             rt.pivot = art.pivot;
-            // Below the host-button column: 1.42b added "Show leader" + lobby description
-            // right under the Timed Lobby checkbox, where the steppers used to sit.
-            rt.anchoredPosition = art.anchoredPosition + new Vector2(75f, -400f);
+            // Position is re-pinned to the checkbox every poll in Update.
+            rt.anchoredPosition = art.anchoredPosition + new Vector2(30f, -90f);
             rt.sizeDelta = new Vector2(290f, 106f);
 
             MakeButton(hjs, "<", new Vector2(-105f, 28f), () => Step(-1));
