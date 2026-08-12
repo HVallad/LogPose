@@ -124,6 +124,7 @@ namespace LogPose.UI
             {
                 Refresh();
                 RefreshSides();
+                AltArtPatches.ApplyDonArts(_gls);
             }
         }
 

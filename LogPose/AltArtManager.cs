@@ -23,6 +23,79 @@ namespace LogPose
 
         private static readonly Dictionary<string, Sprite> SpriteCache = new Dictionary<string, Sprite>();
         private static readonly Dictionary<string, List<string>> VariantCache = new Dictionary<string, List<string>>();
+        private static readonly Dictionary<string, List<string>> CustomCache = new Dictionary<string, List<string>>();
+
+        // User-supplied art lives at the game root in CustomArts\ — any png/jpg whose
+        // name starts with a card ID belongs to that card. Sidecar values use the
+        // "custom:<filename>" namespace so they flow through the same per-deck save,
+        // solo merge and replay pipeline as official parallels. SafetyNet mirrors the
+        // folder because game updates wipe root folders.
+        internal static string CustomArtsDir
+        {
+            get { return Path.Combine(BepInEx.Paths.GameRootPath, "CustomArts"); }
+        }
+
+        internal static List<string> GetCustomArts(string cardID)
+        {
+            List<string> cached;
+            if (CustomCache.TryGetValue(cardID, out cached))
+                return cached;
+            var result = new List<string>();
+            try
+            {
+                if (Directory.Exists(CustomArtsDir))
+                    foreach (string file in Directory.GetFiles(CustomArtsDir))
+                    {
+                        string ext = Path.GetExtension(file).ToLowerInvariant();
+                        if (ext != ".png" && ext != ".jpg" && ext != ".jpeg")
+                            continue;
+                        string name = Path.GetFileNameWithoutExtension(file);
+                        if (!name.StartsWith(cardID, StringComparison.OrdinalIgnoreCase))
+                            continue;
+                        // Guard against a longer ID sharing the prefix.
+                        if (name.Length > cardID.Length && char.IsDigit(name[cardID.Length]))
+                            continue;
+                        result.Add("custom:" + name);
+                    }
+            }
+            catch { }
+            result.Sort(StringComparer.OrdinalIgnoreCase);
+            CustomCache[cardID] = result;
+            return result;
+        }
+
+        // Copy a picked image into CustomArts named <cardID>_<original>. Returns the
+        // new suffix, or null on failure.
+        internal static string AddCustomArt(string cardID, string sourcePath)
+        {
+            try
+            {
+                Directory.CreateDirectory(CustomArtsDir);
+                string ext = Path.GetExtension(sourcePath).ToLowerInvariant();
+                if (ext == ".jpeg")
+                    ext = ".jpg";
+                if (ext != ".png" && ext != ".jpg")
+                    return null;
+                string baseName = Path.GetFileNameWithoutExtension(sourcePath);
+                foreach (char c in Path.GetInvalidFileNameChars())
+                    baseName = baseName.Replace(c.ToString(), "");
+                if (!baseName.StartsWith(cardID, StringComparison.OrdinalIgnoreCase))
+                    baseName = cardID + "_" + baseName;
+                string target = Path.Combine(CustomArtsDir, baseName + ext);
+                int n = 2;
+                while (File.Exists(target))
+                    target = Path.Combine(CustomArtsDir, baseName + "_" + (n++) + ext);
+                File.Copy(sourcePath, target);
+                CustomCache.Remove(cardID);
+                Plugin.Log.LogInfo("AltArt: custom art added: " + Path.GetFileName(target));
+                return "custom:" + Path.GetFileNameWithoutExtension(target);
+            }
+            catch (Exception e)
+            {
+                Plugin.Log.LogWarning("AltArt: custom add failed: " + e.Message);
+                return null;
+            }
+        }
 
         // Replays reconstruct a recorded match on a programmatic solo board, so no single
         // deck sidecar applies. Use the union of every saved deck's picks instead — if the
@@ -87,6 +160,48 @@ namespace LogPose
             {
                 Plugin.Log.LogWarning("AltArt: failed to merge sidecar " + path + ": " + e.Message);
             }
+        }
+
+        // ------------------------------------------------------------- multi-DON!! ----
+        // The ten DON!! cards can each carry their own art: the sidecar's "__dons" key
+        // holds a |-joined suffix list ('' = base art), applied by index to face-up
+        // DON!! cards on the board. The plain "Don" key mirrors the first pick so the
+        // single-art choke path (and older versions reading the sidecar) stay coherent.
+        internal const string DonListKey = "__dons";
+
+        internal static List<string> GetDonList()
+        {
+            string raw;
+            if (ActiveMap.TryGetValue(DonListKey, out raw) && !string.IsNullOrEmpty(raw))
+                return new List<string>(raw.Split('|'));
+            string single;
+            if (ActiveMap.TryGetValue("Don", out single) && !string.IsNullOrEmpty(single))
+                return new List<string> { single };
+            return new List<string>();
+        }
+
+        internal static void SetDonList(List<string> list)
+        {
+            int last = -1;
+            for (int i = 0; i < list.Count; i++)
+                if (!string.IsNullOrEmpty(list[i]))
+                    last = i;
+            if (last < 0)
+            {
+                ActiveMap.Remove(DonListKey);
+                ActiveMap.Remove("Don");
+            }
+            else
+            {
+                List<string> trimmed = list.GetRange(0, last + 1);
+                ActiveMap[DonListKey] = string.Join("|", trimmed.ToArray());
+                string first = trimmed.Find(s => !string.IsNullOrEmpty(s));
+                if (first != null)
+                    ActiveMap["Don"] = first;
+                else
+                    ActiveMap.Remove("Don");
+            }
+            SaveSidecar();
         }
 
         internal static bool HasActiveVariant(string cardID)
@@ -231,18 +346,31 @@ namespace LogPose
 
         private static Sprite LoadVariantSprite(string cardID, string suffix, SpriteState state)
         {
-            string rel = FindImageFolderRelative(cardID);
-            if (rel == null)
-                return null;
-            string basePath = Path.Combine(Path.Combine(Application.streamingAssetsPath, rel), cardID + suffix);
-
             string path = null;
-            if (state == SpriteState.Thumbnail && File.Exists(basePath + "_small.jpg"))
-                path = basePath + "_small.jpg";
-            else if (File.Exists(basePath + ".png"))
-                path = basePath + ".png";
-            else if (File.Exists(basePath + ".jpg"))
-                path = basePath + ".jpg";
+            if (suffix.StartsWith("custom:", StringComparison.Ordinal))
+            {
+                // Customs have no separate thumbnail — the full image serves both.
+                string baseName = Path.Combine(CustomArtsDir, suffix.Substring(7));
+                if (File.Exists(baseName + ".png"))
+                    path = baseName + ".png";
+                else if (File.Exists(baseName + ".jpg"))
+                    path = baseName + ".jpg";
+                else if (File.Exists(baseName + ".jpeg"))
+                    path = baseName + ".jpeg";
+            }
+            else
+            {
+                string rel = FindImageFolderRelative(cardID);
+                if (rel == null)
+                    return null;
+                string basePath = Path.Combine(Path.Combine(Application.streamingAssetsPath, rel), cardID + suffix);
+                if (state == SpriteState.Thumbnail && File.Exists(basePath + "_small.jpg"))
+                    path = basePath + "_small.jpg";
+                else if (File.Exists(basePath + ".png"))
+                    path = basePath + ".png";
+                else if (File.Exists(basePath + ".jpg"))
+                    path = basePath + ".jpg";
+            }
             if (path == null)
                 return null;
 

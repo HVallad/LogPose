@@ -29,6 +29,8 @@ namespace LogPose
                         Path.Combine(root, "Decks"), "*.arts.json", int.MaxValue);
                     copied += Mirror(Path.Combine(Paths.ConfigPath),
                         Path.Combine(root, "config"), "*.cfg", int.MaxValue);
+                    copied += Mirror(Path.Combine(Paths.GameRootPath, "CustomArts"),
+                        Path.Combine(root, "CustomArts"), "*.*", int.MaxValue);
                     copied += Mirror(Path.Combine(Paths.GameRootPath, "CombatLogs", "AutoSaved"),
                         Path.Combine(root, "CombatLogs"), "*.*", MaxLogFiles);
                     if (copied > 0)

@@ -48,6 +48,69 @@ namespace LogPose
             AltArtManager.ResetForMatch();
         }
 
+        // -------------------------------------------------------------- multi-DON!! ---
+        // The image choke serves ONE sprite per card ID, so per-instance DON!! art is
+        // applied by a poll pass instead: each face-up DON!! (cost area + attached)
+        // takes the list entry for its index, cycling. Runs from BoardHUD's poll. Own
+        // seats only — in multiplayer the opponent's client shows their own picks.
+        internal static void ApplyDonArts(GameplayLogicScript gls)
+        {
+            try
+            {
+                System.Collections.Generic.List<string> list = AltArtManager.GetDonList();
+                if (list.Count <= 1 || gls == null || gls.Lps_Players == null)
+                    return;   // empty/single is the normal choke path
+                int seats = gls.e_GameStyle == GameStyle.SoloVSelf ? gls.Lps_Players.Count : 1;
+                for (int s = 0; s < seats && s < gls.Lps_Players.Count; s++)
+                {
+                    PlayerState ps = gls.Lps_Players[s];
+                    int i = 0;
+                    SkinDons(ps.Lgo_MyDonCostArea, list, ref i);
+                    SkinAttached(ps.Lgo_MyLeader, list, ref i);
+                    SkinAttached(ps.Lgo_MyDeploy, list, ref i);
+                }
+            }
+            catch { }
+        }
+
+        private static void SkinDons(System.Collections.Generic.List<GameObject> dons,
+            System.Collections.Generic.List<string> list, ref int i)
+        {
+            if (dons == null)
+                return;
+            foreach (GameObject g in dons)
+            {
+                if (g == null)
+                    continue;
+                CardLogicScript cls = g.GetComponent<CardLogicScript>();
+                if (cls == null || !cls.myCard.bFaceUp)
+                    continue;
+                Sprite want = AltArtManager.GetArtSprite("Don", list[i % list.Count], SpriteState.Full);
+                i++;
+                if (want == null)
+                    continue;
+                UnityEngine.UI.Image im = g.GetComponent<UnityEngine.UI.Image>();
+                if (im != null && im.sprite != want)
+                    im.sprite = want;
+            }
+        }
+
+        private static void SkinAttached(System.Collections.Generic.List<GameObject> cards,
+            System.Collections.Generic.List<string> list, ref int i)
+        {
+            if (cards == null)
+                return;
+            foreach (GameObject c in cards)
+            {
+                if (c == null)
+                    continue;
+                CardLogicScript cls = c.GetComponent<CardLogicScript>();
+                if (cls == null || cls.lgo_AttachedDon == null)
+                    continue;
+                SkinDons(cls.lgo_AttachedDon, list, ref i);
+            }
+        }
+
         // While the alt-art page is open the editor's Physics2D card hover/click must be
         // suppressed — UI raycasts don't block it, so a click on a thumbnail would also
         // hit the deck-list card behind the overlay.

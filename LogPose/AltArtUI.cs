@@ -126,7 +126,9 @@ namespace LogPose
             }
         }
 
-        private static List<string> DeckCardsWithVariants(DeckEditorScript editor)
+        // Every unique card in the deck — custom art can be added to any of them, so
+        // the list no longer gates on official variants existing.
+        private static List<string> DeckCards(DeckEditorScript editor)
         {
             var result = new List<string>();
             if (editor.lgo_CurrentDeck == null)
@@ -139,7 +141,7 @@ namespace LogPose
                 if (cls == null || cls.myCard.cardDef == null)
                     continue;
                 string id = cls.myCard.cardDef.cardID;
-                if (!result.Contains(id) && AltArtManager.GetVariants(id).Count > 0)
+                if (!result.Contains(id))
                     result.Add(id);
             }
             return result;
@@ -147,6 +149,8 @@ namespace LogPose
 
         private static string CardName(string cardID)
         {
+            if (cardID == "Don")
+                return "DON!!";
             CardDefinition def = CardDatabaseScript.Instance != null
                 ? CardDatabaseScript.Instance.FindDefinition(cardID) : null;
             return def != null && !string.IsNullOrEmpty(def.characterName) ? def.characterName : cardID;
@@ -156,6 +160,13 @@ namespace LogPose
         {
             if (string.IsNullOrEmpty(suffix))
                 return "Base print";
+            if (suffix.StartsWith("custom:"))
+            {
+                string n = suffix.Substring(7);
+                if (_selCard != null && n.StartsWith(_selCard, StringComparison.OrdinalIgnoreCase))
+                    n = n.Substring(_selCard.Length).TrimStart('_', ' ', '-');
+                return string.IsNullOrEmpty(n) ? "Custom" : "Custom · " + n;
+            }
             string s = suffix.TrimStart('_');
             if (s.StartsWith("p"))
                 return "Parallel " + s.Substring(1);
@@ -203,13 +214,16 @@ namespace LogPose
             _fetchLabel = fetch.GetComponentInChildren<TMP_Text>(true);
             UI.W.Btn(pt, "×", 1724f, 28f, 44f, 44f, UI.BtnKind.Secondary, ClosePage, 22f);
 
-            List<string> cards = DeckCardsWithVariants(editor);
+            List<string> cards = DeckCards(editor);
             if (cards.Count == 0)
             {
-                UI.W.Label(pt, "No variant art found for the cards in this deck.\n\nFetch arts downloads the official parallel prints for every card in the deck.",
+                UI.W.Label(pt, "Load a deck first — every card in it can then pick official parallels or your own custom art.",
                     450f, 420f, 900f, 120f, 20f, UI.Theme.TextMuted, 400, TextAlignmentOptions.Center);
                 return;
             }
+            // The DON!! pseudo-entry is always first: its ten cards can each carry a
+            // different art.
+            cards.Insert(0, "Don");
             if (_selCard == null || !cards.Contains(_selCard))
             {
                 _selCard = cards[0];
@@ -305,10 +319,15 @@ namespace LogPose
                 UI.Theme.Text, 500);
             name.enableWordWrapping = false;
             name.overflowMode = TextOverflowModes.Ellipsis;
-            int artCount = AltArtManager.GetVariants(cardID).Count + 1;
-            UI.W.Label(row.transform, cardID + " · " + artCount + " arts"
-                + (string.IsNullOrEmpty(active) ? "" : " · custom"), 58f, 38f, 236f, 18f, 12f,
-                string.IsNullOrEmpty(active) ? UI.Theme.TextMuted : UI.Theme.Accent300, 400,
+            int artCount = AltArtManager.GetVariants(cardID).Count
+                + AltArtManager.GetCustomArts(cardID).Count + 1;
+            bool marked = !string.IsNullOrEmpty(active)
+                || (cardID == "Don" && AltArtManager.GetDonList().Count > 1);
+            string sub = cardID == "Don"
+                ? artCount + " arts" + (AltArtManager.GetDonList().Count > 1 ? " · mixed" : "")
+                : cardID + " · " + artCount + " arts" + (string.IsNullOrEmpty(active) ? "" : " · picked");
+            UI.W.Label(row.transform, sub, 58f, 38f, 236f, 18f, 12f,
+                marked ? UI.Theme.Accent300 : UI.Theme.TextMuted, 400,
                 TextAlignmentOptions.TopLeft, true);
         }
 
@@ -321,8 +340,9 @@ namespace LogPose
             active = active ?? "";
             var arts = new List<string> { "" };
             arts.AddRange(AltArtManager.GetVariants(_selCard));
+            arts.AddRange(AltArtManager.GetCustomArts(_selCard));
             if (!arts.Contains(_selArt))
-                _selArt = active;
+                _selArt = arts.Contains(active) ? active : "";
 
             UI.W.Label(pt, CardName(_selCard), 384f, 128f, 600f, 32f, 20f, UI.Theme.Text, 500);
             UI.W.Tag(pt, arts.Count + " ARTS AVAILABLE", 384f, 162f, false, outline: true);
@@ -341,7 +361,7 @@ namespace LogPose
                 UI.W.Label(pt, "+" + (arts.Count - MaxArtsPerRow) + " more", x + 8f, 300f, 120f, 24f, 13f,
                     UI.Theme.TextMuted, 400);
 
-            // Preview + details.
+            // Preview.
             Sprite full = AltArtManager.GetArtSprite(_selCard, _selArt, SpriteState.Full);
             if (full == null)
                 full = AltArtManager.GetArtSprite(_selCard, _selArt, SpriteState.Thumbnail);
@@ -358,10 +378,17 @@ namespace LogPose
 
             float dx = 760f;
             UI.W.Label(pt, ArtName(_selArt), dx, 482f, 400f, 30f, 20f, UI.Theme.Text, 500);
+
+            if (_selCard == "Don")
+            {
+                BuildDonDetails(pt, dx);
+                return;
+            }
+
             UI.W.Label(pt, _selCard + (string.IsNullOrEmpty(_selArt) ? "" : _selArt), dx, 516f, 400f, 22f, 14f,
                 UI.Theme.TextMuted, 400, TextAlignmentOptions.TopLeft, true);
             UI.W.Rule(pt, dx, 552f, 420f);
-            UI.W.Label(pt, "The chosen printing is used whenever this deck plays the card — in your hand, on the field, in the editor and in replays. Choices save to the deck's sidecar file.",
+            UI.W.Label(pt, "The chosen printing is used whenever this deck plays the card — in your hand, on the field, in the editor and in replays. Custom images live in the CustomArts folder next to the game.",
                 dx, 568f, 440f, 70f, 13f, UI.Theme.TextMuted, 400);
 
             bool isActive = _selArt == active;
@@ -376,6 +403,105 @@ namespace LogPose
                 _selArt = "";
                 Rebuild();
             }, 15f);
+            UI.W.Btn(pt, "Add custom art…", dx, 724f, 200f, 44f, UI.BtnKind.Secondary, AddCustom, 14f);
+            UI.W.Btn(pt, "Open art folder", dx + 216f, 724f, 180f, 44f, UI.BtnKind.Secondary, OpenCustomFolder, 14f);
+        }
+
+        // DON!! details: ten slots, each assignable to the selected art.
+        private static void BuildDonDetails(Transform pt, float dx)
+        {
+            UI.W.Label(pt, "Each of the ten DON!! cards can carry its own art. Pick an art above, then click a slot — or use it for all ten.",
+                dx, 516f, 440f, 48f, 13f, UI.Theme.TextMuted, 400);
+
+            List<string> cur = AltArtManager.GetDonList();
+            for (int i = 0; i < 10; i++)
+            {
+                string slotArt = cur.Count == 0 ? "" : cur[i % cur.Count];
+                int col = i % 5, row = i / 5;
+                BuildDonSlot(pt, i, slotArt, dx + col * 88f, 576f + row * 122f);
+            }
+
+            UI.W.Btn(pt, "Use for all 10", dx, 836f, 200f, 48f, UI.BtnKind.Primary, () =>
+            {
+                var all = new List<string>();
+                for (int i = 0; i < 10; i++)
+                    all.Add(_selArt);
+                AltArtManager.SetDonList(all);
+                Rebuild();
+            }, 15f);
+            UI.W.Btn(pt, "Reset all", dx + 216f, 836f, 120f, 48f, UI.BtnKind.Secondary, () =>
+            {
+                AltArtManager.SetDonList(new List<string>());
+                Rebuild();
+            }, 14f);
+            UI.W.Btn(pt, "Add custom…", dx + 352f, 836f, 130f, 48f, UI.BtnKind.Secondary, AddCustom, 13f);
+        }
+
+        private static void BuildDonSlot(Transform pt, int slot, string slotArt, float x, float y)
+        {
+            GameObject go = UI.W.Go("DonSlot" + slot, pt);
+            UI.W.TL(go, x, y, 76f, 112f);
+            Image frame = go.AddComponent<Image>();
+            frame.sprite = UI.UISprites.RoundedRect(24, 24, 6f, UI.Theme.WithA(UI.Theme.Text, 0.03f),
+                UI.Theme.WithA(UI.Theme.Text, 0.14f), 1f, 7f);
+            frame.type = Image.Type.Sliced;
+            Button b = go.AddComponent<Button>();
+            b.targetGraphic = frame;
+            int captured = slot;
+            b.onClick.AddListener(() => AssignDonSlot(captured));
+
+            Sprite art = AltArtManager.GetArtSprite("Don", slotArt, SpriteState.Full);
+            if (art != null)
+            {
+                GameObject img = UI.W.Go("Img", go.transform);
+                UI.W.TL(img, 4f, 4f, 68f, 88f);
+                Image ii = img.AddComponent<Image>();
+                ii.sprite = art;
+                ii.raycastTarget = false;
+            }
+            TMP_Text n = UI.W.Label(go.transform, "#" + (slot + 1), 0f, 92f, 76f, 18f, 11f,
+                UI.Theme.TextMuted, 600, TextAlignmentOptions.Center, true);
+            n.raycastTarget = false;
+        }
+
+        private static void AssignDonSlot(int slot)
+        {
+            List<string> cur = AltArtManager.GetDonList();
+            var full = new List<string>();
+            for (int i = 0; i < 10; i++)
+                full.Add(cur.Count == 0 ? "" : cur[i % cur.Count]);
+            full[slot] = _selArt;
+            AltArtManager.SetDonList(full);
+            Rebuild();
+        }
+
+        private static void AddCustom()
+        {
+            string path = FilePicker.PickImage("Choose an image for " + CardName(_selCard));
+            if (string.IsNullOrEmpty(path))
+                return;
+            string suffix = AltArtManager.AddCustomArt(_selCard, path);
+            if (suffix == null)
+                return;
+            _selArt = suffix;
+            Rebuild();
+        }
+
+        private static void OpenCustomFolder()
+        {
+            try
+            {
+                System.IO.Directory.CreateDirectory(AltArtManager.CustomArtsDir);
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = AltArtManager.CustomArtsDir,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception e)
+            {
+                Plugin.Log.LogWarning("Open folder failed: " + e.Message);
+            }
         }
 
         private static void BuildArtThumb(Transform pt, string suffix, float x, float y, bool viewSelected, bool inUse)
@@ -409,6 +535,12 @@ namespace LogPose
             {
                 TMP_Text tag = UI.W.Label(slot.transform, "IN USE", 0f, 210f, 168f, 20f, 11f,
                     UI.Theme.Accent300, 600, TextAlignmentOptions.Center, false, 0.12f);
+                tag.raycastTarget = false;
+            }
+            else if (suffix.StartsWith("custom:"))
+            {
+                TMP_Text tag = UI.W.Label(slot.transform, "CUSTOM", 0f, 210f, 168f, 20f, 10f,
+                    UI.Theme.WithA(UI.Theme.Text, 0.5f), 600, TextAlignmentOptions.Center, false, 0.12f);
                 tag.raycastTarget = false;
             }
         }
