@@ -193,7 +193,7 @@ namespace LogPose
                 // The browser imposer moves the Timed Lobby toggle per poll — follow it.
                 RectTransform art = anchor.GetComponent<RectTransform>();
                 RectTransform rt = _root.GetComponent<RectTransform>();
-                Vector2 want = art.anchoredPosition + new Vector2(30f, -90f);
+                Vector2 want = art.anchoredPosition + new Vector2(150f, -66f);
                 if (rt.anchorMin != art.anchorMin)
                 { rt.anchorMin = art.anchorMin; rt.anchorMax = art.anchorMax; rt.pivot = art.pivot; }
                 if (rt.anchoredPosition != want)
@@ -260,7 +260,7 @@ namespace LogPose
             rt.anchorMax = art.anchorMax;
             rt.pivot = art.pivot;
             // Position is re-pinned to the checkbox every poll in Update.
-            rt.anchoredPosition = art.anchoredPosition + new Vector2(30f, -90f);
+            rt.anchoredPosition = art.anchoredPosition + new Vector2(150f, -66f);
             rt.sizeDelta = new Vector2(290f, 106f);
 
             MakeButton(hjs, "<", new Vector2(-105f, 28f), () => Step(-1));

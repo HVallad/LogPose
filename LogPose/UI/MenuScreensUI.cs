@@ -452,10 +452,10 @@ namespace LogPose.UI
                 _createPanel = Panel(t, "CreatePanel", 0f, 0f, 512f, 545f);
                 _createKick = CLabel(t, "C R E A T E   A   L O B B Y", 0f, 0f, 340f, 18f, 11f,
                     Theme.Accent300, 600, TextAlignmentOptions.MidlineLeft);
-                _baseLbl = CLabel(t, "BASE TIME", 0f, 0f, 130f, 18f, 10f,
-                    Theme.WithA(Theme.Text, 0.5f), 600, TextAlignmentOptions.MidlineLeft);
-                _incLbl = CLabel(t, "INCREMENT", 0f, 0f, 130f, 18f, 10f,
-                    Theme.WithA(Theme.Text, 0.5f), 600, TextAlignmentOptions.MidlineLeft);
+                _baseLbl = CLabel(t, "BASE TIME", 0f, 0f, 104f, 18f, 10f,
+                    Theme.WithA(Theme.Text, 0.5f), 600, TextAlignmentOptions.MidlineRight);
+                _incLbl = CLabel(t, "INCREMENT", 0f, 0f, 104f, 18f, 10f,
+                    Theme.WithA(Theme.Text, 0.5f), 600, TextAlignmentOptions.MidlineRight);
                 _railCap = null;
             }
 
@@ -575,8 +575,8 @@ namespace LogPose.UI
                 }
             }
 
-            // Deck rail (both modes).
-            C(_deckPanel.rectTransform, railCx, 285f, 512f, 250f);
+            // Deck rail (both modes; private hides Quick join, so the panel shrinks).
+            C(_deckPanel.rectTransform, railCx, priv ? 316f : 283f, 512f, priv ? 196f : 262f);
             C(_deckKick.rectTransform, railCx - 96f, 384f, 300f, 18f);
             C(_railThumb.transform.parent as RectTransform, railCx - 186f, 296f, 76f, 106f);
             C(RT(_hjs.go_DeckSelector), railCx + 42f, 312f, 320f, 48f);
@@ -600,23 +600,26 @@ namespace LogPose.UI
                 BoardHUD.StyleAsButton(quick, 464f, 58f, 17f, BtnKind.Primary);
                 Relabel(quick, "Quick join", 17f);
             }
-            C(_quickCap.rectTransform, railCx, 165f, 440f, 18f);
+            C(_quickCap.rectTransform, railCx, 172f, 440f, 18f);
 
-            // Create panel.
-            C(_createPanel.rectTransform, railCx, -125f, 512f, 545f);
-            C(_createKick.rectTransform, railCx - 76f, 118f, 340f, 18f);
+            // Create panel — the private variant hides the description and share
+            // checkbox, so its contents compact upward and the panel shrinks to fit.
+            C(_createPanel.rectTransform, railCx, priv ? 20f : -125f, 512f, priv ? 320f : 545f);
+            C(_createKick.rectTransform, railCx - 76f, priv ? 150f : 118f, 340f, 18f);
             if (_hjs.go_LobbyDescription != null && _hjs.go_LobbyDescription.activeSelf)
                 C(RT(_hjs.go_LobbyDescription), railCx, 72f, 464f, 48f);
             if (_hjs.go_ShareLeaderInfo != null && _hjs.go_ShareLeaderInfo.activeSelf)
             {
-                C(RT(_hjs.go_ShareLeaderInfo), railCx + 30f, 22f, 0f, 0f);
+                C(RT(_hjs.go_ShareLeaderInfo), railCx - 90f, 22f, 0f, 0f);
                 RelabelToggle(_hjs.go_ShareLeaderInfo, "Show my leader in the list");
             }
-            C(RT(_hjs.go_IsTimerLobby), railCx + 30f, -24f, 0f, 0f);
+            float timedY = priv ? 100f : -24f;
+            C(RT(_hjs.go_IsTimerLobby), railCx - 90f, timedY, 0f, 0f);
             RelabelToggle(_hjs.go_IsTimerLobby, "Timed lobby");
-            // The stepper follows the Timed toggle at (+30,-90); label its two rows.
-            C(_baseLbl.rectTransform, railCx - 218f, -86f, 130f, 18f);
-            C(_incLbl.rectTransform, railCx - 218f, -140f, 130f, 18f);
+            // The stepper follows the Timed toggle at (+150,-66): its two rows land at
+            // toggle-y − 38 and − 92 — the labels right-align against them.
+            C(_baseLbl.rectTransform, railCx - 160f, timedY - 38f, 104f, 18f);
+            C(_incLbl.rectTransform, railCx - 160f, timedY - 92f, 104f, 18f);
 
             if (!priv)
             {
@@ -656,7 +659,7 @@ namespace LogPose.UI
                 GameObject hostP = _hjs.go_HostGamePrivateUnlimited;
                 if (hostP != null)
                 {
-                    C(RT(hostP), railCx, -330f, 464f, 58f);
+                    C(RT(hostP), railCx, -90f, 464f, 58f);
                     BoardHUD.StyleAsButton(hostP, 464f, 58f, 15f, BtnKind.Primary);
                 }
                 if (_hjs.go_IPAddress != null)
