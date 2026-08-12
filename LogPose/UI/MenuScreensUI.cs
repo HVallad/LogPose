@@ -366,7 +366,31 @@ namespace LogPose.UI
                 C(RT(header), 0f, 455f, 700f, 50f);
                 TMP_Text ht = header.GetComponent<TMP_Text>();
                 if (ht != null)
-                { ht.enableAutoSizing = false; ht.fontSize = 34f; ht.alignment = TextAlignmentOptions.Center; }
+                {
+                    ht.enableAutoSizing = false;
+                    ht.fontSize = 34f;
+                    ht.alignment = TextAlignmentOptions.Center;
+                    if (ht.raycastTarget)
+                        ht.raycastTarget = false;
+                }
+            }
+
+            // The vanilla status label ("Query Lobbies…") raycasts by default and its
+            // old rect sat right over the create-lobby button, eating its clicks —
+            // restyle it as a status line under the list instead.
+            Transform guide = cn.Find("GuideText");
+            if (guide != null)
+            {
+                C(guide as RectTransform, -190f, -450f, 700f, 40f);
+                TMP_Text gt = guide.GetComponent<TMP_Text>();
+                if (gt != null)
+                {
+                    if (gt.raycastTarget)
+                        gt.raycastTarget = false;
+                    gt.enableAutoSizing = false;
+                    gt.fontSize = 14f;
+                    gt.alignment = TextAlignmentOptions.Center;
+                }
             }
 
             // Active chip = primary. eMultiStyle: Western, Nationals, Eastern,
@@ -464,7 +488,7 @@ namespace LogPose.UI
                     if (tog != null && tog.activeSelf)
                     {
                         C(RT(tog), tx, 320f, 116f, 44f);
-                        Relabel(tog, null, 13f);
+                        RulesetChip(tog);
                         tx += 124f;
                     }
                 }
@@ -486,10 +510,21 @@ namespace LogPose.UI
             }
         }
 
+        private static readonly string[] ChipFormats =
+            { "Western", "Nationals", "Eastern", "Unlimited", "Korean", "Private" };
+
         private static void ChipClick(int idx)
         {
             if (_hjs == null)
                 return;
+            EnterFormat(idx);
+            if (idx >= 0 && idx < ChipFormats.Length)
+                Plugin.CfgLastFormat.Value = ChipFormats[idx];
+            Plugin.OnScreenSwitched();
+        }
+
+        private static void EnterFormat(int idx)
+        {
             switch (idx)
             {
                 case 0: _hjs.MultiPlayerWestern(); break;
@@ -499,7 +534,28 @@ namespace LogPose.UI
                 case 4: _hjs.MultiPlayerKorean(); break;
                 case 5: _hjs.MultiPlayer(); break;
             }
-            Plugin.OnScreenSwitched();
+        }
+
+        // The format-select screen is redundant now that the browser carries format
+        // chips — Multiplayer goes straight to the browser on the last-used format.
+        [HarmonyLib.HarmonyPrefix]
+        [HarmonyLib.HarmonyPatch(typeof(HostJoinScript), "ShowMultiplayerCanvas")]
+        private static bool ShowMultiplayerCanvas_Prefix(HostJoinScript __instance)
+        {
+            if (!Plugin.CfgUiReskin.Value)
+                return true;
+            try
+            {
+                _hjs = __instance;
+                int idx = System.Array.IndexOf(ChipFormats, Plugin.CfgLastFormat.Value);
+                EnterFormat(idx >= 0 ? idx : 0);
+                Plugin.OnScreenSwitched();
+                return false;
+            }
+            catch
+            {
+                return true;
+            }
         }
 
         private static int ActiveChip(string style, bool priv)
@@ -525,6 +581,60 @@ namespace LogPose.UI
             C(rt, x, y, 0f, 0f);
             if (rt != null && rt.localScale.x != 0.8f)
                 rt.localScale = new Vector3(0.8f, 0.8f, 1f);
+        }
+
+        private static Sprite _chipBox, _chipFill;
+
+        // The ruleset toggles carry LEGACY Text labels that are stretch-anchored with a
+        // +272px sizeDelta — on a 116-wide chip the invisible label rect overhangs onto
+        // BOTH neighbors and (raycasting by default) eats their clicks: the same disease
+        // as the old "buttons are offset" bug. Margins + no raycast, and the checkbox
+        // Background/Checkmark stretch into a full-chip selected fill.
+        private static void RulesetChip(GameObject tog)
+        {
+            Text lt = tog.GetComponentInChildren<Text>(true);
+            if (lt != null)
+            {
+                if (lt.raycastTarget)
+                    lt.raycastTarget = false;
+                lt.fontSize = 13;
+                lt.alignment = TextAnchor.MiddleCenter;
+                RectTransform lrt = lt.rectTransform;
+                if (lrt.anchorMin.x != lrt.anchorMax.x && lrt.sizeDelta != new Vector2(-8f, -8f))
+                { lrt.sizeDelta = new Vector2(-8f, -8f); lrt.anchoredPosition = Vector2.zero; }
+            }
+            if (_chipBox == null)
+            {
+                _chipBox = UISprites.RoundedRect(32, 32, 8f, Theme.WithA(Theme.Text, 0.04f),
+                    Theme.WithA(Theme.Text, 0.22f), 1f, 10f);
+                _chipFill = UISprites.RoundedRect(32, 32, 8f, Theme.WithA(Theme.Accent, 0.16f),
+                    Theme.Accent, 1f, 10f);
+            }
+            Transform bg = tog.transform.Find("Background");
+            if (bg != null)
+            {
+                RectTransform brt = bg as RectTransform;
+                brt.anchorMin = Vector2.zero;
+                brt.anchorMax = Vector2.one;
+                brt.pivot = new Vector2(0.5f, 0.5f);
+                brt.anchoredPosition = Vector2.zero;
+                brt.sizeDelta = Vector2.zero;
+                Image bi = bg.GetComponent<Image>();
+                if (bi != null && bi.sprite != _chipBox)
+                { bi.sprite = _chipBox; bi.type = Image.Type.Sliced; bi.color = Color.white; }
+                Transform chk = bg.Find("Checkmark");
+                if (chk != null)
+                {
+                    RectTransform crt = chk as RectTransform;
+                    crt.anchorMin = Vector2.zero;
+                    crt.anchorMax = Vector2.one;
+                    crt.anchoredPosition = Vector2.zero;
+                    crt.sizeDelta = Vector2.zero;
+                    Image ci = chk.GetComponent<Image>();
+                    if (ci != null && ci.sprite != _chipFill)
+                    { ci.sprite = _chipFill; ci.type = Image.Type.Sliced; ci.color = Color.white; }
+                }
+            }
         }
 
         // -------------------------------------------------------- 2d format select ----

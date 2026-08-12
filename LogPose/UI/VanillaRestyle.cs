@@ -162,6 +162,13 @@ namespace LogPose.UI
         {
             if (tmp.font != null && tmp.font.name.StartsWith("LogPose"))
                 return;
+            // Pure display labels must never raycast: the invisible (alpha-0) side-name
+            // rects sat over the lobby browser's format chips and ate their clicks.
+            string n = tmp.gameObject.name;
+            if (tmp.raycastTarget && (n == "OpponentSideName" || n == "PlayerSideName"
+                || n == "OpponentTimer" || n == "PlayerTimer" || n == "Turn Counter"
+                || n == "Mismatch Indicator" || n == "Version Number" || n == "GuideText"))
+                tmp.raycastTarget = false;
             bool mono = tmp.gameObject.name.Contains("Timer") || tmp.gameObject.name.Contains("Version");
             TMP_FontAsset f = mono ? UIFonts.Mono : UIFonts.Sans;
             if (f != null)

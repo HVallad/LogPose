@@ -11,7 +11,7 @@ namespace LogPose
     {
         public const string GUID = "com.hunter.logpose";
         public const string NAME = "LogPose";
-        public const string VERSION = "1.0.24";
+        public const string VERSION = "1.0.25";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;
@@ -31,6 +31,7 @@ namespace LogPose
         internal static ConfigEntry<float> CfgTimerRecoverySeconds;
         internal static ConfigEntry<bool> CfgUiReskin;
         internal static ConfigEntry<string> CfgUiColorway;
+        internal static ConfigEntry<string> CfgLastFormat;
 
         private void Awake()
         {
@@ -65,6 +66,9 @@ namespace LogPose
                 "Replace the game's menu chrome with the LogPose 1.0 redesign. Turn off to keep the vanilla look.");
             CfgUiColorway = Config.Bind("UI", "Colorway", "Nocturne",
                 "Reskin colorway: Nocturne (blurple) or Batsu (brand magenta).");
+            CfgLastFormat = Config.Bind("UI", "LastMultiplayerFormat", "Western",
+                "The lobby browser format the Multiplayer button opens with (remembers your last pick). " +
+                "Western=Standard, Nationals=OP17, Eastern=Extra Regulation, plus Unlimited, Korean, Private.");
 
             // Scene loads restyle IMMEDIATELY — waiting for the next poll paints a
             // flash of vanilla UI on every transition.
@@ -83,6 +87,7 @@ namespace LogPose
             harmony.PatchAll(typeof(TimerPatches));
             harmony.PatchAll(typeof(UI.BoardLayoutPatches));
             harmony.PatchAll(typeof(UI.DeckEditorUI));
+            harmony.PatchAll(typeof(UI.MenuScreensUI));
             UI.MenuPerfPatches.Apply(harmony);
 
             // Canvas switches inside the menu scene fire no scene-load event, so hook

@@ -187,8 +187,7 @@ namespace LogPose.UI
             foreach (string f in new[] { "Standard", "OP17", "Extra Regulation", "Unlimited", "Korean", "Private" })
                 W.Tag(tags.transform, f, 0f, 0f, false);
 
-            W.Btn(card.transform, "Queue Standard", 32f, h - 88f, 190f, 56f, BtnKind.Primary, () => Invoke("Multiplayer"), 16f);
-            W.Btn(card.transform, "All formats", 238f, h - 88f, 140f, 56f, BtnKind.Secondary, () => Invoke("Multiplayer"), 16f);
+            W.Btn(card.transform, "Browse lobbies", 32f, h - 88f, 346f, 56f, BtnKind.Primary, () => Invoke("Multiplayer"), 16f);
         }
 
         private static void BuildDeckCard(Transform t, float x, float y, float w, float h)

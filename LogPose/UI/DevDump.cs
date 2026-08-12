@@ -75,12 +75,17 @@ namespace LogPose.UI
                             detail = "font=" + (tmp.font != null ? tmp.font.name : "null") + " size=" + tmp.fontSize
                                 + " text=\"" + (t.Length > 40 ? t.Substring(0, 40) : t) + "\"";
                         }
+                        Vector3[] wc = new Vector3[4];
+                        rt.GetWorldCorners(wc);
                         sb.AppendLine(Path(g.transform) + " | " + kind + " | " + detail
                             + " | col=#" + ColorUtility.ToHtmlStringRGBA(g.color)
                             + " | " + Mathf.RoundToInt(rt.rect.width) + "x" + Mathf.RoundToInt(rt.rect.height)
                             + " | anch=" + rt.anchoredPosition.ToString("F0")
                             + " a=" + rt.anchorMin.ToString("F1") + rt.anchorMax.ToString("F1")
-                            + " sib=" + rt.GetSiblingIndex());
+                            + " sib=" + rt.GetSiblingIndex()
+                            + " rc=" + (g.raycastTarget ? 1 : 0)
+                            + " w=(" + wc[0].x.ToString("F0") + "," + wc[0].y.ToString("F0")
+                            + ")-(" + wc[2].x.ToString("F0") + "," + wc[2].y.ToString("F0") + ")");
                     }
                 }
                 string file = System.IO.Path.Combine(BepInEx.Paths.BepInExRootPath, "logpose-uidump.txt");
