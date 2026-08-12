@@ -576,7 +576,7 @@ namespace LogPose.UI
             }
 
             // Deck rail (both modes; private hides Quick join, so the panel shrinks).
-            C(_deckPanel.rectTransform, railCx, priv ? 316f : 283f, 512f, priv ? 196f : 262f);
+            C(_deckPanel.rectTransform, railCx, priv ? 316f : 279f, 512f, priv ? 196f : 274f);
             C(_deckKick.rectTransform, railCx - 96f, 384f, 300f, 18f);
             C(_railThumb.transform.parent as RectTransform, railCx - 186f, 296f, 76f, 106f);
             C(RT(_hjs.go_DeckSelector), railCx + 42f, 312f, 320f, 48f);
@@ -596,11 +596,15 @@ namespace LogPose.UI
             GameObject quick = _hjs.go_QuickJoin;
             if (quick != null && quick.activeSelf)
             {
-                C(RT(quick), railCx, 202f, 464f, 58f);
+                C(RT(quick), railCx, 208f, 464f, 58f);
                 BoardHUD.StyleAsButton(quick, 464f, 58f, 17f, BtnKind.Primary);
                 Relabel(quick, "Quick join", 17f);
             }
-            C(_quickCap.rectTransform, railCx, 172f, 440f, 18f);
+            // The caption belongs to Quick join — clear of the button above and the
+            // panel border below, and hidden with it in private mode.
+            if (_quickCap.gameObject.activeSelf != !priv)
+                _quickCap.gameObject.SetActive(!priv);
+            C(_quickCap.rectTransform, railCx, 162f, 440f, 18f);
 
             // Create panel — the private variant hides the description and share
             // checkbox, so its contents compact upward and the panel shrinks to fit.
