@@ -11,7 +11,7 @@ namespace LogPose
     {
         public const string GUID = "com.hunter.logpose";
         public const string NAME = "LogPose";
-        public const string VERSION = "1.0.22";
+        public const string VERSION = "1.0.23";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;
@@ -127,6 +127,7 @@ namespace LogPose
             UI.VanillaRestyle.Update(sceneLoaded);
             UI.BoardHUD.Update();
             UI.DeckEditorUI.Update(sceneLoaded);
+            UI.MenuScreensUI.Update(sceneLoaded);
             if (sceneLoaded)
             {
                 double ms = (System.Diagnostics.Stopwatch.GetTimestamp() - forceT0) * 1000.0
