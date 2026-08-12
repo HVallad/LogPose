@@ -84,6 +84,33 @@ namespace LogPose.UI
                 img.color = Theme.WithA(Theme.Text, 0.05f);
                 return;
             }
+            // Scrollbars ship spriteless and get their color from the vanilla
+            // parchment ColorBlock — the brown thumb in the lobby list. Dark track,
+            // accent thumb, and the tint retargeted to plain white.
+            if (name == "Scrollbar Vertical" || name == "Scrollbar Horizontal")
+            {
+                img.sprite = UISprites.RoundedRect(16, 16, 4f, Theme.WithA(Theme.Text, 0.05f), Color.clear, 0f, 5f);
+                img.type = Image.Type.Sliced;
+                img.color = Color.white;
+                return;
+            }
+            if (name == "Handle")
+            {
+                img.sprite = UISprites.RoundedRect(16, 16, 4f, Theme.WithA(Theme.Accent, 0.5f), Color.clear, 0f, 5f);
+                img.type = Image.Type.Sliced;
+                img.color = Color.white;
+                Scrollbar sb = img.GetComponentInParent<Scrollbar>();
+                if (sb != null && sb.targetGraphic == img)
+                {
+                    ColorBlock cb = sb.colors;
+                    cb.normalColor = Color.white;
+                    cb.highlightedColor = new Color(0.9f, 0.88f, 1f, 1f);
+                    cb.pressedColor = new Color(0.8f, 0.77f, 1f, 1f);
+                    cb.selectedColor = Color.white;
+                    sb.colors = cb;
+                }
+                return;
+            }
 
             // The wood table background -> flat ground.
             if (name == "BG" && img.rectTransform.rect.width > 1200f)
