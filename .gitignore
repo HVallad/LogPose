@@ -7,3 +7,7 @@ decompiled/
 
 LogPoseSetup/bin/
 LogPoseSetup/obj/
+
+# Claude Code local session files
+.claude/
+CLAUDE.local.md
